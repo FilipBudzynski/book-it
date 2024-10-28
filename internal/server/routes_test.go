@@ -1,32 +1,39 @@
 package server
 
 import (
-	"github.com/gin-gonic/gin"
+	"encoding/json"
+	"github.com/labstack/echo/v4"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
 )
 
-func TestHelloWorldHandler(t *testing.T) {
+func TestHandler(t *testing.T) {
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	resp := httptest.NewRecorder()
+	c := e.NewContext(req, resp)
 	s := &Server{}
-	r := gin.New()
-	r.GET("/", s.HelloWorldHandler)
-	// Create a test HTTP request
-	req, err := http.NewRequest("GET", "/", nil)
-	if err != nil {
-		t.Fatal(err)
+	// Assertions
+	if err := s.HelloWorldHandler(c); err != nil {
+		t.Errorf("handler() error = %v", err)
+		return
 	}
-	// Create a ResponseRecorder to record the response
-	rr := httptest.NewRecorder()
-	// Serve the HTTP request
-	r.ServeHTTP(rr, req)
-	// Check the status code
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	if resp.Code != http.StatusOK {
+		t.Errorf("handler() wrong status code = %v", resp.Code)
+		return
 	}
-	// Check the response body
-	expected := "{\"message\":\"Hello World\"}"
-	if rr.Body.String() != expected {
-		t.Errorf("Handler returned unexpected body: got %v want %v", rr.Body.String(), expected)
+	expected := map[string]string{"message": "Hello World"}
+	var actual map[string]string
+	// Decode the response body into the actual map
+	if err := json.NewDecoder(resp.Body).Decode(&actual); err != nil {
+		t.Errorf("handler() error decoding response body: %v", err)
+		return
+	}
+	// Compare the decoded response with the expected value
+	if !reflect.DeepEqual(expected, actual) {
+		t.Errorf("handler() wrong response body. expected = %v, actual = %v", expected, actual)
+		return
 	}
 }

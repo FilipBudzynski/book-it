@@ -1,43 +1,48 @@
 package server
 
 import (
-	"book-it/cmd/web"
-	"io/fs"
+	"book_it/cmd/web"
+	"book_it/handler"
+	"book_it/internal/database"
+	"book_it/service"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-
 	"github.com/a-h/templ"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func (s *Server) RegisterRoutes() http.Handler {
-	r := gin.Default()
+	e := echo.New()
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+	fileServer := http.FileServer(http.FS(web.Files))
+	e.GET("/assets/*", echo.WrapHandler(fileServer))
 
-	r.GET("/", s.HelloWorldHandler)
+	e.GET("/web", echo.WrapHandler(templ.Handler(web.HelloForm())))
+	e.POST("/hello", echo.WrapHandler(http.HandlerFunc(web.HelloWebHandler)))
 
-	r.GET("/health", s.healthHandler)
+	e.GET("/", s.HelloWorldHandler)
 
-	staticFiles, _ := fs.Sub(web.Files, "assets")
-	r.StaticFS("/assets", http.FS(staticFiles))
+	e.GET("/health", s.healthHandler)
 
-	r.GET("/web", func(c *gin.Context) {
-		templ.Handler(web.HelloForm()).ServeHTTP(c.Writer, c.Request)
-	})
+	userHandler := handler.NewUserHandler(
+		service.NewUserService(database.New().Db),
+	)
+	e.GET("/users", echo.WrapHandler(templ.Handler(web.UserForm())))
+	e.POST("/user", userHandler.CreateUserHandler)
 
-	r.POST("/hello", func(c *gin.Context) {
-		web.HelloWebHandler(c.Writer, c.Request)
-	})
-
-	return r
+	return e
 }
 
-func (s *Server) HelloWorldHandler(c *gin.Context) {
-	resp := make(map[string]string)
-	resp["message"] = "Hello World"
+func (s *Server) HelloWorldHandler(c echo.Context) error {
+	resp := map[string]string{
+		"message": "Hello World",
+	}
 
-	c.JSON(http.StatusOK, resp)
+	return c.JSON(http.StatusOK, resp)
 }
 
-func (s *Server) healthHandler(c *gin.Context) {
-	c.JSON(http.StatusOK, s.db.Health())
+func (s *Server) healthHandler(c echo.Context) error {
+	return c.JSON(http.StatusOK, s.db.Health())
 }

@@ -1,4 +1,4 @@
-# Project book-it
+# Project book_it
 
 One Paragraph of project description goes here
 

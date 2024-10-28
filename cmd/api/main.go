@@ -1,7 +1,6 @@
 package main
 
 import (
-	"book-it/internal/server"
 	"context"
 	"fmt"
 	"log"
@@ -9,6 +8,8 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"book_it/internal/server"
 )
 
 func gracefulShutdown(apiServer *http.Server, done chan bool) {
@@ -36,6 +37,7 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 }
 
 func main() {
+
 	server := server.NewServer()
 
 	// Create a done channel to signal when the shutdown is complete

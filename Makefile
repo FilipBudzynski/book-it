@@ -16,11 +16,15 @@ templ-install:
 			exit 1; \
 		fi; \
 	fi
+tailwind:
+	
+	@if [ ! -f tailwindcss ]; then curl -sL https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-macos-x64 -o tailwindcss; fi
+	@chmod +x tailwindcss
 
-build: templ-install
+build: tailwind templ-install
 	@echo "Building..."
 	@templ generate
-	
+	@./tailwindcss -i cmd/web/assets/css/input.css -o cmd/web/assets/css/output.css
 	@go build -o main cmd/api/main.go
 
 # Run the application
@@ -54,4 +58,4 @@ watch:
             fi; \
         fi
 
-.PHONY: all build run test clean watch templ-install
+.PHONY: all build run test clean watch tailwind templ-install

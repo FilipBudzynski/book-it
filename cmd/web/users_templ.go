@@ -8,7 +8,9 @@ package web
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-func HelloForm() templ.Component {
+import "book_it/service"
+
+func UserForm() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -41,7 +43,7 @@ func HelloForm() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form hx-post=\"/hello\" method=\"POST\" hx-target=\"#hello-container\"><input class=\"bg-gray-200 text-black p-2 border border-gray-400 rounded-lg\" id=\"name\" name=\"name\" type=\"text\"> <button type=\"submit\" class=\"bg-orange-500 hover:bg-orange-700 text-white py-2 px-4 rounded\">Submit</button></form><div id=\"hello-container\"></div>")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form hx-post=\"/user\" method=\"POST\" hx-target=\"#users-container\"><input class=\"bg-gray-200 text-black p-2 border border-gray-400 rounded-lg\" id=\"email\" name=\"email\" type=\"text\"> <input class=\"bg-gray-200 text-black p-2 border border-gray-400 rounded-lg\" id=\"username\" name=\"username\" type=\"text\"> <button type=\"submit\" class=\"bg-orange-500 hover:bg-orange-700 text-white py-2 px-4 rounded\">Submit</button></form><ul id=\"users-container\" class=\"w-48 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white\"></ul>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -55,7 +57,7 @@ func HelloForm() templ.Component {
 	})
 }
 
-func HelloPost(name string) templ.Component {
+func UsersList(users []service.User) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -76,22 +78,37 @@ func HelloPost(name string) templ.Component {
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"bg-green-100 p-4 shadow-md rounded-lg mt-6\"><p>Hello, ")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var4 string
-		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(name)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `cmd/web/hello.templ`, Line: 15, Col: 18}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</p></div>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
+		for _, user := range users {
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<li class=\"w-full px-4 py-2 border-b border-gray-200 rounded-t-lg dark:border-gray-600\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var4 string
+			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(user.Username)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `cmd/web/users.templ`, Line: 26, Col: 105}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</li><li class=\"w-full px-4 py-2 border-b border-gray-200 rounded-t-lg dark:border-gray-600\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var5 string
+			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(user.Email)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `cmd/web/users.templ`, Line: 27, Col: 102}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</li>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
 		return templ_7745c5c3_Err
 	})
