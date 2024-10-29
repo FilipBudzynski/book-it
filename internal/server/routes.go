@@ -2,18 +2,19 @@ package server
 
 import (
 	"book_it/cmd/web"
-	"book_it/handler"
-	"book_it/internal/database"
-	"book_it/service"
+	"book_it/pkg/handlers"
+	"book_it/pkg/services"
 	"net/http"
 
 	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"gorm.io/gorm"
 )
 
-func (s *Server) RegisterRoutes() http.Handler {
+func (s *Server) RegisterRoutes(db *gorm.DB) http.Handler {
 	e := echo.New()
+
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	fileServer := http.FileServer(http.FS(web.Files))
@@ -26,11 +27,11 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	e.GET("/health", s.healthHandler)
 
-	userHandler := handler.NewUserHandler(
-		service.NewUserService(database.New().Db),
-	)
-	e.GET("/users", echo.WrapHandler(templ.Handler(web.UserForm())))
-	e.POST("/user", userHandler.CreateUserHandler)
+	userService := services.NewUserService(db)
+	userHandler := handlers.NewUserHandler(userService)
+
+    e.GET("/create", userHandler.ListUsersHandler)
+	e.POST("/create", userHandler.CreateUserHandler)
 
 	return e
 }
