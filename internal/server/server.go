@@ -7,15 +7,13 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/FilipBudzynski/book_it/internal/database"
 	_ "github.com/joho/godotenv/autoload"
-
-	"book_it/internal/database"
 )
 
 type Server struct {
 	port int
-
-	db database.Service
+	db   database.Service
 }
 
 func NewServer() *http.Server {

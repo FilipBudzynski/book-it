@@ -64,13 +64,13 @@ func (s *Repository) Health() map[string]string {
 	// Ping the database
 	db, err := s.Db.DB()
 	if err != nil {
-		log.Fatalf(fmt.Sprintf("gorm conversion to db failed", err))
+		log.Fatalf("gorm conversion to db failed, err: %v", err)
 	}
 	err = db.PingContext(ctx)
 	if err != nil {
 		stats["status"] = "down"
 		stats["error"] = fmt.Sprintf("db down: %v", err)
-		log.Fatalf(fmt.Sprintf("db down: %v", err)) // Log the error and terminate the program
+		log.Fatalf("db down: %v", err) // Log the error and terminate the program
 		return stats
 	}
 

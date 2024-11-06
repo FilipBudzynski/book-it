@@ -1,11 +1,12 @@
 package server
 
 import (
-	"book_it/cmd/web"
-	"book_it/pkg/handlers"
-	"book_it/pkg/services"
 	"net/http"
 
+	"github.com/FilipBudzynski/book_it/cmd/web"
+	"github.com/FilipBudzynski/book_it/pkg/handlers"
+	"github.com/FilipBudzynski/book_it/pkg/routes"
+	"github.com/FilipBudzynski/book_it/pkg/services"
 	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -24,14 +25,12 @@ func (s *Server) RegisterRoutes(db *gorm.DB) http.Handler {
 	e.POST("/hello", echo.WrapHandler(http.HandlerFunc(web.HelloWebHandler)))
 
 	e.GET("/", s.HelloWorldHandler)
-
 	e.GET("/health", s.healthHandler)
 
+	// register user routes
 	userService := services.NewUserService(db)
 	userHandler := handlers.NewUserHandler(userService)
-
-    e.GET("/create", userHandler.ListUsersHandler)
-	e.POST("/create", userHandler.CreateUserHandler)
+	routes.RegisterUserRoutes(e, userHandler)
 
 	return e
 }

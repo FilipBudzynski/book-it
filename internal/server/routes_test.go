@@ -15,6 +15,7 @@ func TestHandler(t *testing.T) {
 	resp := httptest.NewRecorder()
 	c := e.NewContext(req, resp)
 	s := &Server{}
+
 	// Assertions
 	if err := s.HelloWorldHandler(c); err != nil {
 		t.Errorf("handler() error = %v", err)

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"book_it/internal/server"
 	"context"
 	"fmt"
 	"log"
@@ -9,6 +8,8 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/FilipBudzynski/book_it/internal/server"
 )
 
 func gracefulShutdown(apiServer *http.Server, done chan bool) {

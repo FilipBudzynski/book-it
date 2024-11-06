@@ -1,32 +1,24 @@
 package handlers
 
 import (
-	"book_it/cmd/web"
-	"book_it/pkg/services"
-
+	"github.com/FilipBudzynski/book_it/cmd/web"
+	"github.com/FilipBudzynski/book_it/pkg/entities"
+	"github.com/FilipBudzynski/book_it/pkg/services"
 	"github.com/labstack/echo/v4"
 )
 
-type UserService interface {
-	Create(u *services.User) error
-	Update(u *services.User) error
-	GetById(id uint) (*services.User, error)
-	GetAll() ([]services.User, error)
-	Delete(u services.User) error
-}
-
-func NewUserHandler(us UserService) *UserHandler {
+func NewUserHandler(us services.User) *UserHandler {
 	return &UserHandler{
 		userService: us,
 	}
 }
 
 type UserHandler struct {
-	userService UserService
+	userService services.User
 }
 
-func (u *UserHandler) CreateUserHandler(c echo.Context) error {
-	user := new(services.User)
+func (u *UserHandler) CreateUser(c echo.Context) error {
+	user := new(entities.User)
 
 	if err := c.Bind(user); err != nil {
 		return echo.NewHTTPError(echo.ErrInternalServerError.Code, err)
@@ -39,7 +31,7 @@ func (u *UserHandler) CreateUserHandler(c echo.Context) error {
 	return web.AppendUsersList(*user).Render(c.Request().Context(), c.Response().Writer)
 }
 
-func (u *UserHandler) ListUsersHandler(c echo.Context) error {
+func (u *UserHandler) ListUsers(c echo.Context) error {
 	users, err := u.userService.GetAll()
 	if err != nil {
 		return echo.NewHTTPError(echo.ErrInternalServerError.Code, err)
