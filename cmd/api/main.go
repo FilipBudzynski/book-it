@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/FilipBudzynski/book_it/internal/server"
+	"github.com/FilipBudzynski/book_it/pkg/handlers"
 )
 
 func gracefulShutdown(apiServer *http.Server, done chan bool) {
@@ -37,6 +38,8 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 }
 
 func main() {
+	// setup authentication
+	handlers.NewAuth()
 	server := server.NewServer()
 
 	// Create a done channel to signal when the shutdown is complete

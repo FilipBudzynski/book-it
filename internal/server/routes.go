@@ -18,19 +18,25 @@ func (s *Server) RegisterRoutes(db *gorm.DB) http.Handler {
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	// e.Use(session.Middleware(store))
+
 	fileServer := http.FileServer(http.FS(web.Files))
 	e.GET("/assets/*", echo.WrapHandler(fileServer))
 
 	e.GET("/web", echo.WrapHandler(templ.Handler(web.HelloForm())))
 	e.POST("/hello", echo.WrapHandler(http.HandlerFunc(web.HelloWebHandler)))
 
-	e.GET("/", s.HelloWorldHandler)
+	// e.GET("/", s.HelloWorldHandler)
+	e.GET("/", echo.WrapHandler(templ.Handler(web.LoginPage())))
 	e.GET("/health", s.healthHandler)
 
 	// register user routes
 	userService := services.NewUserService(db)
 	userHandler := handlers.NewUserHandler(userService)
 	routes.RegisterUserRoutes(e, userHandler)
+
+	// register auth routes
+	routes.RegisterAuthRoutes(e)
 
 	return e
 }
