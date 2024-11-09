@@ -1,7 +1,14 @@
 package web
 
-templ LoginPage() {
-	@Base() {
-		<a href="/auth/google">Login with Google</a>
-	}
+templ HomePage(loggedIn bool) {
+    @Base() {
+        <div class="px-6 sm:px-0 max-w-sm flex flex-col justify-center items-center">
+            <span class="text-sm text-center text-google-text-gray tracking-wider">Track Progress & Discover</span>
+            if loggedIn {
+                @SignOutButton()
+            } else {
+                @SignInButton()
+            }
+        </div>
+    }
 }

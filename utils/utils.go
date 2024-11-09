@@ -1,63 +1,27 @@
 package utils
 
 import (
-	"errors"
-	"fmt"
-	"unicode"
+	"net/http"
 
-	"golang.org/x/crypto/bcrypt"
+	"github.com/a-h/templ"
+	"github.com/labstack/echo/v4"
+	"github.com/markbates/goth/gothic"
 )
 
-const (
-	MIN_PASSWORD_LEN = 8
-)
-
-func HashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 10)
-	return string(bytes), err
+func RenderView(c echo.Context, cmp templ.Component) error {
+	return cmp.Render(c.Request().Context(), c.Response().Writer)
 }
 
-func CheckPasswordHash(password, hash string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	return err == nil
+func IsUserLoggedIn(r *http.Request, sessionName string) bool {
+	session, _ := gothic.Store.Get(r, sessionName)
+	_, ok := session.Values["userID"]
+	return ok
 }
 
-func ValidatePassword(password string) error {
-	if len(password) < MIN_PASSWORD_LEN {
-		return fmt.Errorf("password too short, minimum length is %d", MIN_PASSWORD_LEN)
+func GetUserIDFromSession(r *http.Request, sessionName string) string {
+	session, _ := gothic.Store.Get(r, sessionName)
+	if userId, ok := session.Values["userID"]; ok {
+		return userId.(string)
 	}
-
-	hasUpper := false
-	hasLower := false
-	hasNumber := false
-	hasSpecial := false
-
-	for _, r := range password {
-		switch {
-		case unicode.IsUpper(r):
-			hasUpper = true
-		case unicode.IsLower(r):
-			hasLower = true
-		case unicode.IsDigit(r):
-			hasNumber = true
-		case unicode.IsPunct(r) || unicode.IsSymbol(r):
-			hasSpecial = true
-		}
-	}
-
-	// Check each requirement and return an error if a condition is not met
-	if !hasUpper {
-		return errors.New("password must contain at least one uppercase letter")
-	}
-	if !hasLower {
-		return errors.New("password must contain at least one lowercase letter")
-	}
-	if !hasNumber {
-		return errors.New("password must contain at least one number")
-	}
-	if !hasSpecial {
-		return errors.New("password must contain at least one special character (e.g., !@#$%)")
-	}
-
-	return nil
+	return ""
 }

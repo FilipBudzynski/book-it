@@ -5,9 +5,9 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func RegisterAuthRoutes(app *echo.Echo) {
+func RegisterAuthRoutes(app *echo.Echo, authHandler *handlers.AuthHandler) {
 	group := app.Group("/auth")
-	group.GET("/:provider/callback", handlers.GetAuthCallbackFunc)
-	group.GET("/:provider", handlers.GetAuthFunc)
-	group.GET("/logout/:provider", handlers.Logout)
+	group.GET("/:provider/callback", authHandler.GetAuthCallbackFunc)
+	group.GET("/:provider", authHandler.GetAuthFunc)
+	group.GET("/:provider/logout", authHandler.Logout)
 }

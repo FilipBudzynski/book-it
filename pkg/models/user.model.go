@@ -9,8 +9,15 @@ type User struct {
 
 	Username string `gorm:"not null" json:"username"`
 	Email    string `gorm:"unique;not null" json:"email"`
-	Password string `gorm:"size:255" json:"password"`
-	GoogleId string `gorm:"size:255" json:"google_id"`
-	// CreatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP()" json:"created_at"`
-	ID uint `gorm:"primaryKey" json:"id"`
+	GoogleId string `gorm:"primaryKey" json:"google_id"`
+	// ID uint `gorm:"primaryKey" json:"id"`
+	Books []UserBook
+}
+
+type UserBook struct {
+	gorm.Model
+
+	Name         string `gorm:"not null`
+	UserGoogleId string `gorm:not null`
+	ID           uint   `gorm:primaryKet`
 }

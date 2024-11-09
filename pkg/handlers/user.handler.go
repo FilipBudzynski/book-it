@@ -20,15 +20,17 @@ func NewUserHandler(us services.UserService) *UserHandler {
 	}
 }
 
-func (u *UserHandler) RegisterUser(c echo.Context) error {
+
+func (u *UserHandler) CreateUser(c echo.Context) error {
 	user := new(models.User)
 
 	if err := c.Bind(user); err != nil {
 		return echo.NewHTTPError(echo.ErrInternalServerError.Code, err)
 	}
 
-	if err := u.userService.Register(user); err != nil {
-		return fmt.Errorf("registration failed, err %v", err) // echo.NewHTTPError(echo.ErrInternalServerError.Code, err)
+	if err := u.userService.Create(user); err != nil {
+		return fmt.Errorf("creating user failed, err %v", err) 
+        // echo.NewHTTPError(echo.ErrInternalServerError.Code, err)
 	}
 
 	fmt.Fprintln(c.Response().Writer, "User registered successfully")
@@ -47,7 +49,6 @@ func (u *UserHandler) ListUsers(c echo.Context) error {
 }
 
 func (u *UserHandler) View(c echo.Context, cmp templ.Component) error {
-	// c.Response().Header().Set(echo.HeaderContentType, echo.MIMETextHTML)
 
 	return cmp.Render(c.Request().Context(), c.Response().Writer)
 }

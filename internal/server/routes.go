@@ -7,6 +7,7 @@ import (
 	"github.com/FilipBudzynski/book_it/pkg/handlers"
 	"github.com/FilipBudzynski/book_it/pkg/routes"
 	"github.com/FilipBudzynski/book_it/pkg/services"
+	"github.com/FilipBudzynski/book_it/utils"
 	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -27,7 +28,7 @@ func (s *Server) RegisterRoutes(db *gorm.DB) http.Handler {
 	e.POST("/hello", echo.WrapHandler(http.HandlerFunc(web.HelloWebHandler)))
 
 	// e.GET("/", s.HelloWorldHandler)
-	e.GET("/", echo.WrapHandler(templ.Handler(web.LoginPage())))
+	e.GET("/", s.HomePageHandler)
 	e.GET("/health", s.healthHandler)
 
 	// register user routes
@@ -36,9 +37,15 @@ func (s *Server) RegisterRoutes(db *gorm.DB) http.Handler {
 	routes.RegisterUserRoutes(e, userHandler)
 
 	// register auth routes
-	routes.RegisterAuthRoutes(e)
+	authHanlder := handlers.NewAuthHandler(userService)
+	routes.RegisterAuthRoutes(e, authHanlder)
 
 	return e
+}
+
+func (s *Server) HomePageHandler(c echo.Context) error {
+	logged := utils.IsUserLoggedIn(c.Request(), "session")
+	return utils.RenderView(c, web.HomePage(logged))
 }
 
 func (s *Server) HelloWorldHandler(c echo.Context) error {

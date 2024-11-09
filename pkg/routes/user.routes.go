@@ -8,5 +8,4 @@ import (
 func RegisterUserRoutes(app *echo.Echo, h *handlers.UserHandler) {
 	group := app.Group("/users")
 	group.GET("", h.ListUsers)
-	// group.POST("/register", h.RegisterUser)
 }

@@ -1,11 +1,9 @@
 package services
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/FilipBudzynski/book_it/pkg/models"
-	"github.com/FilipBudzynski/book_it/utils"
 	"gorm.io/gorm"
 )
 
@@ -13,8 +11,7 @@ import (
 type UserService interface {
 	Create(u *models.User) error
 	Update(u *models.User) error
-	Register(u *models.User) error
-	GetById(id uint) (*models.User, error)
+	GetById(id string) (*models.User, error)
 	GetByEmail(email string) (*models.User, error)
 	GetAll() ([]models.User, error)
 	Delete(u models.User) error
@@ -37,30 +34,11 @@ func NewUserService(db *gorm.DB) *userService {
 	}
 }
 
-func (u *userService) Register(user *models.User) error {
-	existingUser, _ := u.GetByEmail(user.Email)
-	if existingUser != nil {
-		return fmt.Errorf("error user with email: '%s', already exists", user.Email)
-	}
-
-	password, err := utils.HashPassword(user.Password)
-	if err != nil {
-		return err
-	}
-	user.Password = password
-
-	if err := u.Create(user); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (u *userService) Create(user *models.User) error {
 	return u.db.Create(user).Error
 }
 
-func (u *userService) GetById(id uint) (*models.User, error) {
+func (u *userService) GetById(id string) (*models.User, error) {
 	var user models.User
 	if err := u.db.First(&user, id).Error; err != nil {
 		return nil, err
@@ -70,10 +48,15 @@ func (u *userService) GetById(id uint) (*models.User, error) {
 
 func (u *userService) GetByEmail(email string) (*models.User, error) {
 	var user models.User
-	if err := u.db.First(&user, "email = ?", email).Error; err != nil {
-		return nil, err
+	err := u.db.First(&user, "email = ?", email).Error
+	if err == nil {
+		return &user, nil
 	}
-	return &user, nil
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
+
+	return nil, err
 }
 
 func (u *userService) GetAll() ([]models.User, error) {
