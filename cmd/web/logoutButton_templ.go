@@ -29,7 +29,7 @@ func SignOutButton() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<a href=\"/auth/google/logout\" type=\"button\" class=\"w-full flex items-center justify-center bg-white border border-button-border-light rounded-md p-0.5 pr-3 gap-x-2\"><span class=\"text-sm text-google-text-gray tracking-wider text-center\">Sign Out</span></a>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<a href=\"/auth/logout?provider=google\" type=\"button\" class=\"w-full flex items-center justify-center bg-white border border-button-border-light rounded-md p-0.5 pr-3 gap-x-2\"><span class=\"text-sm text-google-text-gray tracking-wider text-center\">Sign Out</span></a>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

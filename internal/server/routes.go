@@ -19,7 +19,6 @@ func (s *Server) RegisterRoutes(db *gorm.DB) http.Handler {
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	// e.Use(session.Middleware(store))
 
 	fileServer := http.FileServer(http.FS(web.Files))
 	e.GET("/assets/*", echo.WrapHandler(fileServer))
@@ -44,7 +43,7 @@ func (s *Server) RegisterRoutes(db *gorm.DB) http.Handler {
 }
 
 func (s *Server) HomePageHandler(c echo.Context) error {
-	logged := utils.IsUserLoggedIn(c.Request(), "session")
+	logged := utils.IsUserLoggedIn(c.Request())
 	return utils.RenderView(c, web.HomePage(logged))
 }
 

@@ -2,46 +2,15 @@ package handlers
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/FilipBudzynski/book_it/pkg/models"
 	"github.com/FilipBudzynski/book_it/pkg/services"
-	"github.com/gorilla/sessions"
-	"github.com/joho/godotenv"
+	"github.com/FilipBudzynski/book_it/utils"
 	"github.com/labstack/echo/v4"
-	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
-	"github.com/markbates/goth/providers/google"
 )
-
-const (
-	maxAge = 86400
-	isProd = false
-)
-
-func UseAuth() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("error loading .env file")
-	}
-	googleClientId := os.Getenv("GOOGLE_CLIENT_ID")
-	googleClientSecret := os.Getenv("GOOGLE_CLIENT_SECRET")
-	hashingKey := os.Getenv("HASHING_KEY")
-
-	store := sessions.NewCookieStore([]byte(hashingKey))
-	store.MaxAge(maxAge)
-	store.Options.HttpOnly = true
-	store.Options.Secure = true
-
-	gothic.Store = store
-
-	goth.UseProviders(
-		google.New(googleClientId, googleClientSecret, "http://localhost:3000/auth/google/callback"),
-	)
-}
 
 type AuthHandler struct {
 	userService services.UserService
@@ -53,18 +22,25 @@ func NewAuthHandler(us services.UserService) *AuthHandler {
 	}
 }
 
-func (a *AuthHandler) setProvider(c echo.Context) (http.ResponseWriter, *http.Request) {
+// setProvider is a helper function that sets Request context to contain value "provider", from url path ":provider"
+// returns responseWriter and altered request
+func setProvider(c echo.Context) (http.ResponseWriter, *http.Request) {
 	ctx := context.WithValue(c.Request().Context(), gothic.ProviderParamKey, c.Param("provider"))
 	return c.Response().Writer, c.Request().WithContext(ctx)
 }
 
 func (a *AuthHandler) GetAuthCallbackFunc(c echo.Context) error {
-	response, request := a.setProvider(c)
+	responseWriter, request := setProvider(c)
 
-	gothUser, err := gothic.CompleteUserAuth(response, request)
+	if request.URL.Query().Get("code") == "" {
+		log.Println("user has canceled authentication")
+		gothic.Logout(responseWriter, request)
+		return c.Redirect(http.StatusFound, "/")
+	}
+
+	gothUser, err := gothic.CompleteUserAuth(responseWriter, request)
 	if err != nil {
-		fmt.Fprintln(c.Response().Writer, err.Error())
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	// try to get user from db
@@ -75,7 +51,7 @@ func (a *AuthHandler) GetAuthCallbackFunc(c echo.Context) error {
 	// create new user
 	if user == nil {
 		user = &models.User{
-			Username: gothUser.Name,
+			Username: gothUser.NickName,
 			Email:    gothUser.Email,
 			GoogleId: gothUser.UserID,
 		}
@@ -83,36 +59,32 @@ func (a *AuthHandler) GetAuthCallbackFunc(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	}
-
 	log.Printf("successfully logged-in user: %s", user.Username)
-	// set cookie session
-	session, _ := gothic.Store.New(c.Request(), "session")
-	session.Values["userID"] = user.GoogleId
-	session.Save(c.Request(), c.Response().Writer)
 
-	return c.Redirect(http.StatusTemporaryRedirect, "/")
+	// set cookie session
+	err = utils.SetSessionUserID(responseWriter, request, gothUser.UserID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	return c.Redirect(http.StatusFound, "/")
 }
 
 func (a *AuthHandler) GetAuthFunc(c echo.Context) error {
-	response, request := a.setProvider(c)
-
-	if gothUser, err := gothic.CompleteUserAuth(c.Response().Writer, c.Request()); err == nil {
-		fmt.Fprintln(c.Response().Writer, gothUser)
-	} else {
-		gothic.BeginAuthHandler(response, request)
-	}
-
+	responseWriter, request := setProvider(c)
+	gothic.BeginAuthHandler(responseWriter, request)
 	return nil
 }
 
 func (a *AuthHandler) Logout(c echo.Context) error {
-    // remove cookie from server
-	gothic.Logout(c.Response().Writer, c.Request())
+	r := c.Request()
+	w := c.Response().Writer
 
-	// remove cookie from user side
-	session, _ := gothic.Store.Get(c.Request(), "session")
-	session.Options.MaxAge = -1
-	session.Save(c.Request(), c.Response().Writer)
+	// remove cookie
+	err := utils.RemoveCookieSession(w, r)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
 
-	return c.Redirect(http.StatusTemporaryRedirect, "/")
+	return c.Redirect(http.StatusFound, "/")
 }
