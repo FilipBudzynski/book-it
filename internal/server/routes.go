@@ -14,8 +14,11 @@ import (
 	"gorm.io/gorm"
 )
 
+var UserService services.UserService
+
 func (s *Server) RegisterRoutes(db *gorm.DB) http.Handler {
 	e := echo.New()
+	UserService = services.NewUserService(db)
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
@@ -31,20 +34,29 @@ func (s *Server) RegisterRoutes(db *gorm.DB) http.Handler {
 	e.GET("/health", s.healthHandler)
 
 	// register user routes
-	userService := services.NewUserService(db)
-	userHandler := handlers.NewUserHandler(userService)
+	// userService := services.NewUserService(db)
+	userHandler := handlers.NewUserHandler(UserService)
 	routes.RegisterUserRoutes(e, userHandler)
 
 	// register auth routes
-	authHanlder := handlers.NewAuthHandler(userService)
+	authHanlder := handlers.NewAuthHandler(UserService)
 	routes.RegisterAuthRoutes(e, authHanlder)
 
 	return e
 }
 
 func (s *Server) HomePageHandler(c echo.Context) error {
-	logged := utils.IsUserLoggedIn(c.Request())
-	return utils.RenderView(c, web.HomePage(logged))
+	userSession, _ := utils.GetUserSessionFromStore(c.Request())
+	if (userSession == utils.UserSession{}) {
+		return utils.RenderView(c, web.HomePage(nil))
+	}
+
+	dbUser, err := UserService.GetByGoogleID(userSession.UserID)
+	if dbUser == nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	return utils.RenderView(c, web.HomePage(dbUser))
 }
 
 func (s *Server) HelloWorldHandler(c echo.Context) error {

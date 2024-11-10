@@ -13,6 +13,7 @@ type UserService interface {
 	Update(u *models.User) error
 	GetById(id string) (*models.User, error)
 	GetByEmail(email string) (*models.User, error)
+	GetByGoogleID(googleID string) (*models.User, error)
 	GetAll() ([]models.User, error)
 	Delete(u models.User) error
 }
@@ -38,12 +39,27 @@ func (u *userService) Create(user *models.User) error {
 	return u.db.Create(user).Error
 }
 
+// TODO: do a loop to get by providerID or something
+
 func (u *userService) GetById(id string) (*models.User, error) {
 	var user models.User
 	if err := u.db.First(&user, id).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (u *userService) GetByGoogleID(googleID string) (*models.User, error) {
+	var user models.User
+	err := u.db.First(&user, "google_id = ?", googleID).Error
+	if err == nil {
+		return &user, nil
+	}
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
+
+	return nil, err
 }
 
 func (u *userService) GetByEmail(email string) (*models.User, error) {

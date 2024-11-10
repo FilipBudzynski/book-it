@@ -33,8 +33,8 @@ func (a *AuthHandler) GetAuthCallbackFunc(c echo.Context) error {
 	responseWriter, request := setProvider(c)
 
 	if request.URL.Query().Get("code") == "" {
-		log.Println("user has canceled authentication")
 		gothic.Logout(responseWriter, request)
+		log.Println("user has canceled authentication")
 		return c.Redirect(http.StatusFound, "/")
 	}
 
@@ -44,14 +44,15 @@ func (a *AuthHandler) GetAuthCallbackFunc(c echo.Context) error {
 	}
 
 	// try to get user from db
-	user, err := a.userService.GetByEmail(gothUser.Email)
+	var user *models.User
+	user, err = a.userService.GetByEmail(gothUser.Email)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 	// create new user
 	if user == nil {
 		user = &models.User{
-			Username: gothUser.NickName,
+			Username: gothUser.Name,
 			Email:    gothUser.Email,
 			GoogleId: gothUser.UserID,
 		}
@@ -59,13 +60,18 @@ func (a *AuthHandler) GetAuthCallbackFunc(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	}
-	log.Printf("successfully logged-in user: %s", user.Username)
 
-	// set cookie session
-	err = utils.SetSessionUserID(responseWriter, request, gothUser.UserID)
+	// set user cookie session
+	err = utils.SetUserSession(responseWriter, request, utils.UserSession{
+		UserID:       gothUser.UserID,
+		AccessToken:  gothUser.AccessToken,
+		RefreshToken: gothUser.RefreshToken,
+	})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
+
+	log.Printf("successfully logged-in user: %s", user.Username)
 
 	return c.Redirect(http.StatusFound, "/")
 }
