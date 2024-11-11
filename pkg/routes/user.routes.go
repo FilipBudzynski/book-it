@@ -7,5 +7,7 @@ import (
 
 func RegisterUserRoutes(app *echo.Echo, h *handlers.UserHandler) {
 	group := app.Group("/users")
+	// middleware - protected routes
+	// group.Use()
 	group.GET("", h.ListUsers)
 }

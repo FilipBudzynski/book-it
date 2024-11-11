@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"log"
 	"net/http"
 
 	"github.com/FilipBudzynski/book_it/pkg/models"
@@ -33,8 +32,11 @@ func (a *AuthHandler) GetAuthCallbackFunc(c echo.Context) error {
 	responseWriter, request := setProvider(c)
 
 	if request.URL.Query().Get("code") == "" {
-		gothic.Logout(responseWriter, request)
-		log.Println("user has canceled authentication")
+		if err := gothic.Logout(responseWriter, request); err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+		c.Logger().Printf("user has canceled authentication")
 		return c.Redirect(http.StatusFound, "/")
 	}
 
@@ -71,7 +73,7 @@ func (a *AuthHandler) GetAuthCallbackFunc(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	log.Printf("successfully logged-in user: %s", user.Username)
+	c.Logger().Printf("successfully logged-in user: %s", user.Username)
 
 	return c.Redirect(http.StatusFound, "/")
 }
