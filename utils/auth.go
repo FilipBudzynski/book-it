@@ -1,0 +1,93 @@
+package utils
+
+import (
+	"encoding/gob"
+	"fmt"
+	"net/http"
+
+	"github.com/labstack/echo/v4"
+	"github.com/markbates/goth/gothic"
+)
+
+const (
+	sessionName = "_user_session"
+	userIDKey   = "user_id"
+)
+
+type UserSession struct {
+	UserID       string
+	AccessToken  string
+	RefreshToken string
+}
+
+func init() {
+	gob.Register(UserSession{})
+}
+
+// setSessionValue stores a value in the current user session.
+func setSessionValue(w http.ResponseWriter, r *http.Request, key, value any) error {
+	session, _ := gothic.Store.New(r, sessionName)
+	session.Values[key] = value
+	return session.Save(r, w)
+}
+
+// getFromSession retrives a previously-stored value from the session.
+func getFromSession(r *http.Request, key string) (string, error) {
+	session, err := gothic.Store.Get(r, sessionName)
+	if value, ok := session.Values[key]; ok {
+		return value.(string), nil
+	}
+	return "", err
+}
+
+func IsUserLoggedIn(r *http.Request) bool {
+	session, _ := gothic.Store.Get(r, sessionName)
+	_, ok := session.Values[userIDKey]
+	return ok
+}
+
+func CheckLoggedInMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		_, err := GetUserSessionFromStore(c.Request())
+		if err != nil {
+			return echo.NewHTTPError(echo.ErrUnauthorized.Code, "Unauthorized")
+		}
+		return next(c)
+	}
+}
+
+func GetUserSessionFromStore(r *http.Request) (UserSession, error) {
+	session, err := gothic.Store.Get(r, sessionName)
+	if value, ok := session.Values["userSession"]; ok {
+		return value.(UserSession), nil
+	}
+	return UserSession{}, fmt.Errorf("User session not found %s", err)
+}
+
+// GetSessionUserID is an abstraction over GetFromSession to retrive userID from session
+func GetSessionUserID(r *http.Request) (string, error) {
+	return getFromSession(r, userIDKey)
+}
+
+func SetUserSession(w http.ResponseWriter, r *http.Request, userSession UserSession) error {
+	return setSessionValue(w, r, "userSession", userSession)
+}
+
+// SetSessionValue stores a value in the current user session.
+func SetSessionValueMap(w http.ResponseWriter, r *http.Request, values map[any]any) error {
+	session, _ := gothic.Store.New(r, sessionName)
+	session.Values = values
+	return session.Save(r, w)
+}
+
+// GetFromSession is an abstraction over SetSessionValue to store userID in session.
+func SetSessionUserID(w http.ResponseWriter, r *http.Request, id string) error {
+	return setSessionValue(w, r, userIDKey, id)
+}
+
+func RemoveCookieSession(w http.ResponseWriter, r *http.Request) error {
+	session, _ := gothic.Store.Get(r, sessionName)
+	session.Options.MaxAge = -1
+	// session.Values = make(map[any]any)
+	return session.Save(r, w)
+}

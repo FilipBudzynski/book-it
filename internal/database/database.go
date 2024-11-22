@@ -8,11 +8,29 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/FilipBudzynski/book_it/pkg/models"
 	_ "github.com/joho/godotenv/autoload"
 	_ "github.com/mattn/go-sqlite3"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
+
+var (
+	dburl      = os.Getenv("DB_URL")
+	dbInstance *Repository
+)
+
+func init() {
+	db, err := gorm.Open(sqlite.Open(dburl), &gorm.Config{})
+	if err != nil {
+		panic("failed to connect database")
+	}
+
+	err = db.AutoMigrate(models.Models...)
+	if err != nil {
+		panic("failed to migrate database")
+	}
+}
 
 // Service represents a service that interacts with a database.
 type Service interface {
@@ -28,11 +46,6 @@ type Service interface {
 type Repository struct {
 	Db *gorm.DB
 }
-
-var (
-	dburl      = os.Getenv("DB_URL")
-	dbInstance *Repository
-)
 
 func New() *Repository {
 	// Reuse Connection

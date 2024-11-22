@@ -4,32 +4,37 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strconv"
 
 	"github.com/FilipBudzynski/book_it/pkg/models"
 )
 
-// NewBookService creates new BookService for external api communication
+const (
+	GoogleBooksAPI    = "https://www.googleapis.com/books/v1/volumes?q=%s&maxResults=%d"
+	DefaultMaxResults = 5
+)
+
+// NewGoogleBookService creates new BookService for external api communication
 //
 // apiUrl: expectes the url schema that will be used for getting the results
 // example:  "https://www.googleapis.com/books/v1/volumes?q=%s&maxResults=%d"
 //
 // maxResults: a number to specify max returned results for a query
-func NewBookService(apiUrl string, maxResults int) *bookService {
-	return &bookService{
-		apiUrl:     apiUrl,
-		maxResults: maxResults,
+func NewGoogleBookService() *googleBookService {
+	return &googleBookService{
+		apiUrl:     GoogleBooksAPI,
+		maxResults: DefaultMaxResults,
 	}
 }
 
-type bookService struct {
+type googleBookService struct {
 	apiUrl     string
 	maxResults int
 }
 
 type BooksResponse struct {
 	Items []struct {
+		ID         string     `json:"id"`
 		VolumeInfo VolumeInfo `json:"volumeInfo"`
 	} `json:"items"`
 }
@@ -50,9 +55,8 @@ type VolumeInfo struct {
 	} `json:"industryIdentifiers"`
 }
 
-func (s *bookService) GetByTitle(query string, maxResults int) ([]*models.Book, error) {
-	encodedQuery := url.QueryEscape(query)
-	url := fmt.Sprintf(s.apiUrl, encodedQuery, maxResults)
+func (s *googleBookService) GetByQuery(query string, maxResults int) ([]*models.Book, error) {
+	url := fmt.Sprintf(s.apiUrl, query, maxResults)
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -73,7 +77,7 @@ func (s *bookService) GetByTitle(query string, maxResults int) ([]*models.Book, 
 
 	var books []*models.Book
 	for _, item := range booksResponse.Items {
-		parsedBook, err := s.parseBook(item.VolumeInfo)
+		parsedBook, err := s.convert(item.VolumeInfo, item.ID)
 		if err != nil {
 			continue
 		}
@@ -83,9 +87,13 @@ func (s *bookService) GetByTitle(query string, maxResults int) ([]*models.Book, 
 	return books, nil
 }
 
-func (s *bookService) parseBook(item VolumeInfo) (models.Book, error) {
+func (s *googleBookService) GetMaxResults() int {
+	return s.maxResults
+}
+
+func (s *googleBookService) convert(responseVolume VolumeInfo, googleId string) (models.Book, error) {
 	var isbnString string
-	for _, id := range item.IndustryIdentifiers {
+	for _, id := range responseVolume.IndustryIdentifiers {
 		if id.Type == "ISBN_13" {
 			isbnString = id.Identifier
 			break
@@ -93,13 +101,13 @@ func (s *bookService) parseBook(item VolumeInfo) (models.Book, error) {
 	}
 
 	// Compose the title and subtitle if subtitle is present
-	title := item.Title
-	if item.Subtitle != "" {
-		title = fmt.Sprintf("%s: %s", title, item.Subtitle)
+	title := responseVolume.Title
+	if responseVolume.Subtitle != "" {
+		title = fmt.Sprintf("%s: %s", title, responseVolume.Subtitle)
 	}
 
 	// Get description either from or SearchInfo
-	description := item.Description
+	description := responseVolume.Description
 
 	// Create and return a Book instance
 	isbn, err := strconv.ParseUint(isbnString, 10, 0)
@@ -107,16 +115,14 @@ func (s *bookService) parseBook(item VolumeInfo) (models.Book, error) {
 		return models.Book{}, err
 	}
 	return models.Book{
+		ID:            googleId,
 		ISBN:          uint(isbn),
 		Title:         title,
-		Authors:       item.Authors,
-		Link:          item.ImageLinks.SmallThumbnail,
+		Authors:       responseVolume.Authors,
+		Link:          responseVolume.ImageLinks.SmallThumbnail,
 		Description:   description,
-		ImageLink:     item.ImageLinks.SmallThumbnail,
-		PublishedDate: item.PublishedDate,
+		ImageLink:     responseVolume.ImageLinks.SmallThumbnail,
+		PublishedDate: responseVolume.PublishedDate,
 	}, nil
 }
 
-func (s *bookService) GetMaxResults() int {
-	return s.maxResults
-}

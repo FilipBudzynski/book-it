@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"net/url"
 
 	web_books "github.com/FilipBudzynski/book_it/cmd/web/books"
 	"github.com/FilipBudzynski/book_it/pkg/models"
@@ -10,9 +11,14 @@ import (
 )
 
 // BookService provides actions for managing book resources.
+//
+// BookService can be implemented by different providers (e.g. Google Books API)
+//
+// It should communicate with the external api in order to retreive response
+// and parse it into models.Book struct
 type BookService interface {
-	// GetByTitle returns maxResults number of books by title from external api
-	GetByTitle(title string, maxResults int) ([]*models.Book, error)
+	// GetByQuery returns maxResults number of books by title from external api
+	GetByQuery(title string, maxResults int) ([]*models.Book, error)
 	// GetMaxResults gets the maxResults value specified for the service
 	GetMaxResults() int
 }
@@ -27,14 +33,15 @@ func NewBookHandler(bh BookService) *BookHandler {
 	}
 }
 
-func (h *BookHandler) Search(c echo.Context) error {
+func (h *BookHandler) ListBooks(c echo.Context) error {
 	if c.Request().Method == "GET" {
 		return utils.RenderView(c, web_books.BooksSearch())
 	}
 
 	query := c.FormValue("book-title")
+	encodedQuery := url.QueryEscape(query)
 
-	exampleBooks, err := h.bookService.GetByTitle(query, h.bookService.GetMaxResults())
+	exampleBooks, err := h.bookService.GetByQuery(encodedQuery, h.bookService.GetMaxResults())
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -42,18 +49,5 @@ func (h *BookHandler) Search(c echo.Context) error {
 }
 
 func (h *BookHandler) List(c echo.Context) error {
-	// bookId := c.Param("book_id")
-	// limit, err := strconv.Atoi(c.Param("limit"))
-	// if err != nil {
-	// 	return echo.NewHTTPError(echo.ErrUnprocessableEntity.Code, err.Error())
-	// }
-	//
-	// books, err := h.bookService.GetWithMaxResults(bookId, limit)
-	//    if err != nil {
-	//
-	//    }
-	// _ = books
-	//
-	// return utils.RenderView(c, web.ListBooks(books))
 	return nil
 }

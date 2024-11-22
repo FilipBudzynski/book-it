@@ -14,11 +14,6 @@ import (
 	"gorm.io/gorm"
 )
 
-const (
-	GoogleBooksAPI    = "https://www.googleapis.com/books/v1/volumes?q=%s&maxResults=%d"
-	DefaultMaxResults = 5
-)
-
 var UserService services.UserService
 
 func (s *Server) RegisterRoutes(db *gorm.DB) http.Handler {
@@ -48,7 +43,7 @@ func (s *Server) RegisterRoutes(db *gorm.DB) http.Handler {
 	routes.RegisterAuthRoutes(e, authHanlder)
 
 	// register book routes
-	googleBookService := services.NewBookService(GoogleBooksAPI, DefaultMaxResults)
+	googleBookService := services.NewGoogleBookService()
 	bookHanlder := handlers.NewBookHandler(googleBookService)
 	routes.RegisterBookRoutes(e, bookHanlder)
 

@@ -1,18 +1,21 @@
 package models
 
 import (
-	"time"
-
 	"gorm.io/gorm"
 )
+
+var Models = []any{
+	&User{},
+	&UserBook{},
+}
 
 type userBookStatus string
 
 const (
-	InProgress userBookStatus = "InProgress"
-	NotStarted userBookStatus = "NotStarted"
-	Started    userBookStatus = "Started"
-	Finished   userBookStatus = "Finished"
+	BookStatusInProgress userBookStatus = "InProgress"
+	BookStatusNotStarted userBookStatus = "NotStarted"
+	BookStatusStarted    userBookStatus = "Started"
+	BookStatusFinished   userBookStatus = "Finished"
 )
 
 type User struct {
@@ -26,6 +29,7 @@ type User struct {
 // will this be needed?
 // maybe just get the books from external API
 type Book struct {
+	ID            string
 	ISBN          uint     `gorm:"primaryKey"`
 	Title         string   `json:"title"`
 	Authors       []string `json:"authors"`
@@ -34,13 +38,11 @@ type Book struct {
 	Genre         string
 	Link          string
 	PublishedDate string
-	gorm.Model
 }
 
 type UserBook struct {
+	gorm.Model
 	Status       userBookStatus `gorm:"not null"`
 	UserGoogleId string         `gorm:"not null"` // foreignKey
-	BookID       uint           `gorm:"not null"`
-	AddedAt      time.Time
-	gorm.Model
+	BookId       string         `gorm:"not null"`
 }
