@@ -7,19 +7,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// UserService provides actions for managing Users.
-type UserService interface {
-	// db methods
-	Create(u *models.User) error
-	Update(u *models.User) error
-	GetById(id string) (*models.User, error)
-	GetByEmail(email string) (*models.User, error)
-	GetByGoogleID(googleID string) (*models.User, error)
-	GetAll() ([]models.User, error)
-	Delete(u models.User) error
-	// user management methods
-	AddBook(userID, bookID string) error
-}
 
 // userService implements the UserService
 type userService struct {
@@ -87,7 +74,6 @@ func (u *userService) Delete(user models.User) error {
 
 func (u *userService) AddBook(userID, bookID string) error {
 	var user models.User
-	// err := u.db.First(&user, "google_id = ?", userID).Error
 	err := u.db.Preload("Books").First(&user, "google_id = ?", userID).Error
 	if err != nil {
 		return err

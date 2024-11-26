@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/FilipBudzynski/book_it/pkg/models"
+	"github.com/FilipBudzynski/book_it/pkg/schemas"
 )
 
 const (
@@ -45,17 +45,19 @@ type VolumeInfo struct {
 	Authors       []string `json:"authors"`
 	PublishedDate string   `json:"publishedDate"`
 	Description   string   `json:"description,omitempty"`
-	ImageLinks    struct {
+
+	ImageLinks struct {
 		SmallThumbnail string `json:"smallThumbnail"`
 		Thumbnail      string `json:"thumbnail"`
 	} `json:"imageLinks,omitempty"`
+
 	IndustryIdentifiers []struct {
 		Type       string `json:"type"`
 		Identifier string `json:"identifier"`
 	} `json:"industryIdentifiers"`
 }
 
-func (s *googleBookService) GetByQuery(query string, maxResults int) ([]*models.Book, error) {
+func (s *googleBookService) GetByQuery(query string, maxResults int) ([]*schemas.Book, error) {
 	url := fmt.Sprintf(s.apiUrl, query, maxResults)
 
 	resp, err := http.Get(url)
@@ -64,18 +66,16 @@ func (s *googleBookService) GetByQuery(query string, maxResults int) ([]*models.
 	}
 	defer resp.Body.Close()
 
-	// Check if request was successful
 	if resp.StatusCode != http.StatusOK {
 		return nil, err
 	}
 
-	// Decode the JSON response
 	var booksResponse BooksResponse
 	if err := json.NewDecoder(resp.Body).Decode(&booksResponse); err != nil {
 		return nil, err
 	}
 
-	var books []*models.Book
+	var books []*schemas.Book
 	for _, item := range booksResponse.Items {
 		parsedBook, err := s.convert(item.VolumeInfo, item.ID)
 		if err != nil {
@@ -91,7 +91,7 @@ func (s *googleBookService) GetMaxResults() int {
 	return s.maxResults
 }
 
-func (s *googleBookService) convert(responseVolume VolumeInfo, googleId string) (models.Book, error) {
+func (s *googleBookService) convert(responseVolume VolumeInfo, googleId string) (schemas.Book, error) {
 	var isbnString string
 	for _, id := range responseVolume.IndustryIdentifiers {
 		if id.Type == "ISBN_13" {
@@ -112,9 +112,9 @@ func (s *googleBookService) convert(responseVolume VolumeInfo, googleId string) 
 	// Create and return a Book instance
 	isbn, err := strconv.ParseUint(isbnString, 10, 0)
 	if err != nil {
-		return models.Book{}, err
+		return schemas.Book{}, err
 	}
-	return models.Book{
+	return schemas.Book{
 		ID:            googleId,
 		ISBN:          uint(isbn),
 		Title:         title,
@@ -125,4 +125,3 @@ func (s *googleBookService) convert(responseVolume VolumeInfo, googleId string) 
 		PublishedDate: responseVolume.PublishedDate,
 	}, nil
 }
-

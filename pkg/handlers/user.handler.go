@@ -2,20 +2,30 @@ package handlers
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/FilipBudzynski/book_it/cmd/web"
 	"github.com/FilipBudzynski/book_it/pkg/models"
-	"github.com/FilipBudzynski/book_it/pkg/services"
 	"github.com/FilipBudzynski/book_it/utils"
 	"github.com/labstack/echo/v4"
 )
 
-type UserHandler struct {
-	userService services.UserService
+// UserService provides actions for managing Users.
+type UserService interface {
+	// db methods
+	Create(u *models.User) error
+	Update(u *models.User) error
+	GetById(id string) (*models.User, error)
+	GetByEmail(email string) (*models.User, error)
+	GetByGoogleID(googleID string) (*models.User, error)
+	GetAll() ([]models.User, error)
+	Delete(u models.User) error
 }
 
-func NewUserHandler(us services.UserService) *UserHandler {
+type UserHandler struct {
+	userService UserService
+}
+
+func NewUserHandler(us UserService) *UserHandler {
 	return &UserHandler{
 		userService: us,
 	}
@@ -46,24 +56,4 @@ func (h *UserHandler) ListUsers(c echo.Context) error {
 	}
 
 	return utils.RenderView(c, web.UserForm(users))
-}
-
-func (h *UserHandler) AddBook(c echo.Context) error {
-	bookId := c.QueryParam("book-id")
-	userSession, err := utils.GetUserSessionFromStore(c.Request())
-	if err != nil {
-		return echo.NewHTTPError(echo.ErrUnauthorized.Code, err.Error())
-	}
-
-	user, err := h.userService.GetByGoogleID(userSession.UserID)
-	if err != nil {
-		return echo.NewHTTPError(echo.ErrInternalServerError.Code, err.Error())
-	}
-
-	err = h.userService.AddBook(user.GoogleId, bookId)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusConflict, err.Error())
-	}
-
-	return nil
 }

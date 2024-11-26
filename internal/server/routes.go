@@ -14,7 +14,7 @@ import (
 	"gorm.io/gorm"
 )
 
-var UserService services.UserService
+var UserService handlers.UserService
 
 func (s *Server) RegisterRoutes(db *gorm.DB) http.Handler {
 	e := echo.New()
@@ -30,7 +30,7 @@ func (s *Server) RegisterRoutes(db *gorm.DB) http.Handler {
 	e.POST("/hello", echo.WrapHandler(http.HandlerFunc(web.HelloWebHandler)))
 
 	// e.GET("/", s.HelloWorldHandler)
-	e.GET("/", s.HomePageHandler)
+	e.GET("/", s.LandingPageHandler)
 	e.GET("/health", s.healthHandler)
 
 	// register user routes
@@ -50,7 +50,7 @@ func (s *Server) RegisterRoutes(db *gorm.DB) http.Handler {
 	return e
 }
 
-func (s *Server) HomePageHandler(c echo.Context) error {
+func (s *Server) LandingPageHandler(c echo.Context) error {
 	userSession, _ := utils.GetUserSessionFromStore(c.Request())
 	if (userSession == utils.UserSession{}) {
 		return utils.RenderView(c, web.HomePage(nil))

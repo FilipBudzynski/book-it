@@ -64,9 +64,13 @@ func GetUserSessionFromStore(r *http.Request) (UserSession, error) {
 	return UserSession{}, fmt.Errorf("User session not found %s", err)
 }
 
-// GetSessionUserID is an abstraction over GetFromSession to retrive userID from session
-func GetSessionUserID(r *http.Request) (string, error) {
-	return getFromSession(r, userIDKey)
+// GetUserIDFromSession is an abstraction over GetFromSession to retrive userID from session
+func GetUserIDFromSession(r *http.Request) (string, error) {
+	user, err := GetUserSessionFromStore(r)
+	if err != nil {
+		return "", err
+	}
+	return user.UserID, nil
 }
 
 func SetUserSession(w http.ResponseWriter, r *http.Request, userSession UserSession) error {

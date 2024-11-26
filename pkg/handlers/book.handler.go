@@ -5,7 +5,7 @@ import (
 	"net/url"
 
 	web_books "github.com/FilipBudzynski/book_it/cmd/web/books"
-	"github.com/FilipBudzynski/book_it/pkg/models"
+	"github.com/FilipBudzynski/book_it/pkg/schemas"
 	"github.com/FilipBudzynski/book_it/utils"
 	"github.com/labstack/echo/v4"
 )
@@ -18,7 +18,7 @@ import (
 // and parse it into models.Book struct
 type BookService interface {
 	// GetByQuery returns maxResults number of books by title from external api
-	GetByQuery(title string, maxResults int) ([]*models.Book, error)
+	GetByQuery(title string, maxResults int) ([]*schemas.Book, error)
 	// GetMaxResults gets the maxResults value specified for the service
 	GetMaxResults() int
 }

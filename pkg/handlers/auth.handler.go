@@ -5,17 +5,16 @@ import (
 	"net/http"
 
 	"github.com/FilipBudzynski/book_it/pkg/models"
-	"github.com/FilipBudzynski/book_it/pkg/services"
 	"github.com/FilipBudzynski/book_it/utils"
 	"github.com/labstack/echo/v4"
 	"github.com/markbates/goth/gothic"
 )
 
 type AuthHandler struct {
-	userService services.UserService
+	userService UserService
 }
 
-func NewAuthHandler(us services.UserService) *AuthHandler {
+func NewAuthHandler(us UserService) *AuthHandler {
 	return &AuthHandler{
 		userService: us,
 	}

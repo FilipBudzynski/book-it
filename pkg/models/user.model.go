@@ -4,7 +4,7 @@ import (
 	"gorm.io/gorm"
 )
 
-var Models = []any{
+var MigrateModels = []any{
 	&User{},
 	&UserBook{},
 }
@@ -26,20 +26,8 @@ type User struct {
 	gorm.Model
 }
 
-// will this be needed?
-// maybe just get the books from external API
-type Book struct {
-	ID            string
-	ISBN          uint     `gorm:"primaryKey"`
-	Title         string   `json:"title"`
-	Authors       []string `json:"authors"`
-	Description   string   `json:"description"`
-	ImageLink     string   `json:"thumbnail"`
-	Genre         string
-	Link          string
-	PublishedDate string
-}
-
+// UserBook model is an abstraction for link between user and a book
+// It bounds book to a user providing more information about user interactions with a book
 type UserBook struct {
 	gorm.Model
 	Status       userBookStatus `gorm:"not null"`
