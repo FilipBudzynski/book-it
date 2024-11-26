@@ -7,9 +7,10 @@ import (
 )
 
 func RegisterUserBookRoutes(app *echo.Echo, h *handlers.UserBookHandler) {
-	group := app.Group("/users")
+	group := app.Group("/user-books")
 	// middleware for protected routes
 	group.Use(utils.CheckLoggedInMiddleware)
 	// UserBook endpoints
-	group.GET("/add", h.Create)
+	group.GET("/add", h.AddBook)
+	group.GET("/", h.List)
 }

@@ -3,6 +3,8 @@ package server
 import (
 	"net/http"
 
+	"gorm.io/gorm"
+
 	"github.com/FilipBudzynski/book_it/cmd/web"
 	"github.com/FilipBudzynski/book_it/pkg/handlers"
 	"github.com/FilipBudzynski/book_it/pkg/routes"
@@ -10,8 +12,7 @@ import (
 	"github.com/FilipBudzynski/book_it/utils"
 	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
-	"gorm.io/gorm"
+	prettylogger "github.com/rdbell/echo-pretty-logger"
 )
 
 var UserService handlers.UserService
@@ -20,8 +21,9 @@ func (s *Server) RegisterRoutes(db *gorm.DB) http.Handler {
 	e := echo.New()
 	UserService = services.NewUserService(db)
 
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
+	// e.Use(middleware.Logger())
+	e.Use(prettylogger.Logger)
+	e.Use(utils.CustomRecoverMiddleware)
 
 	fileServer := http.FileServer(http.FS(web.Files))
 	e.GET("/assets/*", echo.WrapHandler(fileServer))
@@ -29,23 +31,27 @@ func (s *Server) RegisterRoutes(db *gorm.DB) http.Handler {
 	e.GET("/web", echo.WrapHandler(templ.Handler(web.HelloForm())))
 	e.POST("/hello", echo.WrapHandler(http.HandlerFunc(web.HelloWebHandler)))
 
-	// e.GET("/", s.HelloWorldHandler)
+	// Register landing page
 	e.GET("/", s.LandingPageHandler)
 	e.GET("/health", s.healthHandler)
 
-	// register user routes
-	// userService := services.NewUserService(db)
+	// Register user routes
 	userHandler := handlers.NewUserHandler(UserService)
 	routes.RegisterUserRoutes(e, userHandler)
 
-	// register auth routes
+	// Register auth routes
 	authHanlder := handlers.NewAuthHandler(UserService)
 	routes.RegisterAuthRoutes(e, authHanlder)
 
-	// register book routes
+	// Register book provider routes
 	googleBookService := services.NewGoogleBookService()
 	bookHanlder := handlers.NewBookHandler(googleBookService)
 	routes.RegisterBookRoutes(e, bookHanlder)
+
+	// Register userBook routes
+	userBookService := services.NewUserBookService(db, googleBookService)
+	userBookHanlder := handlers.NewUserBookHandler(userBookService)
+	routes.RegisterUserBookRoutes(e, userBookHanlder)
 
 	return e
 }

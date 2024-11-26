@@ -7,6 +7,6 @@ import (
 
 func RegisterBookRoutes(app *echo.Echo, h *handlers.BookHandler) {
 	group := app.Group("/books")
-	group.GET("", h.ListBooks)
-	group.POST("", h.ListBooks)
+	group.GET("/", h.ListBooks)
+	group.POST("/", h.ListBooks)
 }

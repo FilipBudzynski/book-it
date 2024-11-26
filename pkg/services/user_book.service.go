@@ -1,17 +1,23 @@
 package services
 
 import (
+	"fmt"
+
+	"github.com/FilipBudzynski/book_it/pkg/handlers"
 	"github.com/FilipBudzynski/book_it/pkg/models"
+	"github.com/FilipBudzynski/book_it/pkg/schemas"
 	"gorm.io/gorm"
 )
 
 type userBookService struct {
-	db *gorm.DB
+	db          *gorm.DB
+	bookService handlers.BookService
 }
 
-func NewUserBookService(db *gorm.DB) *userBookService {
+func NewUserBookService(db *gorm.DB, bookSerivce handlers.BookService) *userBookService {
 	return &userBookService{
-		db: db,
+		db:          db,
+		bookService: bookSerivce,
 	}
 }
 
@@ -28,11 +34,30 @@ func (s *userBookService) Update(userBook *models.UserBook) error {
 	return s.db.Save(userBook).Error
 }
 
-func (s *userBookService) GetAll() ([]models.UserBook, error) {
-	var userBooks []models.UserBook
-	if err := s.db.Find(&userBooks).Error; err != nil {
+func (s *userBookService) GetUserBooks(userId string) ([]schemas.Book, error) {
+	userBooks, err := s.GetAll(userId)
+	if err != nil {
 		return nil, err
 	}
+
+	var books []schemas.Book
+	for _, userBook := range userBooks {
+		book, err := s.bookService.GetByID(userBook.BookId)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to get book with id: %s from the provider, err: %v", userBook.BookId, err)
+		}
+		books = append(books, book)
+	}
+
+	return books, nil
+}
+
+func (s *userBookService) GetAll(userId string) ([]models.UserBook, error) {
+	var userBooks []models.UserBook
+	if err := s.db.Where("user_google_id = ?", userId).Find(&userBooks).Error; err != nil {
+		return nil, err
+	}
+
 	return userBooks, nil
 }
 
