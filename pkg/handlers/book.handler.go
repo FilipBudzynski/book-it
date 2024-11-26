@@ -21,6 +21,8 @@ type BookService interface {
 	GetByQuery(title string, maxResults int) ([]*schemas.Book, error)
 	// GetMaxResults gets the maxResults value specified for the service
 	GetMaxResults() int
+	// GetByID
+	GetByID(id string) (schemas.Book, error)
 }
 
 type BookHandler struct {
@@ -45,6 +47,7 @@ func (h *BookHandler) ListBooks(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
+
 	return utils.RenderView(c, web_books.BooksPost(exampleBooks))
 }
 

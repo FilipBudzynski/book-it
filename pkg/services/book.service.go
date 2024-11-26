@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	GoogleBooksAPI    = "https://www.googleapis.com/books/v1/volumes?q=%s&maxResults=%d"
+	GoogleBooksAPI    = "https://www.googleapis.com/books/v1/volumes"
 	DefaultMaxResults = 5
 )
 
@@ -32,11 +32,13 @@ type googleBookService struct {
 	maxResults int
 }
 
-type BooksResponse struct {
-	Items []struct {
-		ID         string     `json:"id"`
-		VolumeInfo VolumeInfo `json:"volumeInfo"`
-	} `json:"items"`
+type BookResponse struct {
+	ID         string     `json:"id"`
+	VolumeInfo VolumeInfo `json:"volumeInfo"`
+}
+
+type BookItemsResponse struct {
+	Items []BookResponse `json:"items"`
 }
 
 type VolumeInfo struct {
@@ -57,27 +59,59 @@ type VolumeInfo struct {
 	} `json:"industryIdentifiers"`
 }
 
-func (s *googleBookService) GetByQuery(query string, maxResults int) ([]*schemas.Book, error) {
-	url := fmt.Sprintf(s.apiUrl, query, maxResults)
-
+func (s *googleBookService) getProviderResponse(url string) (*http.Response, error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, err
 	}
 
-	var booksResponse BooksResponse
-	if err := json.NewDecoder(resp.Body).Decode(&booksResponse); err != nil {
+	return resp, nil
+}
+
+func (s *googleBookService) GetByID(bookId string) (schemas.Book, error) {
+	url := fmt.Sprintf(s.apiUrl+"/%s", bookId)
+
+	response, err := s.getProviderResponse(url)
+	if err != nil {
+		return schemas.Book{}, err
+	}
+	defer response.Body.Close()
+
+
+	var bookResponse BookResponse
+	if err := json.NewDecoder(response.Body).Decode(&bookResponse); err != nil {
+		return schemas.Book{}, err
+	}
+
+	parsedBook, err := s.convert(bookResponse)
+	if err != nil {
+		return schemas.Book{}, err
+	}
+
+	return parsedBook, nil
+}
+
+func (s *googleBookService) GetByQuery(query string, maxResults int) ([]*schemas.Book, error) {
+	url := fmt.Sprintf(s.apiUrl+"?q=%s&maxResults=%d", query, maxResults)
+
+	response, err := s.getProviderResponse(url)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+
+	var bookItemsResponse BookItemsResponse
+	if err := json.NewDecoder(response.Body).Decode(&bookItemsResponse); err != nil {
 		return nil, err
 	}
 
 	var books []*schemas.Book
-	for _, item := range booksResponse.Items {
-		parsedBook, err := s.convert(item.VolumeInfo, item.ID)
+	for _, bookResp := range bookItemsResponse.Items {
+		parsedBook, err := s.convert(bookResp)
 		if err != nil {
 			continue
 		}
@@ -91,9 +125,10 @@ func (s *googleBookService) GetMaxResults() int {
 	return s.maxResults
 }
 
-func (s *googleBookService) convert(responseVolume VolumeInfo, googleId string) (schemas.Book, error) {
+func (s *googleBookService) convert(bookResponse BookResponse) (schemas.Book, error) {
 	var isbnString string
-	for _, id := range responseVolume.IndustryIdentifiers {
+	volumeInfo := bookResponse.VolumeInfo
+	for _, id := range volumeInfo.IndustryIdentifiers {
 		if id.Type == "ISBN_13" {
 			isbnString = id.Identifier
 			break
@@ -101,13 +136,13 @@ func (s *googleBookService) convert(responseVolume VolumeInfo, googleId string) 
 	}
 
 	// Compose the title and subtitle if subtitle is present
-	title := responseVolume.Title
-	if responseVolume.Subtitle != "" {
-		title = fmt.Sprintf("%s: %s", title, responseVolume.Subtitle)
+	title := volumeInfo.Title
+	if volumeInfo.Subtitle != "" {
+		title = fmt.Sprintf("%s: %s", title, volumeInfo.Subtitle)
 	}
 
 	// Get description either from or SearchInfo
-	description := responseVolume.Description
+	description := volumeInfo.Description
 
 	// Create and return a Book instance
 	isbn, err := strconv.ParseUint(isbnString, 10, 0)
@@ -115,13 +150,13 @@ func (s *googleBookService) convert(responseVolume VolumeInfo, googleId string) 
 		return schemas.Book{}, err
 	}
 	return schemas.Book{
-		ID:            googleId,
+		ID:            bookResponse.ID,
 		ISBN:          uint(isbn),
 		Title:         title,
-		Authors:       responseVolume.Authors,
-		Link:          responseVolume.ImageLinks.SmallThumbnail,
+		Authors:       volumeInfo.Authors,
+		Link:          volumeInfo.ImageLinks.SmallThumbnail,
 		Description:   description,
-		ImageLink:     responseVolume.ImageLinks.SmallThumbnail,
-		PublishedDate: responseVolume.PublishedDate,
+		ImageLink:     volumeInfo.ImageLinks.SmallThumbnail,
+		PublishedDate: volumeInfo.PublishedDate,
 	}, nil
 }
