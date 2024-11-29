@@ -87,7 +87,7 @@ func (u *userService) AddBook(userID, bookID string) error {
 
 	newUserBook := models.UserBook{
 		UserGoogleId: user.GoogleId,
-		BookId:       bookID,
+		BookID:       bookID,
 		Status:       models.BookStatusNotStarted,
 	}
 

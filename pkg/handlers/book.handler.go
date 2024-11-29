@@ -10,17 +10,13 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+const booksLimit int = 10
+
 // BookService provides actions for managing book resources.
-//
-// BookService can be implemented by different providers (e.g. Google Books API)
-//
-// It should communicate with the external api in order to retreive response
-// and parse it into models.Book struct
+// BookSerice should uses a provider to get books from external APIs or database
 type BookService interface {
 	// GetByQuery returns maxResults number of books by title from external api
-	GetByQuery(title string, maxResults int) ([]*schemas.Book, error)
-	// GetMaxResults gets the maxResults value specified for the service
-	GetMaxResults() int
+	GetByQuery(title string, maxResults int) ([]schemas.Book, error)
 	// GetByID
 	GetByID(id string) (schemas.Book, error)
 }
@@ -43,7 +39,7 @@ func (h *BookHandler) ListBooks(c echo.Context) error {
 	query := c.FormValue("book-title")
 	encodedQuery := url.QueryEscape(query)
 
-	exampleBooks, err := h.bookService.GetByQuery(encodedQuery, h.bookService.GetMaxResults())
+	exampleBooks, err := h.bookService.GetByQuery(encodedQuery, booksLimit)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}

@@ -1,6 +1,7 @@
 package web_books
 
 import (
+	"fmt"
 	"github.com/FilipBudzynski/book_it/cmd/web"
 	"github.com/FilipBudzynski/book_it/pkg/schemas"
 )
@@ -50,36 +51,43 @@ templ BooksSearch() {
 	}
 }
 
-templ BooksPost(books []*schemas.Book) {
-	for _, book := range books {
-		<div
-			class="flex flex-col bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 h-full"
-		>
-			<a
-				href="#"
-				class="flex flex-col items-center bg-white border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
-			>
-				if book.ImageLink != "" {
-					<img
-						class="object-cover w-full rounded-t-lg h-96 md:h-auto md:w-48 md:rounded-none md:rounded-s-lg"
-						src={ book.ImageLink }
-						alt="cover"
-					/>
-				}
-				<div class="flex flex-col justify-between p-4 leading-normal">
-					<h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-						{ book.Title }
-					</h5>
-					<h6 class="mb-3 text-xl text-gray-700 dark:text-gray-400">
-						for _, author := range book.Authors {
-							{ author },
-						}
-					</h6>
-					<p class="mb-3 font-normal text-gray-700 dark:text-gray-400">
-						{ book.Description }
-					</p>
+templ BooksPost(books []schemas.Book) {
+	<div id="book-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+		for _, book := range books {
+			<div class="bg-white shadow rounded-lg p-6 flex flex-col">
+				<img src={ book.ImageLink } alt={ book.Title } class="mb-4 w-full h-64 object-cover rounded-md shadow-sm"/>
+				<h2 class="text-xl font-semibold mb-2">{ book.Title }</h2>
+				<p class="text-gray-600 mb-4">
+					By 
+					for _, author := range book.Authors {
+						{ author }, 
+					}
+				</p>
+				<p class="text-sm text-gray-500">{ book.Description }</p>
+				<div class="flex space-x-2 mt-auto">
+					<button
+						class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+						hx-get="/book/{{.ID}}"
+						hx-target="#book-details"
+						hx-swap="innerHTML"
+					>
+						View Details
+					</button>
+					<button
+						class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+						hx-post={ fmt.Sprintf("/user-books/%s", book.ID) }
+						hx-swap="none"
+					>
+						Add to My Books
+					</button>
+					<input type="hidden" name="book-id" value={ book.ID }/>
 				</div>
-			</a>
-		</div>
-	}
+			</div>
+		}
+	</div>
+	<!-- Book Details -->
+	<div id="book-details" class="mt-8 bg-gray-50 p-4 rounded shadow hidden">
+		<h2 class="text-2xl font-bold">Book Details</h2>
+		<div hx-target="this" hx-swap="innerHTML"></div>
+	</div>
 }

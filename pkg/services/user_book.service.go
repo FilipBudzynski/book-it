@@ -21,10 +21,10 @@ func NewUserBookService(db *gorm.DB, bookSerivce handlers.BookService) *userBook
 	}
 }
 
-func (s *userBookService) Create(userId, bookId string) error {
+func (s *userBookService) Create(userID, bookID string) error {
 	userBook := &models.UserBook{
-		UserGoogleId: userId,
-		BookId:       bookId,
+		UserGoogleId: userID,
+		BookID:       bookID,
 		Status:       models.BookStatusNotStarted,
 	}
 	return s.db.Create(userBook).Error
@@ -32,6 +32,10 @@ func (s *userBookService) Create(userId, bookId string) error {
 
 func (s *userBookService) Update(userBook *models.UserBook) error {
 	return s.db.Save(userBook).Error
+}
+
+func (s *userBookService) Delete(id string) error {
+	return s.db.Where("book_id = ?", id).Delete(&models.UserBook{}).Error
 }
 
 func (s *userBookService) GetUserBooks(userId string) ([]schemas.Book, error) {
@@ -42,9 +46,9 @@ func (s *userBookService) GetUserBooks(userId string) ([]schemas.Book, error) {
 
 	var books []schemas.Book
 	for _, userBook := range userBooks {
-		book, err := s.bookService.GetByID(userBook.BookId)
+		book, err := s.bookService.GetByID(userBook.BookID)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to get book with id: %s from the provider, err: %v", userBook.BookId, err)
+			return nil, fmt.Errorf("Failed to get book with id: %s from the provider, err: %v", userBook.BookID, err)
 		}
 		books = append(books, book)
 	}

@@ -7,6 +7,7 @@ import (
 
 	"github.com/FilipBudzynski/book_it/cmd/web"
 	"github.com/FilipBudzynski/book_it/pkg/handlers"
+	"github.com/FilipBudzynski/book_it/pkg/providers"
 	"github.com/FilipBudzynski/book_it/pkg/routes"
 	"github.com/FilipBudzynski/book_it/pkg/services"
 	"github.com/FilipBudzynski/book_it/utils"
@@ -44,12 +45,14 @@ func (s *Server) RegisterRoutes(db *gorm.DB) http.Handler {
 	routes.RegisterAuthRoutes(e, authHanlder)
 
 	// Register book provider routes
-	googleBookService := services.NewGoogleBookService()
-	bookHanlder := handlers.NewBookHandler(googleBookService)
+	bookService := services.NewBookService(
+		providers.NewGoogleProvider().WithLimit(15),
+	)
+	bookHanlder := handlers.NewBookHandler(bookService)
 	routes.RegisterBookRoutes(e, bookHanlder)
 
 	// Register userBook routes
-	userBookService := services.NewUserBookService(db, googleBookService)
+	userBookService := services.NewUserBookService(db, bookService)
 	userBookHanlder := handlers.NewUserBookHandler(userBookService)
 	routes.RegisterUserBookRoutes(e, userBookHanlder)
 

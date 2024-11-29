@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	web_user_books "github.com/FilipBudzynski/book_it/cmd/web/user_books"
@@ -13,9 +14,10 @@ import (
 // UserBookService provides actions for managing user_book resources
 type UserBookService interface {
 	Create(userId, bookId string) error
+	Update(userBook *models.UserBook) error
+	Delete(id string) error
 	GetAll(userId string) ([]models.UserBook, error)
 	GetById(id string) (*models.UserBook, error)
-	Update(userBook *models.UserBook) error
 	GetUserBooks(userId string) ([]schemas.Book, error)
 }
 
@@ -29,8 +31,12 @@ func NewUserBookHandler(userBookService UserBookService) *UserBookHandler {
 	}
 }
 
-func (h *UserBookHandler) AddBook(c echo.Context) error {
-	bookId := c.QueryParam("book-id")
+func (h *UserBookHandler) Create(c echo.Context) error {
+	bookId := c.Param("book_id")
+	if bookId == "" {
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("Something went wrong with the request. Book ID was not provided in query parameters"))
+	}
+
 	userId, err := utils.GetUserIDFromSession(c.Request())
 	if err != nil {
 		return echo.NewHTTPError(echo.ErrUnauthorized.Code, err.Error())
@@ -43,6 +49,20 @@ func (h *UserBookHandler) AddBook(c echo.Context) error {
 
 	// TODO: render view
 	return nil
+}
+
+func (h *UserBookHandler) Delete(c echo.Context) error {
+	bookID := c.Param("book_id")
+	if bookID == "" {
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("Something went wrong with the request. Book ID was not provided in query parameters"))
+	}
+
+	err := h.userBookService.Delete(bookID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	return c.NoContent(http.StatusNoContent)
 }
 
 func (h *UserBookHandler) List(c echo.Context) error {
