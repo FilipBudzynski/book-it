@@ -45,13 +45,15 @@ func (a *AuthHandler) GetAuthCallbackFunc(c echo.Context) error {
 	}
 
 	// try to get user from db
+	// TODO: get by id
 	var user *models.User
 	user, err = a.userService.GetByEmail(gothUser.Email)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	// create new user
+	// if no user in db
 	if user == nil {
+		// create / register new user
 		user = &models.User{
 			Username: gothUser.Name,
 			Email:    gothUser.Email,

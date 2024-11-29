@@ -32,5 +32,5 @@ type UserBook struct {
 	gorm.Model
 	Status       userBookStatus `gorm:"not null"`
 	UserGoogleId string         `gorm:"not null"` // foreignKey
-	BookId       string         `gorm:"not null"`
+	BookID       string         `gorm:"not null"`
 }

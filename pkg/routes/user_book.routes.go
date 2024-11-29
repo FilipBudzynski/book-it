@@ -11,6 +11,7 @@ func RegisterUserBookRoutes(app *echo.Echo, h *handlers.UserBookHandler) {
 	// middleware for protected routes
 	group.Use(utils.CheckLoggedInMiddleware)
 	// UserBook endpoints
-	group.GET("/add", h.AddBook)
-	group.GET("/", h.List)
+	group.POST("/:book_id", h.Create)
+	group.DELETE("/:book_id", h.Delete)
+	group.GET("", h.List)
 }
