@@ -38,6 +38,5 @@ func (s *bookService) GetByQuery(query string, limit int) ([]schemas.Book, error
 	if err != nil {
 		return nil, err
 	}
-
 	return books, nil
 }

@@ -7,14 +7,13 @@ import (
 )
 
 templ List(books []schemas.Book) {
-	@web.Base() {
+	@web.Navbar() {
 		<div class="container mx-auto py-8">
-			<h1 class="text-3xl font-bold text-center mb-8">My Books</h1>
 			<!-- Book Listing -->
 			<div id="book-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 				<!-- Example book -->
 				for _, book := range books {
-					<div name="book-container" class="bg-white shadow rounded-lg p-6 flex flex-col">
+					<div name="book-container" class="bg-white shadow rounded-lg p-6 flex flex-col space-y-2">
 						<h2 class="text-xl font-semibold mb-2">{ book.Title }</h2>
 						<p class="text-gray-600 mb-4">
 							for _, author := range book.Authors {
@@ -22,6 +21,7 @@ templ List(books []schemas.Book) {
 							}
 						</p>
 						<button
+							style="transition: all 100ms ease-in"
 							class="mt-auto bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
 							hx-get="/book/{{ .ID }}"
 							hx-target="#book-details"
@@ -30,9 +30,9 @@ templ List(books []schemas.Book) {
 							View Details
 						</button>
 						<button
-							style="transition: all 800ms ease-in"
+							style="transition: all 100ms ease-in"
 							_="on click remove closest parent <div/>"
-							class="mt-auto bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+							class="mt-auto bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
 							hx-delete={ fmt.Sprintf("/user-books/%s", book.ID) }
 						>
 							Remove

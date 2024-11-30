@@ -39,12 +39,12 @@ func (h *BookHandler) ListBooks(c echo.Context) error {
 	query := c.FormValue("book-title")
 	encodedQuery := url.QueryEscape(query)
 
-	exampleBooks, err := h.bookService.GetByQuery(encodedQuery, booksLimit)
+	books, err := h.bookService.GetByQuery(encodedQuery, booksLimit)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	return utils.RenderView(c, web_books.BooksPost(exampleBooks))
+	return utils.RenderView(c, web_books.BooksPost(books))
 }
 
 func (h *BookHandler) List(c echo.Context) error {
