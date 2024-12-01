@@ -7,43 +7,42 @@ import (
 )
 
 templ List(books []schemas.Book) {
-	@web.Navbar() {
-		<div class="container mx-auto py-8">
-			<!-- Book Listing -->
-			<div id="book-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-				<!-- Example book -->
-				for _, book := range books {
-					<div name="book-container" class="bg-white shadow rounded-lg p-6 flex flex-col space-y-2">
-						<h2 class="text-xl font-semibold mb-2">{ book.Title }</h2>
-						<p class="text-gray-600 mb-4">
-							for _, author := range book.Authors {
-								{ author },
-							}
-						</p>
-						<button
-							style="transition: all 100ms ease-in"
-							class="mt-auto bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-							hx-get="/book/{{ .ID }}"
-							hx-target="#book-details"
-							hx-swap="innerHTML"
-						>
-							View Details
-						</button>
-						<button
-							style="transition: all 100ms ease-in"
-							_="on click remove closest parent <div/>"
-							class="mt-auto bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-							hx-delete={ fmt.Sprintf("/user-books/%s", book.ID) }
-						>
-							Remove
-						</button>
-					</div>
-				}
-			</div>
-			<!-- Book Details -->
-			<div id="book-details" class="mt-8 bg-gray-50 p-4 rounded shadow hidden">
-				<h2 class="text-2xl font-bold">Book Details</h2>
-				<div hx-target="this" hx-swap="innerHTML"></div>
+	@web.Navbar()
+	@web.Base() {
+		<div class="pt-12 justify-items-center">
+			<div class="w-11/12 overflow-x-auto shadow-md sm:rounded-lg">
+				<table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+					<thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400"></thead>
+					<tbody id="books-container">
+						for _, book := range books {
+							<tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+								<td class="w-2/12 px-3 py-2">
+									<img src={ book.ImageLink } alt="img" class="w-auto h-32 object-cover shadow-sm"/>
+								</td>
+								<td class="w-max px-3 py-2">
+									<div class="flex flex-col">
+										<span class="text-base">
+											<a href="" class="transition ease-in-out delay-150 hover:text-black">{ book.Title } </a>
+										</span>
+										<span class="text-sm text-gray-300">
+											by 
+											for _, author := range book.Authors {
+												{ author }
+											}
+										</span>
+									</div>
+								</td>
+								<td class="w-1/5 px-3 py-2">
+									<button
+										hx-delete={ fmt.Sprintf("/user-books/%s", book.ID) }
+										hx-swap="none"
+										class="font-medium text-red-600 dark:text-red-500 transition ease-in-out delay-150 hover:scale-110"
+									>Remove from my books</button>
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
 			</div>
 		</div>
 	}

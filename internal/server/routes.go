@@ -48,11 +48,11 @@ func (s *Server) RegisterRoutes(db *gorm.DB) http.Handler {
 	bookService := services.NewBookService(
 		providers.NewGoogleProvider().WithLimit(15),
 	)
-	bookHanlder := handlers.NewBookHandler(bookService)
+	userBookService := services.NewUserBookService(db, bookService)
+	bookHanlder := handlers.NewBookHandler(bookService, userBookService)
 	routes.RegisterBookRoutes(e, bookHanlder)
 
 	// Register userBook routes
-	userBookService := services.NewUserBookService(db, bookService)
 	userBookHanlder := handlers.NewUserBookHandler(userBookService)
 	routes.RegisterUserBookRoutes(e, userBookHanlder)
 

@@ -22,12 +22,14 @@ type BookService interface {
 }
 
 type BookHandler struct {
-	bookService BookService
+	bookService      BookService
+	userBooksService UserBookService
 }
 
-func NewBookHandler(bh BookService) *BookHandler {
+func NewBookHandler(bookService BookService, userBookService UserBookService) *BookHandler {
 	return &BookHandler{
-		bookService: bh,
+		bookService:      bookService,
+		userBooksService: userBookService,
 	}
 }
 
@@ -44,7 +46,16 @@ func (h *BookHandler) ListBooks(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	return utils.RenderView(c, web_books.BooksPost(books))
+	userID, err := utils.GetUserIDFromSession(c.Request())
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	userBooks, err := h.userBooksService.GetAll(userID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return utils.RenderView(c, web_books.BooksPost(books, userBooks))
 }
 
 func (h *BookHandler) List(c echo.Context) error {

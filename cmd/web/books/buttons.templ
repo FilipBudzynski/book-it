@@ -1,0 +1,19 @@
+package web_books
+
+import "fmt"
+
+templ Button(bookID string, isBookInUserBooks bool) {
+	if isBookInUserBooks {
+		<button
+			hx-delete={ fmt.Sprintf("/user-books/%s", bookID) }
+			hx-swap="outerHTML transition:true"
+			class="font-medium text-red-600 dark:text-red-500 transition ease-in-out delay-150 hover:scale-110"
+		>Remove from my books</button>
+	} else {
+		<button
+			hx-post={ fmt.Sprintf("/user-books/%s", bookID) }
+			hx-swap="outerHTML transition:true"
+			class="font-medium text-green-600 dark:text-red-500 transition ease-in-out delay-150 hover:scale-110"
+		>Want to read</button>
+	}
+}
