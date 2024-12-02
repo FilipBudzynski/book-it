@@ -37,7 +37,6 @@ type UserBook struct {
 
 type Book struct {
 	gorm.Model
-	ID            string
 	ISBN          uint     `json:"isbn"`
 	Title         string   `json:"title"`
 	Authors       []string `json:"authors"`
@@ -47,4 +46,11 @@ type Book struct {
 	Link          string
 	PublishedDate string
 	InBookShelff  bool
+}
+
+type Bookshelf struct {
+	gorm.Model
+	Name         string
+	UserGoogleId string `gorm:"not null"` // foreignKey
+	Books        []UserBook
 }

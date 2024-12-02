@@ -48,9 +48,7 @@ func (h *UserBookHandler) Create(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusConflict, err.Error())
 	}
 
-	// TODO: render view
-	// return nil
-	return utils.RenderView(c, web_books.Button(bookID, true))
+	return utils.RenderView(c, web_books.WantToReadButton(bookID, true))
 }
 
 func (h *UserBookHandler) Delete(c echo.Context) error {
@@ -64,8 +62,7 @@ func (h *UserBookHandler) Delete(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	// return c.NoContent(http.StatusNoContent)
-	return utils.RenderView(c, web_books.Button(bookID, false))
+	return utils.RenderView(c, web_books.WantToReadButton(bookID, false))
 }
 
 func (h *UserBookHandler) List(c echo.Context) error {

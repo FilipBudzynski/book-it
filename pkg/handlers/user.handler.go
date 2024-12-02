@@ -57,3 +57,17 @@ func (h *UserHandler) ListUsers(c echo.Context) error {
 
 	return utils.RenderView(c, web.UserForm(users))
 }
+
+func (h *UserHandler) Navbar(c echo.Context) error {
+	userSession, err := utils.GetUserSessionFromStore(c.Request())
+	if err != nil {
+		return utils.RenderView(c, web.Navbar(nil))
+	}
+
+	user, err := h.userService.GetByGoogleID(userSession.UserID)
+	if err != nil {
+		return echo.NewHTTPError(echo.ErrInternalServerError.Code, err)
+	}
+
+	return utils.RenderView(c, web.Navbar(user))
+}

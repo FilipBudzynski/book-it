@@ -7,7 +7,6 @@ import (
 	"gorm.io/gorm"
 )
 
-
 // userService implements the UserService
 type userService struct {
 	db *gorm.DB

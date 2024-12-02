@@ -56,8 +56,11 @@ func (s *Server) RegisterRoutes(db *gorm.DB) http.Handler {
 	userBookHanlder := handlers.NewUserBookHandler(userBookService)
 	routes.RegisterUserBookRoutes(e, userBookHanlder)
 
+	e.GET("/navbar", userHandler.Navbar)
+
 	return e
 }
+
 
 func (s *Server) LandingPageHandler(c echo.Context) error {
 	userSession, _ := utils.GetUserSessionFromStore(c.Request())

@@ -12,6 +12,7 @@ import (
 const (
 	sessionName = "_user_session"
 	userIDKey   = "user_id"
+	maxAge      = 1800
 )
 
 type UserSession struct {
@@ -27,6 +28,7 @@ func init() {
 // setSessionValue stores a value in the current user session.
 func setSessionValue(w http.ResponseWriter, r *http.Request, key, value any) error {
 	session, _ := gothic.Store.New(r, sessionName)
+	session.Options.MaxAge = maxAge
 	session.Values[key] = value
 	return session.Save(r, w)
 }
