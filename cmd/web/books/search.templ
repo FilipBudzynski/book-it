@@ -9,43 +9,78 @@ import (
 
 templ BooksSearch() {
 	@web.Base() {
-		<div class="pt-12 justify-items-center" hx-target="content-container" hx-swap="innerHTML">
-			<form class="pb-3 max-w-md mx-auto" hx-post="/books" method="POST" hx-target="#books-container">
-				<label
-					for="default-search"
-					class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white"
-				>Search</label>
-				<div class="relative">
-					<div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-						<svg
-							class="w-4 h-4 text-gray-500 dark:text-gray-400"
-							aria-hidden="true"
-							xmlns="http://www.w3.org/2000/svg"
-							fill="none"
-							viewBox="0 0 20 20"
-						>
-							<path
-								stroke="currentColor"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
-							></path>
-						</svg>
-					</div>
+		<!-- <div class="justify-items-center" hx-target="content-container" hx-swap="innerHTML"> -->
+		<!-- 	<form class="pb-3 max-w-md mx-auto" hx-post="/books" method="POST" hx-target="#books-container"> -->
+		<!-- 		<label -->
+		<!-- 			for="default-search" -->
+		<!-- 			class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white" -->
+		<!-- 		>Search</label> -->
+		<!-- 		<div class="relative"> -->
+		<!-- 			<div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none"> -->
+		<!-- 				<svg -->
+		<!-- 					class="w-4 h-4 text-gray-500 dark:text-gray-400" -->
+		<!-- 					aria-hidden="true" -->
+		<!-- 					xmlns="http://www.w3.org/2000/svg" -->
+		<!-- 					fill="none" -->
+		<!-- 					viewBox="0 0 20 20" -->
+		<!-- 				> -->
+		<!-- 					<path -->
+		<!-- 						stroke="currentColor" -->
+		<!-- 						stroke-linecap="round" -->
+		<!-- 						stroke-linejoin="round" -->
+		<!-- 						stroke-width="2" -->
+		<!-- 						d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" -->
+		<!-- 					></path> -->
+		<!-- 				</svg> -->
+		<!-- 			</div> -->
+		<!-- 			<input -->
+		<!-- 				type="search" -->
+		<!-- 				id="book-title" -->
+		<!-- 				name="book-title" -->
+		<!-- 				class="block w-full p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500 dark:focus:border-green-500" -->
+		<!-- 				placeholder="Search Mockups, Logos..." -->
+		<!-- 				required -->
+		<!-- 			/> -->
+		<!-- 			<button -->
+		<!-- 				type="submit" -->
+		<!-- 				class="text-white absolute end-2.5 bottom-2.5 bg-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800" -->
+		<!-- 			>Search</button> -->
+		<!-- 		</div> -->
+		<!-- 	</form> -->
+		<!-- 	@BooksTable() -->
+		<!-- </div> -->
+		<div class="flex w-full flex-col">
+			<form
+				hx-post="/books"
+				method="POST"
+				hx-target="#books-container"
+				class="mb-4"
+			>
+				<label class="mx-36 input input-bordered input-sm flex items-center gap-2">
 					<input
 						type="search"
 						id="book-title"
 						name="book-title"
-						class="block w-full p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500 dark:focus:border-green-500"
-						placeholder="Search Mockups, Logos..."
-						required
+						class="grow"
+						placeholder="Search for new reads"
 					/>
 					<button
 						type="submit"
-						class="text-white absolute end-2.5 bottom-2.5 bg-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
-					>Search</button>
-				</div>
+					>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 16 16"
+							fill="currentColor"
+							class="h-4 w-4 opacity-70"
+						>
+							<path
+								fill-rule="evenodd"
+								d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
+								clip-rule="evenodd"
+							></path>
+						</svg>
+					</button>
+				</label>
 			</form>
 			@BooksTable()
 		</div>

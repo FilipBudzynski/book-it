@@ -4,14 +4,22 @@ import "github.com/FilipBudzynski/book_it/pkg/models"
 
 templ HomePage(user *models.User) {
 	@Base() {
-		<div class="px-6 sm:px-0 max-w-sm flex flex-col justify-center items-center" hx-target>
-			if user != nil {
-				<span class="text-m text-center text-google-text-gray tracking-wider">{ user.Username }</span>
-				@SignOutButton()
-			} else {
-				<span class="text-sm text-center text-google-text-gray tracking-wider">Track Progress & Discover</span>
-				@SignInButton()
-			}
+		<div class="hero">
+			<div class="hero-content text-center">
+				<div class="max-w-lg">
+					<h1 class="mb-4 text-5xl font-extrabold leading-none">
+						Welcome to
+						<span class="text-green-700">Book It</span>
+					</h1>
+					<p class="mb-3 text-lg font-normal">Here at Flowbite we focus on markets where technology, innovation, and capital can unlock long-term value and drive economic growth.</p>
+					<a href="/books" class="inline-flex items-center justify-center px-5 py-3 text-base font-medium text-center text-white bg-green-700 rounded-lg hover:bg-green-800 focus:ring-4 focus:ring-green-300 dark:focus:ring-green-900">
+						Search Books
+						<svg class="w-3.5 h-3.5 ms-2 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10">
+							<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 5h12m0 0L9 1m4 4L9 9"></path>
+						</svg>
+					</a>
+				</div>
+			</div>
 		</div>
 	}
 }
