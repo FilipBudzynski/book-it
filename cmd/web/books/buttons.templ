@@ -4,15 +4,17 @@ import "fmt"
 
 templ WantToReadButton(bookID string, isBookInUserBooks bool) {
 	if isBookInUserBooks {
-		<div
-			hx-delete={ fmt.Sprintf("/user-books/%s", bookID) }
-			hx-swap="outerHTML transition:true"
-			hx-target="this"
-			role="button"
-			class="btn btn-sm w-full btn-outline btn-error"
-		>Remove from Bookshelfs</div>
+		<div class="w-full pr-4 outer-div">
+			<div
+				hx-delete={ fmt.Sprintf("/user-books/%s", bookID) }
+				hx-swap="outerHTML transition:true"
+				hx-target="closest .outer-div"
+				role="button"
+				class="btn btn-sm w-full btn-outline btn-error"
+			>Remove from Bookshelfs</div>
+		</div>
 	} else {
-		<div class="dropdown">
+		<div class="dropdown w-full pr-4">
 			<div
 				tabindex="0"
 				role="button"

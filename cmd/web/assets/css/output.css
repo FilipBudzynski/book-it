@@ -874,6 +874,10 @@ video {
   padding-right: 0.75rem;
 }
 
+.pr-4 {
+  padding-right: 1rem;
+}
+
 .pt-12 {
   padding-top: 3rem;
 }
