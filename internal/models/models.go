@@ -54,16 +54,22 @@ type UserBook struct {
 
 type ReadingProgress struct {
 	gorm.Model
-	UserBookID  string `gorm:"not null"` // Reference to the user book being read
-	StartDate   time.Time
-	EndDate     time.Time
-	Status      userBookStatus // Status of tracking progress
-	PagesPerDay int            // Pages that need to be read a day to finish the book on time
-	CurrentPage int            // Curent page the user is on
-	TotalPages  int            // Total pages in the book
-	ReadDays    []time.Time    // Which days user have read the book
-	NotReadDays []time.Time    // Which days user have not read the book
-	Completed   bool
+	UserBookID       string `gorm:"not null"` // Reference to the user book being read
+	StartDate        time.Time
+	EndDate          time.Time
+	TotalPages       int               // Total pages in the book
+	CurrentPage      int               // Curent page the user is on
+	DailyTargetPages int               // Pages that need to be read a day to finish the book on time
+	DailyProgress    []DailyReadingLog // Which days user have not read the book
+	Completed        bool              // Whether the book is finished
+}
+
+type DailyReadingLog struct {
+	gorm.Model
+	ReadingProgressID uint `gorm:"not null"` // Reading progress foreign key
+	Date              time.Time
+	PagesRead         int  // Pages read on this date
+	Completed         bool // Whether the day's target was met
 }
 
 type Bookshelf struct {
