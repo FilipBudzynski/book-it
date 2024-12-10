@@ -1,7 +1,7 @@
 package services
 
 import (
-	"github.com/FilipBudzynski/book_it/pkg/models"
+	"github.com/FilipBudzynski/book_it/internal/models"
 	"gorm.io/gorm"
 )
 

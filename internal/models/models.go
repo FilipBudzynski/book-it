@@ -1,6 +1,8 @@
 package models
 
 import (
+	"time"
+
 	"gorm.io/gorm"
 )
 
@@ -8,12 +10,12 @@ var MigrateModels = []any{
 	&User{},
 	&UserBook{},
 	&Book{},
+	&ReadingProgress{},
 }
 
 type userBookStatus string
 
 const (
-	BookStatusInProgress userBookStatus = "InProgress"
 	BookStatusNotStarted userBookStatus = "NotStarted"
 	BookStatusStarted    userBookStatus = "Started"
 	BookStatusFinished   userBookStatus = "Finished"
@@ -27,6 +29,20 @@ type User struct {
 	gorm.Model
 }
 
+type Book struct {
+	gorm.Model
+	ID            string `gorm:"primaryKey"`
+	ISBN          uint   `json:"isbn"`
+	Title         string `json:"title"`
+	Authors       string `json:"authors"`
+	Description   string `json:"description"`
+	ImageLink     string `json:"thumbnail"`
+	Genre         string
+	Link          string
+	PublishedDate string
+	InBookShelff  bool
+}
+
 // UserBook model is an abstraction for link between user and a book
 // It bounds book to a user providing more information about user interactions with a book
 type UserBook struct {
@@ -36,18 +52,18 @@ type UserBook struct {
 	BookID       string         `gorm:"not null"`
 }
 
-type Book struct {
+type ReadingProgress struct {
 	gorm.Model
-	ID            string   `gorm:"primaryKey"`
-	ISBN          uint     `json:"isbn"`
-	Title         string   `json:"title"`
-	Authors       string `json:"authors"`
-	Description   string   `json:"description"`
-	ImageLink     string   `json:"thumbnail"`
-	Genre         string
-	Link          string
-	PublishedDate string
-	InBookShelff  bool
+	UserBookID  string `gorm:"not null"` // Reference to the user book being read
+	StartDate   time.Time
+	EndDate     time.Time
+	Status      userBookStatus // Status of tracking progress
+	PagesPerDay int            // Pages that need to be read a day to finish the book on time
+	CurrentPage int            // Curent page the user is on
+	TotalPages  int            // Total pages in the book
+	ReadDays    []time.Time    // Which days user have read the book
+	NotReadDays []time.Time    // Which days user have not read the book
+	Completed   bool
 }
 
 type Bookshelf struct {

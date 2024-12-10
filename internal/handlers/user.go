@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/FilipBudzynski/book_it/cmd/web"
-	"github.com/FilipBudzynski/book_it/pkg/models"
+	"github.com/FilipBudzynski/book_it/internal/models"
 	"github.com/FilipBudzynski/book_it/utils"
 	"github.com/labstack/echo/v4"
 )

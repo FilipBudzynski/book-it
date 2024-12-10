@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"github.com/FilipBudzynski/book_it/pkg/handlers"
+	"github.com/FilipBudzynski/book_it/internal/handlers"
 	"github.com/labstack/echo/v4"
 )
 

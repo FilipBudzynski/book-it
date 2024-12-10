@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/FilipBudzynski/book_it/pkg/models"
+	"github.com/FilipBudzynski/book_it/internal/models"
 	"github.com/FilipBudzynski/book_it/utils"
 	"github.com/labstack/echo/v4"
 	"github.com/markbates/goth/gothic"
@@ -51,9 +51,8 @@ func (a *AuthHandler) GetAuthCallbackFunc(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	// if no user in db
+
 	if user == nil {
-		// create / register new user
 		user = &models.User{
 			Username: gothUser.Name,
 			Email:    gothUser.Email,

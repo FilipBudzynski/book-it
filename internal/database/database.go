@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/FilipBudzynski/book_it/pkg/models"
+	"github.com/FilipBudzynski/book_it/internal/models"
 	_ "github.com/joho/godotenv/autoload"
 	_ "github.com/mattn/go-sqlite3"
 	"gorm.io/driver/sqlite"

@@ -5,7 +5,7 @@ import (
 	"net/url"
 
 	web_books "github.com/FilipBudzynski/book_it/cmd/web/books"
-	"github.com/FilipBudzynski/book_it/pkg/models"
+	"github.com/FilipBudzynski/book_it/internal/models"
 	"github.com/FilipBudzynski/book_it/utils"
 	"github.com/labstack/echo/v4"
 )

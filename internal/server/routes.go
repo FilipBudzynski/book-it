@@ -6,10 +6,10 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/FilipBudzynski/book_it/cmd/web"
-	"github.com/FilipBudzynski/book_it/pkg/handlers"
-	"github.com/FilipBudzynski/book_it/pkg/providers"
-	"github.com/FilipBudzynski/book_it/pkg/routes"
-	"github.com/FilipBudzynski/book_it/pkg/services"
+	"github.com/FilipBudzynski/book_it/internal/handlers"
+	"github.com/FilipBudzynski/book_it/internal/providers"
+	"github.com/FilipBudzynski/book_it/internal/routes"
+	"github.com/FilipBudzynski/book_it/internal/services"
 	"github.com/FilipBudzynski/book_it/utils"
 	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
@@ -25,7 +25,6 @@ func (s *Server) RegisterRoutes(db *gorm.DB) http.Handler {
 	// e.Use(middleware.Logger())
 	e.Use(prettylogger.Logger)
 	e.Use(utils.CustomRecoverMiddleware)
-    e.Use(utils.HTMXMiddleware)
 
 	fileServer := http.FileServer(http.FS(web.Files))
 	e.GET("/assets/*", echo.WrapHandler(fileServer))
@@ -35,7 +34,6 @@ func (s *Server) RegisterRoutes(db *gorm.DB) http.Handler {
 
 	// Register landing page
 	e.GET("/", s.LandingPageHandler)
-	e.GET("/health", s.healthHandler)
 
 	// Register user routes
 	userHandler := handlers.NewUserHandler(UserService)
@@ -46,10 +44,7 @@ func (s *Server) RegisterRoutes(db *gorm.DB) http.Handler {
 	routes.RegisterAuthRoutes(e, authHanlder)
 
 	// Register book provider routes
-	bookService := services.NewBookService(
-		providers.NewGoogleProvider().WithLimit(15),
-		db,
-	)
+	bookService := services.NewBookService(providers.NewGoogleProvider().WithLimit(15), db)
 	userBookService := services.NewUserBookService(db)
 	bookHanlder := handlers.NewBookHandler(bookService, userBookService)
 	routes.RegisterBookRoutes(e, bookHanlder)
@@ -75,16 +70,4 @@ func (s *Server) LandingPageHandler(c echo.Context) error {
 	}
 
 	return utils.RenderView(c, web.HomePage(dbUser))
-}
-
-func (s *Server) HelloWorldHandler(c echo.Context) error {
-	resp := map[string]string{
-		"message": "Hello World",
-	}
-
-	return c.JSON(http.StatusOK, resp)
-}
-
-func (s *Server) healthHandler(c echo.Context) error {
-	return c.JSON(http.StatusOK, s.db.Health())
 }

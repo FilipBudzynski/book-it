@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/FilipBudzynski/book_it/pkg/models"
-	"github.com/FilipBudzynski/book_it/pkg/services"
+	"github.com/FilipBudzynski/book_it/internal/models"
+	"github.com/FilipBudzynski/book_it/internal/services"
 )
 
 const (
