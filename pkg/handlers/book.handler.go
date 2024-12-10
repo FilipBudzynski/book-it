@@ -5,7 +5,7 @@ import (
 	"net/url"
 
 	web_books "github.com/FilipBudzynski/book_it/cmd/web/books"
-	"github.com/FilipBudzynski/book_it/pkg/schemas"
+	"github.com/FilipBudzynski/book_it/pkg/models"
 	"github.com/FilipBudzynski/book_it/utils"
 	"github.com/labstack/echo/v4"
 )
@@ -15,10 +15,13 @@ const booksLimit int = 10
 // BookService provides actions for managing book resources.
 // BookSerice should uses a provider to get books from external APIs or database
 type BookService interface {
+	Create(book *models.Book) error
+	Delete(userID, bookID string) error
+	GetUserBooks(userID string) ([]*models.Book, error)
 	// GetByQuery returns maxResults number of books by title from external api
-	GetByQuery(title string, maxResults int) ([]schemas.Book, error)
+	GetByQuery(title string, maxResults int) ([]*models.Book, error)
 	// GetByID
-	GetByID(id string) (schemas.Book, error)
+	GetByID(id string) (*models.Book, error)
 }
 
 type BookHandler struct {
@@ -50,6 +53,7 @@ func (h *BookHandler) ListBooks(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
+
 	userBooks, err := h.userBooksService.GetAll(userID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())

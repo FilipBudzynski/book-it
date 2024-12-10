@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
-	"github.com/FilipBudzynski/book_it/pkg/schemas"
+	"github.com/FilipBudzynski/book_it/pkg/models"
 	"github.com/FilipBudzynski/book_it/pkg/services"
 )
 
@@ -79,29 +80,24 @@ func (p *googleProvider) getResponse(url string) (*http.Response, error) {
 	return resp, nil
 }
 
-func (p *googleProvider) GetBook(bookID string) (schemas.Book, error) {
+func (p *googleProvider) GetBook(bookID string) (*models.Book, error) {
 	url := fmt.Sprintf(p.apiUrl+"/%s", bookID)
 
 	response, err := p.getResponse(url)
 	if err != nil {
-		return schemas.Book{}, err
+		return &models.Book{}, err
 	}
 	defer response.Body.Close()
 
 	var bookResponse BookResponse
 	if err := json.NewDecoder(response.Body).Decode(&bookResponse); err != nil {
-		return schemas.Book{}, err
+		return &models.Book{}, err
 	}
 
-	parsedBook, err := p.convert(bookResponse)
-	if err != nil {
-		return schemas.Book{}, err
-	}
-
-	return parsedBook, nil
+	return p.convert(bookResponse), nil
 }
 
-func (p *googleProvider) GetBooksByQuery(query string, limit int) ([]schemas.Book, error) {
+func (p *googleProvider) GetBooksByQuery(query string, limit int) ([]*models.Book, error) {
 	url := fmt.Sprintf(p.apiUrl+"?q=%s&maxResults=%d", query, limit)
 
 	response, err := p.getResponse(url)
@@ -115,19 +111,15 @@ func (p *googleProvider) GetBooksByQuery(query string, limit int) ([]schemas.Boo
 		return nil, err
 	}
 
-	var books []schemas.Book
+	var books []*models.Book
 	for _, bookResp := range bookItemsResponse.Items {
-		parsedBook, err := p.convert(bookResp)
-		if err != nil {
-			continue
-		}
-		books = append(books, parsedBook)
+		books = append(books, p.convert(bookResp))
 	}
 
 	return books, nil
 }
 
-func (p *googleProvider) convert(bookResponse BookResponse) (schemas.Book, error) {
+func (p *googleProvider) convert(bookResponse BookResponse) *models.Book {
 	var isbnString string
 	volumeInfo := bookResponse.VolumeInfo
 	for _, id := range volumeInfo.IndustryIdentifiers {
@@ -147,18 +139,18 @@ func (p *googleProvider) convert(bookResponse BookResponse) (schemas.Book, error
 	description := volumeInfo.Description
 
 	// Create and return a Book instance
-	isbn, err := strconv.ParseUint(isbnString, 10, 0)
-	if err != nil {
-		return schemas.Book{}, err
-	}
-	return schemas.Book{
+	book := &models.Book{
 		ID:            bookResponse.ID,
-		ISBN:          uint(isbn),
 		Title:         title,
-		Authors:       volumeInfo.Authors,
+		Authors:       strings.Join(volumeInfo.Authors, ", "),
 		Link:          volumeInfo.ImageLinks.SmallThumbnail,
 		Description:   description,
 		ImageLink:     volumeInfo.ImageLinks.SmallThumbnail,
 		PublishedDate: volumeInfo.PublishedDate,
-	}, nil
+	}
+	if isbn, err := strconv.ParseUint(isbnString, 10, 0); err != nil {
+		book.ISBN = uint(isbn)
+	}
+
+	return book
 }

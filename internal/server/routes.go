@@ -25,6 +25,7 @@ func (s *Server) RegisterRoutes(db *gorm.DB) http.Handler {
 	// e.Use(middleware.Logger())
 	e.Use(prettylogger.Logger)
 	e.Use(utils.CustomRecoverMiddleware)
+    e.Use(utils.HTMXMiddleware)
 
 	fileServer := http.FileServer(http.FS(web.Files))
 	e.GET("/assets/*", echo.WrapHandler(fileServer))
@@ -47,20 +48,20 @@ func (s *Server) RegisterRoutes(db *gorm.DB) http.Handler {
 	// Register book provider routes
 	bookService := services.NewBookService(
 		providers.NewGoogleProvider().WithLimit(15),
+		db,
 	)
-	userBookService := services.NewUserBookService(db, bookService)
+	userBookService := services.NewUserBookService(db)
 	bookHanlder := handlers.NewBookHandler(bookService, userBookService)
 	routes.RegisterBookRoutes(e, bookHanlder)
 
 	// Register userBook routes
-	userBookHanlder := handlers.NewUserBookHandler(userBookService)
+	userBookHanlder := handlers.NewUserBookHandler(userBookService, bookService)
 	routes.RegisterUserBookRoutes(e, userBookHanlder)
 
 	e.GET("/navbar", userHandler.Navbar)
 
 	return e
 }
-
 
 func (s *Server) LandingPageHandler(c echo.Context) error {
 	userSession, _ := utils.GetUserSessionFromStore(c.Request())
