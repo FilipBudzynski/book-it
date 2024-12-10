@@ -7,6 +7,7 @@ import (
 var MigrateModels = []any{
 	&User{},
 	&UserBook{},
+	&Book{},
 }
 
 type userBookStatus string
@@ -37,9 +38,10 @@ type UserBook struct {
 
 type Book struct {
 	gorm.Model
+	ID            string   `gorm:"primaryKey"`
 	ISBN          uint     `json:"isbn"`
 	Title         string   `json:"title"`
-	Authors       []string `json:"authors"`
+	Authors       string `json:"authors"`
 	Description   string   `json:"description"`
 	ImageLink     string   `json:"thumbnail"`
 	Genre         string

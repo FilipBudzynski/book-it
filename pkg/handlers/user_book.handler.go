@@ -7,7 +7,6 @@ import (
 	web_books "github.com/FilipBudzynski/book_it/cmd/web/books"
 	web_user_books "github.com/FilipBudzynski/book_it/cmd/web/user_books"
 	"github.com/FilipBudzynski/book_it/pkg/models"
-	"github.com/FilipBudzynski/book_it/pkg/schemas"
 	"github.com/FilipBudzynski/book_it/utils"
 	"github.com/labstack/echo/v4"
 )
@@ -17,18 +16,19 @@ type UserBookService interface {
 	Create(userId, bookId string) error
 	Update(userBook *models.UserBook) error
 	Delete(id string) error
-	GetAll(userId string) ([]models.UserBook, error)
+	GetAll(userId string) ([]*models.UserBook, error)
 	GetById(id string) (*models.UserBook, error)
-	GetUserBooks(userId string) ([]schemas.Book, error)
 }
 
 type UserBookHandler struct {
 	userBookService UserBookService
+	bookService     BookService
 }
 
-func NewUserBookHandler(userBookService UserBookService) *UserBookHandler {
+func NewUserBookHandler(userBookService UserBookService, bookService BookService) *UserBookHandler {
 	return &UserBookHandler{
 		userBookService: userBookService,
+		bookService:     bookService,
 	}
 }
 
@@ -71,7 +71,7 @@ func (h *UserBookHandler) List(c echo.Context) error {
 		return echo.NewHTTPError(echo.ErrUnauthorized.Code, err.Error())
 	}
 
-	userBooks, err := h.userBookService.GetUserBooks(userId)
+	userBooks, err := h.bookService.GetUserBooks(userId)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
