@@ -1,10 +1,21 @@
 package services
 
 import (
-	"github.com/FilipBudzynski/book_it/internal/handlers"
 	"github.com/FilipBudzynski/book_it/internal/models"
 	"gorm.io/gorm"
 )
+
+// BookService provides actions for managing book resources.
+// BookSerice should uses a provider to get books from external APIs or database
+type BookService interface {
+	Create(book *models.Book) error
+	Delete(userID, bookID string) error
+	GetUserBooks(userID string) ([]*models.Book, error)
+	// GetByQuery returns maxResults number of books by title from external api
+	GetByQuery(title string, maxResults int) ([]*models.Book, error)
+	// GetByID
+	GetByID(id string) (*models.Book, error)
+}
 
 // BookProvider is used to communicate with the external API or Database
 // in order to retreive response and parse it into models.Book struct
@@ -20,7 +31,7 @@ type bookService struct {
 	db       *gorm.DB
 }
 
-func NewBookService(bookProvider BookProvider, db *gorm.DB) handlers.BookService {
+func NewBookService(bookProvider BookProvider, db *gorm.DB) BookService {
 	return &bookService{
 		provider: bookProvider,
 		db:       db,

@@ -3,27 +3,16 @@ package services
 import (
 	"time"
 
+	"github.com/FilipBudzynski/book_it/internal/handlers"
 	"github.com/FilipBudzynski/book_it/internal/models"
 	"gorm.io/gorm"
 )
-
-type TrackingService interface {
-	// standard methods
-	Create(progress *models.ReadingProgress) error
-	Read(id string) (*models.ReadingProgress, error)
-	Update(progress *models.ReadingProgress) error
-	Delete(id string) error
-
-	// custom methods
-	GetByBookId(bookId string) (*models.ReadingProgress, error)
-	GetDailyLog(bookId string, date time.Time) (*models.DailyReadingLog, error)
-}
 
 type trackingService struct {
 	db *gorm.DB
 }
 
-func NewTrackingService(db *gorm.DB) TrackingService {
+func NewTrackingService(db *gorm.DB) handlers.TrackingService {
 	return &trackingService{
 		db: db,
 	}
@@ -50,9 +39,9 @@ func (s *trackingService) Delete(id string) error {
 	return s.db.Where("id = ?", id).Delete(&models.ReadingProgress{}).Error
 }
 
-func (s *trackingService) GetByBookId(bookId string) (*models.ReadingProgress, error) {
+func (s *trackingService) GetByUserBookId(id string) (*models.ReadingProgress, error) {
 	readingProgress := &models.ReadingProgress{}
-	err := s.db.First(readingProgress, "book_id = ?", bookId).Error
+	err := s.db.First(readingProgress, "user_book_id = ?", id).Error
 	if err != nil {
 		return nil, err
 	}
