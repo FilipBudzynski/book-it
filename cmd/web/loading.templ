@@ -1,0 +1,18 @@
+package web
+
+templ Loading() {
+	<style>
+        .htmx-indicator {
+            display: none
+        }
+
+        .htmx-indicator.htmx-request {
+            display: inline;
+        }
+
+        .htmx-indicator.htmx-request~span {
+            display: none;
+        }
+    </style>
+	<span id="loading-spinner" class="loading loading-spinner text-neutral htmx-indicator"></span>
+}

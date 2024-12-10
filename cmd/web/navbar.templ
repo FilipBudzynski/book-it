@@ -3,7 +3,7 @@ package web
 import "github.com/FilipBudzynski/book_it/pkg/models"
 
 templ Navbar(user *models.User) {
-	<div class="navbar bg-base-100 mb-6 shadow-md rounded-box">
+	<div class="navbar bg-base-100 mb-6 shadow-md rounded-box sticky top-0 z-50">
 		<div class="navbar-start">
 			<div class="dropdown">
 				<div tabindex="0" role="button" class="btn btn-ghost lg:hidden">
@@ -49,13 +49,34 @@ templ Navbar(user *models.User) {
 		<div class="navbar-center hidden lg:flex">
 			<ul class="menu menu-horizontal px-1">
 				<li>
-					<a href="#" hx-get="/" hx-target="#content-container" hx-swap="innerHTML" hx-push-url="true">Home</a>
+					<a
+						href="#"
+						hx-get="/"
+						hx-target="#content-container"
+						hx-swap="innerHTML"
+						hx-push-url="true"
+						hx-indicator="#loading-spinner"
+					>Home</a>
 				</li>
 				<li>
-					<a href="#" hx-get="/books" hx-target="#content-container" hx-swap="innerHTML" hx-push-url="true">Search</a>
+					<a
+						href="#"
+						hx-get="/books"
+						hx-target="#content-container"
+						hx-swap="innerHTML"
+						hx-push-url="true"
+						hx-indicator="#loading-spinner"
+					>Search</a>
 				</li>
 				<li>
-					<a href="#" hx-get="/user-books" hx-target="#content-container" hx-swap="innerHTML" hx-push-url="true">My Books</a>
+					<a
+						href="#"
+						hx-get="/user-books"
+						hx-target="#content-container"
+						hx-swap="innerHTML"
+						hx-push-url="true"
+						hx-indicator="#loading-spinner"
+					>My Books</a>
 				</li>
 				<li>
 					<details class="z-50">

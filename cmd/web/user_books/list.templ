@@ -10,89 +10,67 @@ templ List(books []*models.Book) {
 		<article class="mb-4 prose lg:prose-xl">
 			<h2>My Bookshelfs</h2>
 		</article>
-		<table class="bg-base-100 mx-10 table table-zebra table-lg z-[1]">
-			<thead>
-				<th></th>
-				<th>Name and Author</th>
-				<th>Tracking</th>
-				<th>Bookshelf</th>
-			</thead>
-			<tbody
-				hx-confirm="Are you sure?"
-				hx-target="closest tr"
-				hx-swap="none"
-				hx-on="htmx:afterRequest: if (event.detail.xhr.status === 200) this.remove()"
-				id="books-container"
-			>
-				for _, book := range books {
-					<tr>
-						<td class="w-1/12 px-3 py-2">
-							<figure>
-								<img src={ book.ImageLink } alt="img"/>
-							</figure>
-						</td>
-						<td class="w-max px-3 py-2">
-							<div class="flex flex-col">
-								<span class="text-base">
-									<a href="" class="transition ease-out opacity delay-150 hover:text-black">{ book.Title } </a>
-								</span>
-								<span class="text-sm text-gray-300">
-									by 
-									{ book.Authors }
-								</span>
-							</div>
-						</td>
-						<td>
-							<div class="badge badge-primary">in progress</div>
-						</td>
-						<td class="w-1/5 px-3 py-2">
-							<div
-								hx-delete={ fmt.Sprintf("/user-books/%s", book.ID) }
-								hx-swap="none"
-								role="button"
-								class="btn btn-sm w-full btn-outline btn-error"
-							>Remove</div>
-						</td>
-					</tr>
-				}
-			</tbody>
-			<tfoot></tfoot>
-		</table>
 	</div>
-	<!-- <div class="pt-12 justify-items-center"> -->
-	<!-- 	<div class="w-11/12 overflow-x-auto shadow-md sm:rounded-lg"> -->
-	<!-- 		<table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400"> -->
-	<!-- 			<thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400"></thead> -->
-	<!-- 			<tbody id="books-container"> -->
-	<!-- 				for _, book := range books { -->
-	<!-- 					<tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"> -->
-	<!-- 						<td class="w-1/12 px-3 py-2"> -->
-	<!-- 							<img src={ book.ImageLink } alt="img" class="w-auto h-24 object-cover shadow-sm"/> -->
-	<!-- 						</td> -->
-	<!-- 						<td class="w-max px-3 py-2"> -->
-	<!-- 							<div class="flex flex-col"> -->
-	<!-- 								<span class="text-base"> -->
-	<!-- 									<a href="" class="transition ease-in-out delay-150 hover:text-black">{ book.Title } </a> -->
-	<!-- 								</span> -->
-	<!-- 								<span class="text-sm text-gray-300"> -->
-	<!-- 									by  -->
-	<!-- 									for _, author := range book.Authors { -->
-	<!-- 										{ author } -->
-	<!-- 									} -->
-	<!-- 								</span> -->
-	<!-- 							</div> -->
-	<!-- 						</td> -->
-	<!-- 						<td class="w-1/5 px-3 py-2"> -->
-	<!-- 							<button -->
-	<!-- 								hx-delete={ fmt.Sprintf("/user-books/%s", book.ID) } -->
-	<!-- 								hx-swap="none" -->
-	<!-- 								class="font-medium text-red-600 dark:text-red-500 transition ease-in-out delay-150 hover:scale-110" -->
-	<!-- 							>Remove from my books</button> -->
-	<!-- 						</td> -->
-	<!-- 					</tr> -->
-	<!-- 				} -->
-	<!-- 			</tbody> -->
-	<!-- 		</table> -->
-	<!-- 	</div> -->
-	<!-- </div> -->
+	<div class="max-w-[100vw] px-6 pb-16 ">
+		<div class="flex flex-col-reverse justify-between gap-6 xl:flex-row">
+			<div class="w-full flex-grow px-6 pb-16 xl:pr-2">
+				<div class="flex-grow place-items-center relative mb-10 overflow-auto">
+					<table class="bg-base-100 table table-zebra table-md z-[1] ">
+						<thead>
+							<th></th>
+							<th>Name and Author</th>
+							<th>Tracking</th>
+							<th>Bookshelf</th>
+						</thead>
+						<tbody
+							hx-confirm="Are you sure?"
+							hx-target="closest tr"
+							hx-swap="none"
+							hx-on="htmx:afterRequest: if (event.detail.xhr.status === 204) this.remove()"
+							id="books-container"
+						>
+							for _, book := range books {
+								<tr>
+									<td class="w-1/12 px-3 py-2">
+										<div class="flex items-center gap-3">
+											<div class="avatar">
+												<div class="mask mask-squircle h-12 w-12">
+													<img src={ book.ImageLink } alt="img"/>
+												</div>
+											</div>
+										</div>
+									</td>
+									<td class="w-max px-3 py-2">
+										<div class="flex flex-col">
+											<span class="text-base">
+												<a href="" class="transition ease-out opacity delay-150 hover:text-black">{ book.Title } </a>
+											</span>
+											<span class="text-sm text-gray-300">
+												by 
+												{ book.Authors }
+											</span>
+										</div>
+									</td>
+									<td>
+										<div class="badge badge-primary">in progress</div>
+									</td>
+									<td class="w-1/5 px-3 py-2">
+										<div class="w-full pr-4">
+											<div
+												hx-delete={ fmt.Sprintf("/user-books/%s", book.ID) }
+												hx-swap="none"
+												role="button"
+												class="btn btn-sm w-full btn-outline btn-error"
+											>Remove</div>
+										</div>
+									</td>
+								</tr>
+							}
+						</tbody>
+						<tfoot></tfoot>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
 }
