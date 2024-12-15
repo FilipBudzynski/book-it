@@ -4,7 +4,10 @@ import (
 	"net/http"
 	"time"
 
+	web_tracking "github.com/FilipBudzynski/book_it/cmd/web/tracking"
+	web_user_books "github.com/FilipBudzynski/book_it/cmd/web/user_books"
 	"github.com/FilipBudzynski/book_it/internal/models"
+	"github.com/FilipBudzynski/book_it/utils"
 	"github.com/labstack/echo/v4"
 )
 
@@ -24,8 +27,8 @@ type TrackingHandler struct {
 	TrackingService TrackingService
 }
 
-func NewTrackingHandler(trackingService TrackingService) TrackingHandler {
-	return TrackingHandler{
+func NewTrackingHandler(trackingService TrackingService) *TrackingHandler {
+	return &TrackingHandler{
 		TrackingService: trackingService,
 	}
 }
@@ -53,19 +56,37 @@ func (s *TrackingHandler) GetByUserBookId(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	return c.JSON(200, progress)
+	return utils.RenderView(c, web_user_books.TrackingStats(progress))
 }
 
 func (s *TrackingHandler) Create(c echo.Context) error {
-	progress := &models.ReadingProgress{}
-	if err := c.Bind(progress); err != nil {
+	bookProgress := &models.ReadingProgress{}
+	if err := c.Bind(bookProgress); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
-	err := s.TrackingService.Create(progress)
+	bookProgress.Completed = false
+
+	startDate := c.FormValue("start-date")
+	endDate := c.FormValue("end-date")
+	startDateParsed, err := time.Parse(time.DateOnly, startDate)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	endDateParsed, err := time.Parse(time.DateOnly, endDate)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	bookProgress.StartDate = startDateParsed
+	bookProgress.EndDate = endDateParsed
+
+	days := int(bookProgress.EndDate.Sub(bookProgress.StartDate).Hours() / 24)
+	bookProgress.DailyTargetPages = int(bookProgress.TotalPages / days)
+
+	err = s.TrackingService.Create(bookProgress)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	return c.JSON(http.StatusCreated, progress)
+	return utils.RenderView(c, web_tracking.OnTrackIdentifiactor(bookProgress.UserBookID))
 }
 
 func (s *TrackingHandler) Update(c echo.Context) error {

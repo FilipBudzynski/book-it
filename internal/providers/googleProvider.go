@@ -55,6 +55,7 @@ type VolumeInfo struct {
 	Authors       []string `json:"authors"`
 	PublishedDate string   `json:"publishedDate"`
 	Description   string   `json:"description,omitempty"`
+	Pages         int      `json:"pageCount"`
 
 	ImageLinks struct {
 		SmallThumbnail string `json:"smallThumbnail"`
@@ -147,6 +148,7 @@ func (p *googleProvider) convert(bookResponse BookResponse) *models.Book {
 		Description:   description,
 		ImageLink:     volumeInfo.ImageLinks.SmallThumbnail,
 		PublishedDate: volumeInfo.PublishedDate,
+		Pages:         volumeInfo.Pages,
 	}
 	if isbn, err := strconv.ParseUint(isbnString, 10, 0); err != nil {
 		book.ISBN = uint(isbn)

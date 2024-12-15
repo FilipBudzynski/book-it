@@ -22,13 +22,11 @@ type UserBookService interface {
 
 type UserBookHandler struct {
 	userBookService UserBookService
-	bookService     BookService
 }
 
-func NewUserBookHandler(userBookService UserBookService, bookService BookService) *UserBookHandler {
+func NewUserBookHandler(userBookService UserBookService) *UserBookHandler {
 	return &UserBookHandler{
 		userBookService: userBookService,
-		bookService:     bookService,
 	}
 }
 
@@ -71,10 +69,27 @@ func (h *UserBookHandler) List(c echo.Context) error {
 		return echo.NewHTTPError(echo.ErrUnauthorized.Code, err.Error())
 	}
 
-	userBooks, err := h.bookService.GetUserBooks(userId)
+	userBooks, err := h.userBookService.GetAll(userId)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	return utils.RenderView(c, web_user_books.List(userBooks))
+}
+
+func (h *UserBookHandler) GetCreateTrackingModal(c echo.Context) error {
+	bookID := c.Param("user_book_id")
+	if bookID == "" {
+		return echo.NewHTTPError(
+			http.StatusInternalServerError,
+			fmt.Errorf("Something went wrong with the request. Book ID was not provided in query parameters"),
+		)
+	}
+
+	userBook, err := h.userBookService.GetById(bookID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	return utils.RenderView(c, web_user_books.TrackingCreateModal(userBook))
 }

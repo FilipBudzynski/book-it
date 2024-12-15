@@ -13,11 +13,10 @@ import (
 const booksLimit int = 10
 
 // BookService provides actions for managing book resources.
-// BookService should uses a provider to get books from external APIs or database
+// BookSerice should uses a provider to get books from external APIs or database
 type BookService interface {
 	Create(book *models.Book) error
 	Delete(userID, bookID string) error
-	GetUserBooks(userID string) ([]*models.Book, error)
 	// GetByQuery returns maxResults number of books by title from external api
 	GetByQuery(title string, maxResults int) ([]*models.Book, error)
 	// GetByID

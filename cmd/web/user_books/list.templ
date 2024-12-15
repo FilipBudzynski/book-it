@@ -3,74 +3,287 @@ package web_user_books
 import (
 	"fmt"
 	"github.com/FilipBudzynski/book_it/internal/models"
+	"github.com/FilipBudzynski/book_it/cmd/web/tracking"
 )
 
-templ List(books []*models.Book) {
+const htmxTrackingButtonId = "tracking-td-%d"
+
+templ List(books []*models.UserBook) {
 	<div class="flex flex-col items-center mx-10 md:mx-20">
-		<article class="mb-4 prose lg:prose-xl">
-			<h2>My Bookshelfs</h2>
-		</article>
+		<div class="breadcrumbs text-lg">
+			<ul>
+				<li><a>My Books</a></li>
+				<li><a>All</a></li>
+			</ul>
+		</div>
 	</div>
-	<div class="max-w-[100vw] px-6 pb-16 ">
-		<div class="flex flex-col-reverse justify-between gap-6 xl:flex-row">
-			<div class="w-full flex-grow px-6 pb-16 xl:pr-2">
-				<div class="flex-grow place-items-center relative mb-10 overflow-auto">
-					<table class="bg-base-100 table table-zebra table-md z-[1] ">
-						<thead>
-							<th></th>
-							<th>Name and Author</th>
-							<th>Tracking</th>
-							<th>Bookshelf</th>
-						</thead>
-						<tbody
-							hx-confirm="Are you sure?"
-							hx-target="closest tr"
-							hx-swap="none"
-							hx-on="htmx:afterRequest: if (event.detail.xhr.status === 204) this.remove()"
-							id="books-container"
-						>
-							for _, book := range books {
-								<tr>
-									<td class="w-1/12 px-3 py-2">
-										<div class="flex items-center gap-3">
-											<div class="avatar">
-												<div class="mask mask-squircle h-12 w-12">
-													<img src={ book.ImageLink } alt="img"/>
-												</div>
-											</div>
-										</div>
-									</td>
-									<td class="w-max px-3 py-2">
-										<div class="flex flex-col">
-											<span class="text-base">
-												<a href="" class="transition ease-out opacity delay-150 hover:text-black">{ book.Title } </a>
-											</span>
-											<span class="text-sm text-gray-300">
-												by 
-												{ book.Authors }
-											</span>
-										</div>
-									</td>
-									<td>
-										<div class="badge badge-primary">in progress</div>
-									</td>
-									<td class="w-1/5 px-3 py-2">
-										<div class="w-full pr-4">
-											<div
-												hx-delete={ fmt.Sprintf("/user-books/%s", book.ID) }
-												hx-swap="none"
-												role="button"
-												class="btn btn-sm w-full btn-outline btn-error"
-											>Remove</div>
-										</div>
-									</td>
-								</tr>
-							}
-						</tbody>
-						<tfoot></tfoot>
-					</table>
+	<div class="flex-grow justify-center relative mb-10 overflow-auto">
+		<div class="flex w-full relative justify-center">
+			<dialog id="my_modal_1" class="modal">
+				<div class="modal-box" id="htmx_modal"></div>
+			</dialog>
+			<!-- divider -->
+			@Bookshelfs()
+			<div class="divider divider-horizontal"></div>
+			<!-- table -->
+			@UserBooksTable(books)
+		</div>
+	</div>
+	<div id="tracking-statistics"></div>
+}
+
+templ UserBooksTable(books []*models.UserBook) {
+	<div id="modal-content"></div>
+	<div class="flex-grow max-w-[80rem] place-items-center relative mb-10 overflow-auto">
+		<table class="bg-base-100 table table-zebra table-md z-[1] ">
+			<thead>
+				<th></th>
+				<th>Name and Author</th>
+				<th>Tracking</th>
+				<th>Bookshelf</th>
+			</thead>
+			<tbody
+				hx-target="closest tr"
+				hx-swap="none"
+				hx-on="htmx:afterRequest: if (event.detail.xhr.status === 204) this.remove()"
+				id="books-container"
+			>
+				for _, book := range books {
+					<tr>
+						<td class="w-1/12 px-3 py-2">
+							<div class="flex items-center gap-3">
+								<div class="avatar">
+									<div class="mask mask-squircle h-12 w-12">
+										<img src={ book.Book.ImageLink } alt="img"/>
+									</div>
+								</div>
+							</div>
+						</td>
+						<td class="w-max px-3 py-2">
+							<div class="flex flex-col">
+								<span class="text-base">
+									<a href="" class="transition ease-out opacity delay-150 hover:text-black">{ book.Book.Title } </a>
+								</span>
+								<span class="text-sm text-gray-300">
+									by 
+									{ book.Book.Authors }
+								</span>
+							</div>
+						</td>
+						<td>
+							<div id={ fmt.Sprintf(htmxTrackingButtonId, book.ID) }>
+								if book.ReadingProgress != nil {
+									@web_tracking.OnTrackIdentifiactor(book.ID)
+								} else {
+									<button
+										hx-get={ fmt.Sprintf("user-books/create_modal/%d", book.ID) }
+										hx-target="#htmx_modal"
+										hx-swap="innerHTML"
+										hx-trigger="click"
+										onclick="my_modal_1.showModal()"
+										class="btn"
+									>start tracking</button>
+								}
+							</div>
+						</td>
+						<td class="w-1/5 px-3 py-2">
+							<div class="w-full pr-4">
+								<button
+									hx-delete={ fmt.Sprintf("/user-books/%d", book.ID) }
+									hx-confirm="Are you sure?"
+									hx-swap="none"
+									role="button"
+									class="btn btn-sm w-full btn-outline btn-error"
+								>Remove</button>
+							</div>
+						</td>
+					</tr>
+				}
+			</tbody>
+			<tfoot></tfoot>
+		</table>
+	</div>
+}
+
+templ Bookshelfs() {
+	<div class="pr-6 pb-16 ">
+		<!-- bookshelfs -->
+		<div class="w-auto">
+			<table class="table">
+				<!-- head -->
+				<thead>
+					<tr>
+						<th>Bookshelfs</th>
+					</tr>
+				</thead>
+				<tbody>
+					<!-- row 1 -->
+					<tr>
+						<td>All</td>
+					</tr>
+					<!-- row 2 -->
+					<tr>
+						<td>Read</td>
+					</tr>
+					<!-- row 3 -->
+					<tr>
+						<td>To read</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+}
+
+templ TrackingCreateModal(userBook *models.UserBook) {
+	<form method="dialog">
+		<button
+			class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+		>✕</button>
+	</form>
+	<h3 class="text-lg font-bold">Track Progress of { userBook.Book.Title }</h3>
+	<p class="py-4">We can help you to track a progress of reading a book</p>
+	<div class="flex-row">
+		<form method="dialog">
+			<div class="mb-4 grid grid-cols-2 gap-4">
+				<input name="user-book-id" value={ fmt.Sprintf("%d", userBook.ID) } class="input hidden input-bordered w-full mt-2"/>
+				<div>
+					<label class="block text-sm font-medium text-gray-700">Start Date</label>
+					<input name="start-date" type="date" class="input input-bordered w-full mt-2"/>
+				</div>
+				<div>
+					<label class="block text-sm font-medium text-gray-700">End Date</label>
+					<input name="end-date" type="date" class="input input-bordered w-full mt-2"/>
 				</div>
 			</div>
+			<div class="mb-4">
+				<label class="block text-sm font-medium text-gray-700">Total Pages</label>
+				<input
+					name="total-pages"
+					type="number"
+					class="input input-bordered w-full mt-2"
+					placeholder="Enter total pages"
+					value={ fmt.Sprintf("%d", userBook.Book.Pages) }
+				/>
+				<input name="current-page" value="0" class="input hidden input-bordered w-full mt-2"/>
+			</div>
+			<!-- if there is a button in form, it will close the modal -->
+			<div class="modal-action">
+				<button
+					hx-post="/tracking"
+					hx-target={ fmt.Sprintf("#"+htmxTrackingButtonId, userBook.ID) }
+					class="btn"
+					onclick="my_modal_1.close()"
+				>Start Tracking</button>
+			</div>
+		</form>
+	</div>
+}
+
+templ TrackingStats(readingProgress *models.ReadingProgress) {
+	<div class="flex-grow place-items-center relative mb-10 overflow-auto">
+		<div class="flex flex-col items-center mx-10 md:mx-20">
+			<div class="breadcrumbs text-lg">
+				<ul>
+					<li><a>Tracking</a></li>
+					<li><a>Alicja w krainie konieczności</a></li>
+				</ul>
+			</div>
+		</div>
+		<!-- Tracking -->
+		<div class="pb-6">
+			<div class="stats shadow">
+				<div class="stat">
+					<div class="stat-figure text-primary">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							fill="none"
+							viewBox="0 0 24 24"
+							class="inline-block h-8 w-8 stroke-current"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+							></path>
+						</svg>
+					</div>
+					<div class="stat-title">Daily Goal</div>
+					<div class="stat-value text-primary">{ fmt.Sprintf("%d", readingProgress.DailyTargetPages) }</div>
+					<div class="stat-desc">Last read: Mon 9/12/24</div>
+				</div>
+				<div class="stat">
+					<div class="stat-figure text-secondary">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							fill="none"
+							viewBox="0 0 24 24"
+							class="inline-block h-8 w-8 stroke-current"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M13 10V3L4 14h7v7l9-11h-7z"
+							></path>
+						</svg>
+					</div>
+					<div class="stat-title">Total Pages</div>
+					<div class="stat-value text-secondary">{ fmt.Sprintf("%d", readingProgress.TotalPages) }</div>
+					<div class="stat-desc">Already read: 128</div>
+				</div>
+				<div class="stat">
+					<div class="stat-figure text-secondary">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							fill="none"
+							viewBox="0 0 24 24"
+							class="inline-block h-8 w-8 stroke-current"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
+							></path>
+						</svg>
+					</div>
+					<div class="stat-value">{ fmt.Sprintf("%d%%", readingProgress.CurrentPage / readingProgress.TotalPages) }</div>
+					<div class="stat-title">Pages done</div>
+					<div class="stat-desc text-secondary">404 pages to read</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="flex-grow place-items-center relative mb-10 overflow-auto">
+		<div class="w-[70rem] overflow-x-auto">
+			<ul class="steps">
+				<li class="step step-primary">pages: 10</li>
+				<a href="#" class="step step-primary">pages: 12</a>
+				<li class="step step-primary">pages: 23</li>
+				<li class="step step-primary">pages: 11</li>
+				<li class="step step-primary">pages: 12</li>
+				<li class="step"></li>
+				<li class="step"></li>
+				<li class="step"></li>
+				<li class="step"></li>
+				<li class="step"></li>
+				<li class="step"></li>
+				<li class="step"></li>
+				<li class="step"></li>
+				<li class="step"></li>
+				<li class="step"></li>
+				<li class="step"></li>
+				<li class="step"></li>
+				<li class="step"></li>
+				<li class="step"></li>
+				<li class="step"></li>
+				<li class="step"></li>
+				<li class="step"></li>
+				<li class="step"></li>
+				<li class="step ">end</li>
+			</ul>
 		</div>
 	</div>
 }

@@ -13,12 +13,12 @@ var MigrateModels = []any{
 	&ReadingProgress{},
 }
 
-type userBookStatus string
+type bookTrackingStatus string
 
 const (
-	BookStatusNotStarted userBookStatus = "NotStarted"
-	BookStatusStarted    userBookStatus = "Started"
-	BookStatusFinished   userBookStatus = "Finished"
+	BookStatusNotStarted bookTrackingStatus = "NotStarted"
+	BookStatusStarted    bookTrackingStatus = "Started"
+	BookStatusFinished   bookTrackingStatus = "Finished"
 )
 
 type User struct {
@@ -41,24 +41,27 @@ type Book struct {
 	Link          string
 	PublishedDate string
 	InBookShelff  bool
+	Pages         int
 }
 
 // UserBook model is an abstraction for link between user and a book
 // It bounds book to a user providing more information about user interactions with a book
 type UserBook struct {
 	gorm.Model
-	Status       userBookStatus `gorm:"not null"`
-	UserGoogleId string         `gorm:"not null"` // foreignKey
-	BookID       string         `gorm:"not null"`
+	IsTracked       bool   `gorm:"not null;default:false"`
+	UserGoogleId    string `gorm:"not null"` // foreignKey
+	BookID          string `gorm:"not null"`
+	Book            Book
+	ReadingProgress *ReadingProgress `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 }
 
 type ReadingProgress struct {
 	gorm.Model
-	UserBookID       string `gorm:"not null"` // Reference to the user book being read
+	UserBookID       uint `gorm:"not null" form:"user-book-id"` // Reference to the user book being read
 	StartDate        time.Time
 	EndDate          time.Time
-	TotalPages       int               // Total pages in the book
-	CurrentPage      int               // Curent page the user is on
+	TotalPages       int               `form:"total-pages"`  // Total pages in the book
+	CurrentPage      int               `form:"current-page"` // Curent page the user is on
 	DailyTargetPages int               // Pages that need to be read a day to finish the book on time
 	DailyProgress    []DailyReadingLog // Which days user have not read the book
 	Completed        bool              // Whether the book is finished

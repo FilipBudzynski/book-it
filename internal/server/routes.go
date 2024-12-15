@@ -50,10 +50,15 @@ func (s *Server) RegisterRoutes(db *gorm.DB) http.Handler {
 	routes.RegisterBookRoutes(e, bookHanlder)
 
 	// Register userBook routes
-	userBookHanlder := handlers.NewUserBookHandler(userBookService, bookService)
+	userBookHanlder := handlers.NewUserBookHandler(userBookService)
 	routes.RegisterUserBookRoutes(e, userBookHanlder)
 
+	// Register Navbar
 	e.GET("/navbar", userHandler.Navbar)
+
+	// Register Tracking routes
+	trackingHandler := handlers.NewTrackingHandler(services.NewTrackingService(db))
+	routes.RegisterTrackingRoutes(e, trackingHandler)
 
 	return e
 }

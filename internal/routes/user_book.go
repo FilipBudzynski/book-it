@@ -14,4 +14,5 @@ func RegisterUserBookRoutes(app *echo.Echo, h *handlers.UserBookHandler) {
 	group.POST("/:book_id", h.Create)
 	group.DELETE("/:book_id", h.Delete)
 	group.GET("", h.List)
+	group.GET("/create_modal/:user_book_id", h.GetCreateTrackingModal)
 }
