@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	web_books "github.com/FilipBudzynski/book_it/cmd/web/books"
-	web_user_books "github.com/FilipBudzynski/book_it/cmd/web/user_books"
+	webBooks "github.com/FilipBudzynski/book_it/cmd/web/books"
+	webUserBooks "github.com/FilipBudzynski/book_it/cmd/web/user_books"
 	"github.com/FilipBudzynski/book_it/internal/models"
 	"github.com/FilipBudzynski/book_it/utils"
 	"github.com/labstack/echo/v4"
@@ -46,7 +46,7 @@ func (h *UserBookHandler) Create(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusConflict, err.Error())
 	}
 
-	return utils.RenderView(c, web_books.WantToReadButton(bookID, true))
+	return utils.RenderView(c, webBooks.WantToReadButton(bookID, true))
 }
 
 func (h *UserBookHandler) Delete(c echo.Context) error {
@@ -60,7 +60,7 @@ func (h *UserBookHandler) Delete(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	return utils.RenderView(c, web_books.WantToReadButton(bookID, false))
+	return utils.RenderView(c, webBooks.WantToReadButton(bookID, false))
 }
 
 func (h *UserBookHandler) List(c echo.Context) error {
@@ -74,7 +74,7 @@ func (h *UserBookHandler) List(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	return utils.RenderView(c, web_user_books.List(userBooks))
+	return utils.RenderView(c, webUserBooks.List(userBooks))
 }
 
 func (h *UserBookHandler) GetCreateTrackingModal(c echo.Context) error {
@@ -91,5 +91,16 @@ func (h *UserBookHandler) GetCreateTrackingModal(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	return utils.RenderView(c, web_user_books.TrackingCreateModal(userBook))
+	return utils.RenderView(c, webUserBooks.ProgressCreateModal(userBook))
+}
+
+func (h *UserBookHandler) RegisterRoutes(app *echo.Echo) {
+	group := app.Group("/user-books")
+	// middleware for protected routes
+	group.Use(utils.CheckLoggedInMiddleware)
+	// UserBook endpoints
+	group.POST("/:book_id", h.Create)
+	group.DELETE("/:book_id", h.Delete)
+	group.GET("", h.List)
+	group.GET("/create_modal/:user_book_id", h.GetCreateTrackingModal)
 }

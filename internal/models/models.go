@@ -11,6 +11,7 @@ var MigrateModels = []any{
 	&UserBook{},
 	&Book{},
 	&ReadingProgress{},
+	&DailyProgressLog{},
 }
 
 type bookTrackingStatus string
@@ -60,19 +61,44 @@ type ReadingProgress struct {
 	UserBookID       uint `gorm:"not null" form:"user-book-id"` // Reference to the user book being read
 	StartDate        time.Time
 	EndDate          time.Time
-	TotalPages       int               `form:"total-pages"`  // Total pages in the book
-	CurrentPage      int               `form:"current-page"` // Curent page the user is on
-	DailyTargetPages int               // Pages that need to be read a day to finish the book on time
-	DailyProgress    []DailyReadingLog // Which days user have not read the book
-	Completed        bool              // Whether the book is finished
+	TotalPages       int                `form:"total-pages"`  // Total pages in the book
+	CurrentPage      int                `form:"current-page"` // Curent page the user is on
+	DailyTargetPages int                // Pages that need to be read a day to finish the book on time
+	DailyProgress    []DailyProgressLog // Which days user have not read the book
+	Completed        bool               // Whether the book is finished
 }
 
-type DailyReadingLog struct {
+type DailyProgressLog struct {
 	gorm.Model
 	ReadingProgressID uint `gorm:"not null"` // Reading progress foreign key
 	Date              time.Time
-	PagesRead         int  // Pages read on this date
+	PagesRead         int `form:"pages-read"` // Pages read on this date
+	TargetPages       int
 	Completed         bool // Whether the day's target was met
+}
+
+func (d *DailyProgressLog) AfterSave(db *gorm.DB) (error) {
+	var readingProgress ReadingProgress
+	err := db.First(&readingProgress, d.ReadingProgressID).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return err
+	}
+
+	var totalPagesRead int
+	if err := db.Model(&DailyProgressLog{}).
+		Where("reading_progress_id = ?", d.ReadingProgressID).
+		Select("SUM(pages_read)").
+		Row().
+		Scan(&totalPagesRead); err != nil {
+		return err
+	}
+
+	readingProgress.CurrentPage = int(totalPagesRead)
+
+	if err := db.Save(&readingProgress).Error; err != nil {
+		return err
+	}
+	return nil
 }
 
 type Bookshelf struct {

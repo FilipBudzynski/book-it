@@ -58,6 +58,21 @@ func (h *UserHandler) ListUsers(c echo.Context) error {
 	return utils.RenderView(c, web.UserForm(users))
 }
 
+// LandingPageHandler returns a landing page
+func (h *UserHandler) LandingPage(c echo.Context) error {
+	userSession, _ := utils.GetUserSessionFromStore(c.Request())
+	if (userSession == utils.UserSession{}) {
+		return utils.RenderView(c, web.HomePage(nil))
+	}
+
+	dbUser, err := h.userService.GetByGoogleID(userSession.UserID)
+	if dbUser == nil {
+		return echo.NewHTTPError(echo.ErrInternalServerError.Code, err)
+	}
+
+	return utils.RenderView(c, web.HomePage(dbUser))
+}
+
 func (h *UserHandler) Navbar(c echo.Context) error {
 	userSession, err := utils.GetUserSessionFromStore(c.Request())
 	if err != nil {
@@ -70,4 +85,13 @@ func (h *UserHandler) Navbar(c echo.Context) error {
 	}
 
 	return utils.RenderView(c, web.Navbar(user))
+}
+
+func (h *UserHandler) RegisterRoutes(app *echo.Echo) {
+	app.GET("/", h.LandingPage)
+	app.GET("/navbar", h.Navbar)
+
+	group := app.Group("/users")
+	group.Use(utils.CheckLoggedInMiddleware)
+	group.GET("", h.ListUsers)
 }

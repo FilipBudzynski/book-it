@@ -1,0 +1,49 @@
+package web_tracking
+
+import (
+	"fmt"
+
+	"github.com/FilipBudzynski/book_it/internal/models"
+)
+
+const progressLogStepId = "progress-log-%d"
+
+type progressStep struct {
+	class       string
+	dataContent string
+	message     string
+}
+
+func NewProgressStep() *progressStep {
+	return &progressStep{
+		class: "step",
+	}
+}
+
+templ ProgressStep(log models.DailyProgressLog) {
+	{{ stepAtributes := NewProgressStep() }}
+	switch log.PagesRead {
+		case 0:
+			{{ break }}
+		case log.TargetPages:
+			{{ stepAtributes.dataContent = "✓" }}
+			{{ stepAtributes.class += " step-primary" }}
+			{{ stepAtributes.message = fmt.Sprintf("read: %d", log.PagesRead) + "" }}
+		default:
+			{{ stepAtributes.dataContent = "✓" }}
+			{{ stepAtributes.class += " step-primary" }}
+			{{ stepAtributes.message = fmt.Sprintf("read: %d", log.PagesRead) + "" }}
+	}
+	<div
+		id={ fmt.Sprintf(progressLogStepId, log.ID) }
+		hx-get={ fmt.Sprintf("/progress_log/modal/%d", log.ID) }
+		hx-target="#htmx_modal"
+		hx-swap="innerHTML"
+		hx-trigger="click"
+		onclick="my_modal_1.showModal()"
+		class={ stepAtributes.class }
+		if stepAtributes.dataContent != "" {
+			data-content={ stepAtributes.dataContent }
+		}
+	>{ stepAtributes.message }</div>
+}

@@ -6,7 +6,7 @@ templ OnTrackIdentifiactor(bookid uint) {
 	<div>
 		<button
 			hx-get={ fmt.Sprintf("/tracking/%d", bookid) }
-			hx-target="#tracking-statistics"
+			hx-target="#progress-statistics"
 			hx-swap="innerHTML"
 			class="btn"
 		>👀 tracking</button>

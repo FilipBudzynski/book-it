@@ -21,6 +21,17 @@ type BookService interface {
 	GetByQuery(title string, maxResults int) ([]*models.Book, error)
 	// GetByID
 	GetByID(id string) (*models.Book, error)
+
+	WithProvider(provider BookProvider) BookService
+}
+
+// BookProvider is used to communicate with the external API or Database
+// in order to retreive response and parse it into models.Book struct
+type BookProvider interface {
+	GetBook(id string) (*models.Book, error)
+	GetBooksByQuery(query string, limit int) ([]*models.Book, error)
+	// used to change the limit of query results
+	WithLimit(limit int) BookProvider
 }
 
 type BookHandler struct {
@@ -63,4 +74,10 @@ func (h *BookHandler) ListBooks(c echo.Context) error {
 
 func (h *BookHandler) List(c echo.Context) error {
 	return nil
+}
+
+func (h *BookHandler) RegisterRoutes(app *echo.Echo) {
+	group := app.Group("/books")
+	group.GET("", h.ListBooks)
+	group.POST("", h.ListBooks)
 }
