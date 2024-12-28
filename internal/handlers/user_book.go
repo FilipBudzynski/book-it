@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	webBooks "github.com/FilipBudzynski/book_it/cmd/web/books"
+	webProgress "github.com/FilipBudzynski/book_it/cmd/web/progress"
 	webUserBooks "github.com/FilipBudzynski/book_it/cmd/web/user_books"
 	"github.com/FilipBudzynski/book_it/internal/models"
 	"github.com/FilipBudzynski/book_it/utils"
@@ -91,7 +92,7 @@ func (h *UserBookHandler) GetCreateTrackingModal(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	return utils.RenderView(c, webUserBooks.ProgressCreateModal(userBook))
+	return utils.RenderView(c, webProgress.ProgressCreateModal(userBook))
 }
 
 func (h *UserBookHandler) RegisterRoutes(app *echo.Echo) {

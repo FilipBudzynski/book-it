@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	webProgress "github.com/FilipBudzynski/book_it/cmd/web/progress"
@@ -21,23 +23,50 @@ type ProgressService interface {
 	GetByUserBookId(userBookId string) (*models.ReadingProgress, error)
 }
 
-type ProgressHandler struct {
-	ProgressService    ProgressService
-	ProgressLogService ProgressLogService
+type ProgressLogService interface {
+	// standard methods
+	Create(progressId, userBookId uint, target int, date time.Time) (*models.DailyProgressLog, error)
+	Update(log *models.DailyProgressLog) error
+	Get(id string) (*models.DailyProgressLog, error)
+	Delete(id string) error
+	GetAll(progressId string) ([]models.DailyProgressLog, error)
 }
 
-func NewProgressHandler(trackingService ProgressService) *ProgressHandler {
-	return &ProgressHandler{
-		ProgressService: trackingService,
+type progressHandler struct {
+	progressService    ProgressService
+	progressLogService ProgressLogService
+}
+
+func NewProgressHandler(s ProgressService) *progressHandler {
+	return &progressHandler{
+		progressService: s,
 	}
 }
 
-func (h *ProgressHandler) WithProgressLogService(progressLogService ProgressLogService) *ProgressHandler {
-	h.ProgressLogService = progressLogService
+func (h *progressHandler) WithProgressLogService(progressLogService ProgressLogService) *progressHandler {
+	h.progressLogService = progressLogService
 	return h
 }
 
-func (s *ProgressHandler) Create(c echo.Context) error {
+func (h *progressHandler) RegisterRoutes(app *echo.Echo) {
+	group := app.Group("/progress")
+	// middleware for protected routes
+	group.Use(utils.CheckLoggedInMiddleware)
+	// progress endpoints
+	group.POST("", h.Create)
+	group.GET("/:id", h.GetByUserBookId)
+	group.PUT("", h.Update)
+	group.DELETE("", h.Delete)
+
+	// progress log endpoints
+	group.Use(utils.CheckLoggedInMiddleware)
+	group.POST("/log/:id", h.UpdateLog)
+	// htmx routes
+	group.GET("/log/modal/:id", h.GetLogModal)
+	group.GET("/log/list/:id", h.GetLogList)
+}
+
+func (s *progressHandler) Create(c echo.Context) error {
 	bookProgress := &models.ReadingProgress{}
 	if err := c.Bind(bookProgress); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
@@ -67,68 +96,109 @@ func (s *ProgressHandler) Create(c echo.Context) error {
 	bookProgress.Completed = false
 
 	for i := range days {
-		trackingLog, err := s.ProgressLogService.Create(bookProgress.ID, bookProgress.DailyTargetPages, time.Now().AddDate(0, 0, i))
+		trackingLog, err := s.progressLogService.Create(
+			bookProgress.ID,
+			bookProgress.UserBookID,
+			bookProgress.DailyTargetPages,
+			time.Now().AddDate(0, 0, i),
+		)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 		bookProgress.DailyProgress = append(bookProgress.DailyProgress, *trackingLog)
 	}
 
-	err = s.ProgressService.Create(bookProgress)
+	err = s.progressService.Create(bookProgress)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 	return utils.RenderView(c, webProgress.OnTrackIdentifiactor(bookProgress.UserBookID))
 }
 
-func (s *ProgressHandler) Update(c echo.Context) error {
+func (s *progressHandler) Update(c echo.Context) error {
 	progress := &models.ReadingProgress{}
 	if err := c.Bind(progress); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	err := s.ProgressService.Update(progress)
+	err := s.progressService.Update(progress)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 	return c.JSON(http.StatusOK, progress)
 }
 
-func (s *ProgressHandler) Delete(c echo.Context) error {
+func (s *progressHandler) Delete(c echo.Context) error {
 	id := c.Param("id")
-	err := s.ProgressService.Delete(id)
+	err := s.progressService.Delete(id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 	return c.NoContent(http.StatusNoContent)
 }
 
-func (s *ProgressHandler) GetByUserBookId(c echo.Context) error {
+func (s *progressHandler) GetByUserBookId(c echo.Context) error {
 	id := c.Param("id")
-	progress, err := s.ProgressService.GetByUserBookId(id)
+	progress, err := s.progressService.GetByUserBookId(id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 	return utils.RenderView(c, webProgress.ProgressStatistics(progress))
 }
 
-// TODO: udpate daily log
-func (s *ProgressHandler) UpdateDailyLog(c echo.Context) error {
-	dailyLog := &models.DailyProgressLog{}
-	if err := c.Bind(dailyLog); err != nil {
+func (s *progressHandler) UpdateLog(c echo.Context) error {
+	id := c.Param("id")
+	dailyLog, err := s.progressLogService.Get(id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	pagesRead := c.FormValue("pages-read")
+	if pagesRead == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("Something went wrong with the request. Pages read was not provided in form"))
+	}
+
+	pagesReadInt, err := strconv.Atoi(pagesRead)
+	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
-	return nil
+	if pagesReadInt < 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "Pages read cannot be negative")
+	}
+	// TODO: add check with total pages
+	// if pagesReadInt > dailyLog.TargetPages {
+	// 	return echo.NewHTTPError(http.StatusBadRequest, "Pages read cannot be greater than target pages")
+	// }
+
+	dailyLog.PagesRead = int(pagesReadInt)
+
+	if err = s.progressLogService.Update(dailyLog); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	progress, err := s.progressService.Get(fmt.Sprintf("%d", dailyLog.ReadingProgressID))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	return utils.RenderView(c, webProgress.ProgressStatistics(progress))
 }
 
-func (h *ProgressHandler) RegisterRoutes(app *echo.Echo) {
-	group := app.Group("/tracking")
-	// middleware for protected routes
-	group.Use(utils.CheckLoggedInMiddleware)
+// GetModal return reading log modal component if log with given id exists
+func (s *progressHandler) GetLogModal(c echo.Context) error {
+	id := c.Param("id")
+	readingLog, err := s.progressLogService.Get(id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	return utils.RenderView(c, webProgress.ProgressLogModal(*readingLog))
+}
 
-	// progress endpoints
-	group.POST("", h.Create)
-	group.GET("/:id", h.GetByUserBookId)
-	group.PUT("", h.Update)
-	group.DELETE("", h.Delete)
+func (s *progressHandler) GetLogList(c echo.Context) error {
+	progressId := c.Param("id")
+	dailyLogs, err := s.progressLogService.GetAll(progressId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	return utils.RenderView(c, webProgress.DailyProgressLogs(dailyLogs))
 }

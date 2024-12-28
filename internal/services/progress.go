@@ -20,7 +20,7 @@ func (s *progressService) Create(progress *models.ReadingProgress) error {
 
 func (s *progressService) Get(id string) (*models.ReadingProgress, error) {
 	readingProgress := &models.ReadingProgress{}
-	err := s.db.First(readingProgress, "id = ?", id).Error
+	err := s.db.Preload("DailyProgress").First(readingProgress, "id = ?", id).Error
 	if err != nil {
 		return nil, err
 	}

@@ -3,10 +3,8 @@ package web_user_books
 import (
 	"fmt"
 	"github.com/FilipBudzynski/book_it/internal/models"
-	"github.com/FilipBudzynski/book_it/cmd/web/progress"
+	web_progress "github.com/FilipBudzynski/book_it/cmd/web/progress"
 )
-
-const htmxTrackingButtonId = "tracking-td-%d"
 
 templ List(books []*models.UserBook) {
 	<div class="flex flex-col items-center mx-10 md:mx-20">
@@ -34,7 +32,7 @@ templ List(books []*models.UserBook) {
 
 templ UserBooksTable(books []*models.UserBook) {
 	<div id="modal-content"></div>
-	<div class="flex-grow max-w-[80rem] place-items-center relative mb-10 overflow-auto">
+	<div class="flex-grow max-w-[80rem] place-items-center relative mb-10 h-[30rem] rounded-3xl overflow-auto">
 		<table class="bg-base-100 table table-zebra table-md z-[1] ">
 			<thead>
 				<th></th>
@@ -71,9 +69,9 @@ templ UserBooksTable(books []*models.UserBook) {
 							</div>
 						</td>
 						<td>
-							<div id={ fmt.Sprintf(htmxTrackingButtonId, book.ID) }>
+							<div id={ fmt.Sprintf(web_progress.HtmxTrackingButtonId, book.ID) }>
 								if book.ReadingProgress != nil {
-									@web_tracking.OnTrackIdentifiactor(book.ID)
+									@web_progress.OnTrackIdentifiactor(book.ID)
 								} else {
 									<button
 										hx-get={ fmt.Sprintf("user-books/create_modal/%d", book.ID) }
@@ -132,50 +130,5 @@ templ Bookshelfs() {
 				</tbody>
 			</table>
 		</div>
-	</div>
-}
-
-templ ProgressCreateModal(userBook *models.UserBook) {
-	<form method="dialog">
-		<button
-			class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-		>✕</button>
-	</form>
-	<h3 class="text-lg font-bold">Track Progress of { userBook.Book.Title }</h3>
-	<p class="py-4">We can help you to track a progress of reading a book</p>
-	<div class="flex-row">
-		<form method="dialog">
-			<div class="mb-4 grid grid-cols-2 gap-4">
-				<input name="user-book-id" value={ fmt.Sprintf("%d", userBook.ID) } class="input hidden input-bordered w-full mt-2"/>
-				<div>
-					<label class="block text-sm font-medium text-gray-700">Start Date</label>
-					<input name="start-date" type="date" class="input input-bordered w-full mt-2"/>
-				</div>
-				<div>
-					<label class="block text-sm font-medium text-gray-700">End Date</label>
-					<input name="end-date" type="date" class="input input-bordered w-full mt-2"/>
-				</div>
-			</div>
-			<div class="mb-4">
-				<label class="block text-sm font-medium text-gray-700">Total Pages</label>
-				<input
-					name="total-pages"
-					type="number"
-					class="input input-bordered w-full mt-2"
-					placeholder="Enter total pages"
-					value={ fmt.Sprintf("%d", userBook.Book.Pages) }
-				/>
-				<input name="current-page" value="0" class="input hidden input-bordered w-full mt-2"/>
-			</div>
-			<!-- if there is a button in form, it will close the modal -->
-			<div class="modal-action">
-				<button
-					hx-post="/tracking"
-					hx-target={ fmt.Sprintf("#"+htmxTrackingButtonId, userBook.ID) }
-					class="btn"
-					onclick="my_modal_1.close()"
-				>Start Tracking</button>
-			</div>
-		</form>
 	</div>
 }

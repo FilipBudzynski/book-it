@@ -1,6 +1,7 @@
 package web_tracking
 
 import (
+	"time"
 	"fmt"
 	"github.com/FilipBudzynski/book_it/internal/models"
 )
@@ -18,6 +19,26 @@ templ ProgressStatistics(readingProgress *models.ReadingProgress) {
 		<!-- Tracking -->
 		<div class="pb-6">
 			<div class="stats shadow">
+				<div class="stat">
+					<div class="stat-figure text-primary">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							fill="none"
+							viewBox="0 0 24 24"
+							class="inline-block h-8 w-8 stroke-current"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+							></path>
+						</svg>
+					</div>
+					<div class="stat-title">Days Left</div>
+					<div class="stat-value text-primary">{ fmt.Sprintf("%d", int(readingProgress.EndDate.Sub(time.Now()).Hours() / 24 )) }</div>
+					<div class="stat-desc">{ "Started at: " + readingProgress.StartDate.Format("2006-01-02") }</div>
+				</div>
 				<div class="stat">
 					<div class="stat-figure text-primary">
 						<svg
@@ -56,7 +77,7 @@ templ ProgressStatistics(readingProgress *models.ReadingProgress) {
 					</div>
 					<div class="stat-title">Pages Left</div>
 					<div class="stat-value text-secondary">{ fmt.Sprintf("%d", readingProgress.TotalPages - readingProgress.CurrentPage) }</div>
-					<div class="stat-desc">Already read: 128</div>
+					<div class="stat-desc">Already read: { fmt.Sprintf("%d Pages", readingProgress.CurrentPage) }</div>
 				</div>
 				<div class="stat">
 					<div class="stat-figure text-secondary">
@@ -117,9 +138,9 @@ templ ProgressLogModal(dailyLog models.DailyProgressLog) {
 			<!-- if there is a button in form, it will close the modal -->
 			<div class="modal-action">
 				<button
-					hx-put={ fmt.Sprintf("/progress_log/%d", dailyLog.ID) }
-					hx-target={ fmt.Sprintf("#"+progressLogStepId, dailyLog.ID) }
-					hx-swap="outerHTML"
+					hx-post={ fmt.Sprintf("/progress/log/%d", dailyLog.ID) }
+					hx-target="#progress-statistics"
+					hx-swap="innerHTML"
 					hx-trigger="click"
 					class="btn"
 					onclick="my_modal_1.close()"

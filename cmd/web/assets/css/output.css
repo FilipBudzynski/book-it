@@ -701,6 +701,10 @@ video {
   height: 2.25rem;
 }
 
+.h-\[30rem\] {
+  height: 30rem;
+}
+
 .w-1\/12 {
   width: 8.333333%;
 }
@@ -842,6 +846,10 @@ video {
 
 .rounded {
   border-radius: 0.25rem;
+}
+
+.rounded-3xl {
+  border-radius: 1.5rem;
 }
 
 .rounded-lg {

@@ -36,7 +36,7 @@ templ ProgressStep(log models.DailyProgressLog) {
 	}
 	<div
 		id={ fmt.Sprintf(progressLogStepId, log.ID) }
-		hx-get={ fmt.Sprintf("/progress_log/modal/%d", log.ID) }
+		hx-get={ fmt.Sprintf("/progress/log/modal/%d", log.ID) }
 		hx-target="#htmx_modal"
 		hx-swap="innerHTML"
 		hx-trigger="click"

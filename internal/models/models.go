@@ -71,13 +71,14 @@ type ReadingProgress struct {
 type DailyProgressLog struct {
 	gorm.Model
 	ReadingProgressID uint `gorm:"not null"` // Reading progress foreign key
+	UserBookID        uint // Denormalized
 	Date              time.Time
 	PagesRead         int `form:"pages-read"` // Pages read on this date
 	TargetPages       int
 	Completed         bool // Whether the day's target was met
 }
 
-func (d *DailyProgressLog) AfterSave(db *gorm.DB) (error) {
+func (d *DailyProgressLog) AfterSave(db *gorm.DB) error {
 	var readingProgress ReadingProgress
 	err := db.First(&readingProgress, d.ReadingProgressID).Error
 	if err != nil && err != gorm.ErrRecordNotFound {

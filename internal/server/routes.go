@@ -24,13 +24,14 @@ func (s *Server) WithMiddleware(e *echo.Echo) *Server {
 
 func (s *Server) WithRegisterRoutes(e *echo.Echo) *Server {
 	db := s.db.Db
+
 	userService := services.NewUserService(db)
-	bookService := services.NewBookService(db).
-		WithProvider(providers.NewGoogleProvider().
-			WithLimit(15))
 	userBookService := services.NewUserBookService(db)
 	progressService := services.NewProgressService(db)
 	progressLogService := services.NewProgressLogService(db)
+	bookService := services.NewBookService(db).
+		WithProvider(providers.NewGoogleProvider().
+			WithLimit(15))
 
 	routeRegistrars := []RouteRegistrar{
 		handlers.NewAuthHandler(userService),
@@ -38,7 +39,6 @@ func (s *Server) WithRegisterRoutes(e *echo.Echo) *Server {
 		handlers.NewBookHandler(bookService, userBookService),
 		handlers.NewUserBookHandler(userBookService),
 		handlers.NewProgressHandler(progressService).WithProgressLogService(progressLogService),
-		handlers.NewProgressLogHandler(progressLogService),
 	}
 
 	for _, routeRegistrar := range routeRegistrars {
