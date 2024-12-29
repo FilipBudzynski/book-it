@@ -1,0 +1,54 @@
+package web_tracking
+
+templ Tracking() {
+	<div class="card bg-white shadow-xl p-6">
+		<h2 class="text-2xl font-bold mb-4">Track Your Reading Progress</h2>
+		<!-- Book Information -->
+		<div class="mb-4">
+			<label class="block text-sm font-medium text-gray-700">Book Title</label>
+			<input type="text" class="input input-bordered w-full mt-2" placeholder="Enter book title"/>
+		</div>
+		<div class="mb-4 grid grid-cols-2 gap-4">
+			<div>
+				<label class="block text-sm font-medium text-gray-700">Start Date</label>
+				<input type="date" class="input input-bordered w-full mt-2"/>
+			</div>
+			<div>
+				<label class="block text-sm font-medium text-gray-700">End Date</label>
+				<input type="date" class="input input-bordered w-full mt-2"/>
+			</div>
+		</div>
+		<div class="mb-4">
+			<label class="block text-sm font-medium text-gray-700">Total Pages</label>
+			<input type="number" class="input input-bordered w-full mt-2" placeholder="Enter total pages"/>
+		</div>
+		<div class="mb-6">
+			<button class="btn btn-primary w-full">Calculate Daily Target</button>
+		</div>
+		<!-- Daily Reading Progress -->
+		<div class="mb-4">
+			<h3 class="text-lg font-semibold mb-2">Daily Progress</h3>
+			<ul class="space-y-2">
+				<!-- Example Day Placeholder -->
+				<li class="flex items-center justify-between p-3 bg-gray-50 border rounded">
+					<span>Day 1</span>
+					<label class="flex items-center gap-2">
+						<input type="checkbox" class="checkbox checkbox-primary"/>
+						<span class="text-sm">Read</span>
+					</label>
+				</li>
+				<li class="flex items-center justify-between p-3 bg-gray-50 border rounded">
+					<span>Day 2</span>
+					<label class="flex items-center gap-2">
+						<input type="checkbox" class="checkbox checkbox-primary"/>
+						<span class="text-sm">Read</span>
+					</label>
+				</li>
+				<!-- Add more days dynamically -->
+			</ul>
+		</div>
+		<div>
+			<button class="btn btn-accent w-full">Mark Completed</button>
+		</div>
+	</div>
+}

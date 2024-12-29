@@ -19,7 +19,7 @@ func (s *userBookService) Create(userID, bookID string) error {
 	userBook := &models.UserBook{
 		UserGoogleId: userID,
 		BookID:       bookID,
-		Status:       models.BookStatusNotStarted,
+		IsTracked:    false,
 	}
 	return s.db.Create(userBook).Error
 }
@@ -29,12 +29,15 @@ func (s *userBookService) Update(userBook *models.UserBook) error {
 }
 
 func (s *userBookService) Delete(id string) error {
-	return s.db.Where("book_id = ?", id).Delete(&models.UserBook{}).Error
+	return s.db.Delete(&models.UserBook{}, id).Error
 }
 
 func (s *userBookService) GetAll(userId string) ([]*models.UserBook, error) {
 	var userBooks []*models.UserBook
-	if err := s.db.Where("user_google_id = ?", userId).Find(&userBooks).Error; err != nil {
+	if err := s.db.Preload("Book").Preload("ReadingProgress").
+		Where("user_google_id = ?", userId).
+		Where("deleted_at IS NULL").
+		Find(&userBooks).Error; err != nil {
 		return nil, err
 	}
 
@@ -43,7 +46,7 @@ func (s *userBookService) GetAll(userId string) ([]*models.UserBook, error) {
 
 func (s *userBookService) GetById(id string) (*models.UserBook, error) {
 	var userBook models.UserBook
-	if err := s.db.First(&userBook, id).Error; err != nil {
+	if err := s.db.Preload("Book").First(&userBook, id).Error; err != nil {
 		return nil, err
 	}
 	return &userBook, nil

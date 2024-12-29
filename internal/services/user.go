@@ -1,8 +1,6 @@
 package services
 
 import (
-	"fmt"
-
 	"github.com/FilipBudzynski/book_it/internal/models"
 	"gorm.io/gorm"
 )
@@ -69,32 +67,4 @@ func (u *userService) Update(user *models.User) error {
 
 func (u *userService) Delete(user models.User) error {
 	return u.db.Delete(user).Error
-}
-
-func (u *userService) AddBook(userID, bookID string) error {
-	var user models.User
-	err := u.db.Preload("Books").First(&user, "google_id = ?", userID).Error
-	if err != nil {
-		return err
-	}
-
-	var userBook models.UserBook
-	err = u.db.First(&userBook, "book_id = ?", bookID).Error
-	if err == nil {
-		return fmt.Errorf("User: %s already has book with id: %s, err: %v", user.Username, bookID, err)
-	}
-
-	newUserBook := models.UserBook{
-		UserGoogleId: user.GoogleId,
-		BookID:       bookID,
-		Status:       models.BookStatusNotStarted,
-	}
-
-	user.Books = append(user.Books, newUserBook)
-	err = u.db.Save(&user).Error
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

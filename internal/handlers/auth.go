@@ -96,3 +96,10 @@ func (a *AuthHandler) Logout(c echo.Context) error {
 
 	return c.Redirect(http.StatusFound, "/")
 }
+
+func (h *AuthHandler) RegisterRoutes(app *echo.Echo) {
+	group := app.Group("/auth")
+	group.GET("/callback", h.GetAuthCallbackFunc)
+	group.GET("/", h.GetAuthFunc)
+	group.GET("/logout", h.Logout)
+}

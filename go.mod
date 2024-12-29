@@ -7,7 +7,6 @@ toolchain go1.23.3
 require (
 	github.com/a-h/templ v0.2.793
 	github.com/joho/godotenv v1.5.1
-	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/markbates/goth v1.80.0
 	github.com/mattn/go-sqlite3 v1.14.24
