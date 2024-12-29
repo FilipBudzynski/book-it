@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/FilipBudzynski/book_it/internal/handlers"
 	"github.com/FilipBudzynski/book_it/internal/models"
-	"github.com/FilipBudzynski/book_it/internal/services"
 )
 
 const (
@@ -22,7 +22,7 @@ const (
 // example:  "https://www.googleapis.com/books/v1/volumes?q=%s&maxResults=%d"
 //
 // maxResults: a number to specify max returned results for a query
-func NewGoogleProvider() services.BookProvider {
+func NewGoogleProvider() handlers.BookProvider {
 	return &googleProvider{
 		apiUrl:     GoogleBooksAPI,
 		maxResults: DefaultMaxResults,
@@ -34,7 +34,7 @@ type googleProvider struct {
 	maxResults int
 }
 
-func (p *googleProvider) WithLimit(limit int) services.BookProvider {
+func (p *googleProvider) WithLimit(limit int) handlers.BookProvider {
 	p.maxResults = limit
 	return p
 }
@@ -55,6 +55,7 @@ type VolumeInfo struct {
 	Authors       []string `json:"authors"`
 	PublishedDate string   `json:"publishedDate"`
 	Description   string   `json:"description,omitempty"`
+	Pages         int      `json:"pageCount"`
 
 	ImageLinks struct {
 		SmallThumbnail string `json:"smallThumbnail"`
@@ -147,6 +148,7 @@ func (p *googleProvider) convert(bookResponse BookResponse) *models.Book {
 		Description:   description,
 		ImageLink:     volumeInfo.ImageLinks.SmallThumbnail,
 		PublishedDate: volumeInfo.PublishedDate,
+		Pages:         volumeInfo.Pages,
 	}
 	if isbn, err := strconv.ParseUint(isbnString, 10, 0); err != nil {
 		book.ISBN = uint(isbn)

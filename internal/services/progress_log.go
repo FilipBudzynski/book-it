@@ -32,32 +32,6 @@ func (s *progressLogService) Create(progressId, userBookId uint, target int, dat
 	return readingLog, nil
 }
 
-func (s *progressLogService) CreateAll(progressId, userBookId uint, targetPages int, startDate, endDate time.Time) (*models.DailyProgressLog, error) {
-	days := int(endDate.Sub(startDate).Hours() / 24)
-    for i := range days {
-        log, err := s.repository.Create(
-			bookProgress.ID,
-			bookProgress.UserBookID,
-			bookProgress.DailyTargetPages,
-			time.Now().AddDate(0, 0, i),
-		)
-
-    }
-	readingLog := &models.DailyProgressLog{
-		ReadingProgressID: progressId,
-		Date:              date,
-		TargetPages:       target,
-		UserBookID:        userBookId,
-		Completed:         false,
-	}
-
-	err := s.db.Create(readingLog).Error
-	if err != nil {
-		return nil, err
-	}
-	return readingLog, nil
-}
-
 func (s *progressLogService) Update(progressLog *models.DailyProgressLog) error {
 	return s.db.Save(progressLog).Error
 }

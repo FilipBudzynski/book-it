@@ -6,25 +6,20 @@ import (
 	"gorm.io/gorm"
 )
 
-// BookProvider is used to communicate with the external API or Database
-// in order to retreive response and parse it into models.Book struct
-type BookProvider interface {
-	GetBook(id string) (*models.Book, error)
-	GetBooksByQuery(query string, limit int) ([]*models.Book, error)
-	// used to change the limit of query results
-	WithLimit(limit int) BookProvider
-}
-
 type bookService struct {
-	provider BookProvider
+	provider handlers.BookProvider
 	db       *gorm.DB
 }
 
-func NewBookService(bookProvider BookProvider, db *gorm.DB) handlers.BookService {
+func NewBookService(db *gorm.DB) handlers.BookService {
 	return &bookService{
-		provider: bookProvider,
-		db:       db,
+		db: db,
 	}
+}
+
+func (s *bookService) WithProvider(provider handlers.BookProvider) handlers.BookService {
+	s.provider = provider
+	return s
 }
 
 // get fetches the first book by isbn
@@ -71,18 +66,6 @@ func (s *bookService) GetByID(bookId string) (*models.Book, error) {
 	}
 
 	return book, nil
-}
-
-func (s *bookService) GetUserBooks(userID string) ([]*models.Book, error) {
-	books := []*models.Book{}
-	err := s.db.Table("books").
-		Select("books.*").
-		Joins("left join user_books on user_books.book_id = books.id").
-		Where("user_books.deleted_at IS NULL").
-		Where("user_books.user_google_id = ?", userID).
-		Scan(&books).Error
-
-	return books, err
 }
 
 // GetByQuery returns maxResults number of books by title from external api (provider)

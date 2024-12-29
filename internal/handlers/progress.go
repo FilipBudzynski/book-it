@@ -26,7 +26,6 @@ type ProgressService interface {
 type ProgressLogService interface {
 	// standard methods
 	Create(progressId, userBookId uint, target int, date time.Time) (*models.DailyProgressLog, error)
-	CreateAll(progressId, userBookId uint, targetPages int, startDate, endDate time.Time) ([]models.DailyProgressLog, error)
 	Update(log *models.DailyProgressLog) error
 	Get(id string) (*models.DailyProgressLog, error)
 	Delete(id string) error
@@ -96,24 +95,18 @@ func (s *progressHandler) Create(c echo.Context) error {
 	bookProgress.EndDate = endDateParsed
 	bookProgress.Completed = false
 
-	logs, err := s.progressLogService.CreateAll(bookProgress.ID, bookProgress.StartDate, bookProgress.EndDate)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	for i := range days {
+		trackingLog, err := s.progressLogService.Create(
+			bookProgress.ID,
+			bookProgress.UserBookID,
+			bookProgress.DailyTargetPages,
+			time.Now().AddDate(0, 0, i),
+		)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err)
+		}
+		bookProgress.DailyProgress = append(bookProgress.DailyProgress, *trackingLog)
 	}
-	bookProgress.DailyProgress = logs
-
-	// for i := range days {
-	// 	trackingLog, err := s.progressLogService.Create(
-	// 		bookProgress.ID,
-	// 		bookProgress.UserBookID,
-	// 		bookProgress.DailyTargetPages,
-	// 		time.Now().AddDate(0, 0, i),
-	// 	)
-	// 	if err != nil {
-	// 		return echo.NewHTTPError(http.StatusInternalServerError, err)
-	// 	}
-	// 	bookProgress.DailyProgress = append(bookProgress.DailyProgress, *trackingLog)
-	// }
 
 	err = s.progressService.Create(bookProgress)
 	if err != nil {
