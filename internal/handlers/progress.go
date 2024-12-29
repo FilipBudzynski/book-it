@@ -95,6 +95,7 @@ func (s *progressHandler) Create(c echo.Context) error {
 	bookProgress.EndDate = endDateParsed
 	bookProgress.Completed = false
 
+
 	for i := range days {
 		trackingLog, err := s.progressLogService.Create(
 			bookProgress.ID,
