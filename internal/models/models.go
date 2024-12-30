@@ -1,6 +1,7 @@
 package models
 
 import (
+	"errors"
 	"time"
 
 	"gorm.io/gorm"
@@ -68,14 +69,57 @@ type ReadingProgress struct {
 	Completed        bool               // Whether the book is finished
 }
 
+func (r *ReadingProgress) Validate() error {
+	if r.CurrentPage > r.TotalPages {
+		return errors.New("Current page cannot be greater than total pages")
+	}
+
+	if r.CurrentPage < 0 {
+		return errors.New("Current page cannot be negative")
+	}
+
+	if r.DailyTargetPages < 0 {
+		return errors.New("Daily target pages cannot be negative")
+	}
+
+	if r.StartDate.After(r.EndDate) {
+		return errors.New("End date must be after start date")
+	}
+
+	return nil
+}
+
 type DailyProgressLog struct {
 	gorm.Model
 	ReadingProgressID uint `gorm:"not null"` // Reading progress foreign key
 	UserBookID        uint // Denormalized
 	Date              time.Time
-	PagesRead         int `form:"pages-read"` // Pages read on this date
+	PagesRead         int `form:"pages-read"`  // Pages read on this date
+	TotalPages        int `form:"total-pages"` // Denormalized
 	TargetPages       int
 	Completed         bool // Whether the day's target was met
+}
+
+var (
+	ErrTrackingEndsBeforeStart   = errors.New("End date must be after start date")
+	ErrPagesReadNotSpecified     = errors.New("Pages read must be a positive number")
+	ErrPagesReadGreaterThanTotal = errors.New("Pages read cannot be greater than total pages")
+)
+
+func (d *DailyProgressLog) Validate() error {
+	if d.PagesRead < 0 {
+		return ErrPagesReadNotSpecified
+	}
+
+	if d.PagesRead > d.TotalPages {
+		return ErrPagesReadGreaterThanTotal
+	}
+
+	if d.PagesRead >= d.TargetPages {
+		d.Completed = true
+	}
+
+	return nil
 }
 
 func (d *DailyProgressLog) AfterSave(db *gorm.DB) error {

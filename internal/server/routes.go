@@ -6,6 +6,7 @@ import (
 	"github.com/FilipBudzynski/book_it/cmd/web"
 	"github.com/FilipBudzynski/book_it/internal/handlers"
 	"github.com/FilipBudzynski/book_it/internal/providers"
+	"github.com/FilipBudzynski/book_it/internal/repositories"
 	"github.com/FilipBudzynski/book_it/internal/services"
 	"github.com/FilipBudzynski/book_it/utils"
 	"github.com/labstack/echo/v4"
@@ -25,10 +26,11 @@ func (s *Server) WithMiddleware(e *echo.Echo) *Server {
 func (s *Server) WithRegisterRoutes(e *echo.Echo) *Server {
 	db := s.db.Db
 
+	progressRepo := repositories.NewProgressRepository(db)
+
 	userService := services.NewUserService(db)
 	userBookService := services.NewUserBookService(db)
-	progressService := services.NewProgressService(db)
-	progressLogService := services.NewProgressLogService(db)
+	progressService := services.NewProgressService(progressRepo)
 	bookService := services.NewBookService(db).
 		WithProvider(providers.NewGoogleProvider().
 			WithLimit(15))
@@ -38,7 +40,7 @@ func (s *Server) WithRegisterRoutes(e *echo.Echo) *Server {
 		handlers.NewUserHandler(userService),
 		handlers.NewBookHandler(bookService, userBookService),
 		handlers.NewUserBookHandler(userBookService),
-		handlers.NewProgressHandler(progressService).WithProgressLogService(progressLogService),
+		handlers.NewProgressHandler(progressService),
 	}
 
 	for _, routeRegistrar := range routeRegistrars {
