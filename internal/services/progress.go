@@ -10,14 +10,14 @@ import (
 )
 
 var (
-	ErrorTrackingEndsBeforeStart = errors.New("End date must be after start date")
-	ErrPagesReadNotSpecified     = errors.New("Pages read must be a positive number")
+	ErrTrackingEndsBeforeStart = errors.New("End date must be after start date")
+	ErrPagesReadNotSpecified   = errors.New("Pages read must be a positive number")
 )
 
 type ProgressRepository interface {
 	Create(progress models.ReadingProgress) error
-	GetById(id string, preloads ...string) (*models.ReadingProgress, error)
-	GetByUserBookId(userBookId string, preloads ...string) (*models.ReadingProgress, error)
+	GetById(id string, progress *models.ReadingProgress) error
+	GetByUserBookId(userBookId string) (*models.ReadingProgress, error)
 	Delete(id string) error
 	// logs methods
 	// TODO: move to progressLogRepository
@@ -45,7 +45,7 @@ func (s *progressService) Create(bookId uint, totalPages int, startDate, endDate
 	}
 
 	days := int(endDateParsed.Sub(startDateParsed).Hours() / 24)
-	if days == 0 {
+	if days <= 0 {
 		return models.ReadingProgress{}, errors.New("End date must be after start date")
 	}
 
@@ -83,7 +83,9 @@ func (s *progressService) Create(bookId uint, totalPages int, startDate, endDate
 }
 
 func (s *progressService) Get(id string) (*models.ReadingProgress, error) {
-	return s.repo.GetById(id, "DailyProgress")
+	progress := &models.ReadingProgress{}
+	err := s.repo.GetById(id, progress)
+	return progress, err
 }
 
 func (s *progressService) UpdateLogPagesRead(id, pagesReadString string) error {
@@ -118,5 +120,5 @@ func (s *progressService) Delete(id string) error {
 }
 
 func (s *progressService) GetByUserBookId(id string) (*models.ReadingProgress, error) {
-	return s.repo.GetByUserBookId(id, "DailyProgress")
+	return s.repo.GetByUserBookId(id)
 }

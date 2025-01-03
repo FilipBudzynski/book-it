@@ -19,23 +19,14 @@ func (r *progressRepository) Create(progress models.ReadingProgress) error {
 	return r.db.Create(&progress).Error
 }
 
-func (r *progressRepository) get(query, data string, preloads ...string) ([]*models.ReadingProgress, error) {
-	readingProgress := []*models.ReadingProgress{}
-	tx := &gorm.DB{}
-	for _, v := range preloads {
-		tx = r.db.Preload(v)
-	}
-	return readingProgress, tx.Find(&readingProgress, query, data).Error
+func (r *progressRepository) GetById(id string, progress *models.ReadingProgress) error {
+	return r.db.Preload("DailyProgress").First(progress, "id = ?", id).Error
 }
 
-func (r *progressRepository) GetById(id string, preloads ...string) (*models.ReadingProgress, error) {
-	progress, err := r.get("id = ?", id, preloads...)
-	return progress[0], err
-}
-
-func (r *progressRepository) GetByUserBookId(userBookId string, preloads ...string) (*models.ReadingProgress, error) {
-	progress, err := r.get("user_book_id = ?", userBookId, preloads...)
-	return progress[0], err
+func (r *progressRepository) GetByUserBookId(userBookId string) (*models.ReadingProgress, error) {
+	progress := &models.ReadingProgress{}
+	err := r.db.Preload("DailyProgress").First(progress, "user_book_id = ?", userBookId).Error
+	return progress, err
 }
 
 func (r *progressRepository) GetLogById(id string) (*models.DailyProgressLog, error) {

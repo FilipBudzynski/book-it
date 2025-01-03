@@ -14,14 +14,12 @@ type ProgressService interface {
 	// standard methods
 	Create(bookId uint, totalPages int, startDateString, endDateString string) (models.ReadingProgress, error)
 	Get(id string) (*models.ReadingProgress, error)
+	GetByUserBookId(userBookId string) (*models.ReadingProgress, error)
 	Delete(id string) error
 
 	// log methods
-	UpdateLogPagesRead(id, pagesReadString string) error
 	GetLog(id string) (*models.DailyProgressLog, error)
-
-	// custom methods
-	GetByUserBookId(userBookId string) (*models.ReadingProgress, error)
+	UpdateLogPagesRead(id, pagesReadString string) error
 }
 
 type progressHandler struct {
@@ -71,15 +69,6 @@ func (s *progressHandler) Create(c echo.Context) error {
 	return utils.RenderView(c, webProgress.OnTrackIdentifiactor(progress.UserBookID))
 }
 
-func (s *progressHandler) Delete(c echo.Context) error {
-	id := c.Param("id")
-	err := s.progressService.Delete(id)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
-	}
-	return c.NoContent(http.StatusNoContent)
-}
-
 func (s *progressHandler) GetByUserBookId(c echo.Context) error {
 	id := c.Param("id")
 	progress, err := s.progressService.GetByUserBookId(id)
@@ -101,7 +90,7 @@ func (s *progressHandler) UpdatePagesRead(c echo.Context) error {
 	log, err := s.progressService.GetLog(id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
-	}
+    }
 
 	return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/progress/%d", log.UserBookID))
 }
@@ -114,4 +103,13 @@ func (s *progressHandler) GetLogModal(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 	return utils.RenderView(c, webProgress.ProgressLogModal(*log))
+}
+
+func (s *progressHandler) Delete(c echo.Context) error {
+	id := c.Param("id")
+	err := s.progressService.Delete(id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	return c.NoContent(http.StatusNoContent)
 }
