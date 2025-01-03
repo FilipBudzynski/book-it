@@ -1,10 +1,11 @@
 package handlers
 
 import (
-	"fmt"
+	"net/http"
 
 	"github.com/FilipBudzynski/book_it/cmd/web"
 	"github.com/FilipBudzynski/book_it/internal/models"
+	"github.com/FilipBudzynski/book_it/internal/toast"
 	"github.com/FilipBudzynski/book_it/utils"
 	"github.com/labstack/echo/v4"
 )
@@ -39,14 +40,11 @@ func (h *UserHandler) CreateUser(c echo.Context) error {
 	}
 
 	if err := h.userService.Create(user); err != nil {
-		return fmt.Errorf("creating user failed, err %v", err)
-		// echo.NewHTTPError(echo.ErrInternalServerError.Code, err)
+		return toast.Warning(err.Error())
+		// return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("creating user failed, err %v", err))
 	}
 
-	fmt.Fprintln(c.Response().Writer, "User registered successfully")
-	return nil
-
-	// return web.AppendUsersList(*user).Render(c.Request().Context(), c.Response().Writer)
+	return c.NoContent(http.StatusCreated)
 }
 
 func (h *UserHandler) ListUsers(c echo.Context) error {

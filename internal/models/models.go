@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -29,6 +30,28 @@ type User struct {
 	GoogleId string `gorm:"primaryKey" json:"google_id"`
 	Books    []UserBook
 	gorm.Model
+}
+
+var (
+	ErrUsernameRequired = errors.New("username is required")
+	ErrEmailRequired    = errors.New("a valid email is required")
+	ErrGoogleIdRequired = errors.New("google id is required")
+)
+
+func (u *User) Validate() error {
+	if strings.TrimSpace(u.Username) == "" {
+		return ErrUsernameRequired
+	}
+
+	if !strings.Contains(u.Email, "@") || len(strings.TrimSpace(u.Email)) < 5 {
+		return ErrEmailRequired
+	}
+
+	if strings.TrimSpace(u.GoogleId) == "" {
+		return ErrGoogleIdRequired
+	}
+
+	return nil
 }
 
 type Book struct {
@@ -69,21 +92,28 @@ type ReadingProgress struct {
 	Completed        bool               // Whether the book is finished
 }
 
+var (
+	ErrCurrentPageGreaterThanTotal = errors.New("current page cannot be greater than total pages")
+	ErrCurrentPageNegative         = errors.New("current page cannot be negative")
+	ErrDailyTargetPagesNegative    = errors.New("daily target pages cannot be negative")
+	ErrInvalidEndDate              = errors.New("end date must be after start date")
+)
+
 func (r *ReadingProgress) Validate() error {
 	if r.CurrentPage > r.TotalPages {
-		return errors.New("Current page cannot be greater than total pages")
+		return ErrCurrentPageGreaterThanTotal
 	}
 
 	if r.CurrentPage < 0 {
-		return errors.New("Current page cannot be negative")
+		return ErrCurrentPageNegative
 	}
 
 	if r.DailyTargetPages < 0 {
-		return errors.New("Daily target pages cannot be negative")
+		return ErrDailyTargetPagesNegative
 	}
 
 	if r.StartDate.After(r.EndDate) {
-		return errors.New("End date must be after start date")
+		return ErrInvalidEndDate
 	}
 
 	return nil
@@ -101,9 +131,9 @@ type DailyProgressLog struct {
 }
 
 var (
-	ErrTrackingEndsBeforeStart   = errors.New("End date must be after start date")
-	ErrPagesReadNotSpecified     = errors.New("Pages read must be a positive number")
-	ErrPagesReadGreaterThanTotal = errors.New("Pages read cannot be greater than total pages")
+	ErrTrackingEndsBeforeStart   = errors.New("end date must be after start date")
+	ErrPagesReadNotSpecified     = errors.New("pages read must be a positive number")
+	ErrPagesReadGreaterThanTotal = errors.New("pages read cannot be greater than total pages")
 )
 
 func (d *DailyProgressLog) Validate() error {

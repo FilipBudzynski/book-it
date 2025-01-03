@@ -6,6 +6,7 @@ import (
 
 	webProgress "github.com/FilipBudzynski/book_it/cmd/web/progress"
 	"github.com/FilipBudzynski/book_it/internal/models"
+	"github.com/FilipBudzynski/book_it/internal/toast"
 	"github.com/FilipBudzynski/book_it/utils"
 	"github.com/labstack/echo/v4"
 )
@@ -66,6 +67,7 @@ func (s *progressHandler) Create(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
+	toast.Success(c, "Tracking Begins!")
 	return utils.RenderView(c, webProgress.OnTrackIdentifiactor(progress.UserBookID))
 }
 
@@ -90,7 +92,7 @@ func (s *progressHandler) UpdatePagesRead(c echo.Context) error {
 	log, err := s.progressService.GetLog(id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
-    }
+	}
 
 	return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/progress/%d", log.UserBookID))
 }

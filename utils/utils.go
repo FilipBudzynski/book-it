@@ -1,10 +1,6 @@
 package utils
 
 import (
-	"reflect"
-	"strings"
-	"unicode"
-
 	"github.com/FilipBudzynski/book_it/cmd/web"
 	"github.com/FilipBudzynski/book_it/internal/models"
 	"github.com/a-h/templ"
@@ -29,45 +25,4 @@ func BookInUserBooks(bookID string, userBooks []*models.UserBook) bool {
 		}
 	}
 	return false
-}
-
-// StructNameToSnakeCase takes a struct and returns its name in snake_case
-func StructNameToSnakeCase[T any]() string {
-	t := reflect.TypeOf((*T)(nil))
-
-	if t.Kind() == reflect.Ptr {
-		t = t.Elem()
-	}
-	if t.Kind() != reflect.Struct {
-		return ""
-	}
-
-	structName := t.Name()
-
-	var snakeCaseName strings.Builder
-	for i, r := range structName {
-		if unicode.IsUpper(r) {
-			if i > 0 {
-				snakeCaseName.WriteRune('_')
-			}
-			snakeCaseName.WriteRune(unicode.ToLower(r))
-		} else {
-			snakeCaseName.WriteRune(r)
-		}
-	}
-
-	return snakeCaseName.String()
-}
-
-func StructName[T any]() string {
-	t := reflect.TypeOf((*T)(nil))
-
-	if t.Kind() == reflect.Ptr {
-		t = t.Elem()
-	}
-	if t.Kind() != reflect.Struct {
-		return ""
-	}
-
-	return t.Name()
 }

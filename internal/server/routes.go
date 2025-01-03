@@ -20,6 +20,7 @@ type RouteRegistrar interface {
 func (s *Server) WithMiddleware(e *echo.Echo) *Server {
 	e.Use(prettylogger.Logger)
 	e.Use(utils.CustomRecoverMiddleware)
+	e.HTTPErrorHandler = utils.CustomErrorHandler
 	return s
 }
 
@@ -27,8 +28,9 @@ func (s *Server) WithRegisterRoutes(e *echo.Echo) *Server {
 	db := s.db.Db
 
 	progressRepo := repositories.NewProgressRepository(db)
+	userRepo := repositories.NewUserRepository(db)
 
-	userService := services.NewUserService(db)
+	userService := services.NewUserService(userRepo)
 	userBookService := services.NewUserBookService(db)
 	progressService := services.NewProgressService(progressRepo)
 	bookService := services.NewBookService(db).
@@ -49,6 +51,7 @@ func (s *Server) WithRegisterRoutes(e *echo.Echo) *Server {
 
 	fileServer := http.FileServer(http.FS(web.Files))
 	e.GET("/assets/*", echo.WrapHandler(fileServer))
+	e.Static("/static", "cmd/web")
 
 	return s
 }

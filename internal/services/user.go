@@ -1,70 +1,59 @@
 package services
 
 import (
+	"errors"
+
 	"github.com/FilipBudzynski/book_it/internal/models"
-	"gorm.io/gorm"
 )
 
-// userService implements the UserService
+type UserRepository interface {
+	Create(user *models.User) error
+	GetById(id string) (*models.User, error)
+	GetByGoogleID(googleID string) (*models.User, error)
+	GetByEmail(email string) (*models.User, error)
+	GetAll() ([]models.User, error)
+	Update(user *models.User) error
+	Delete(user models.User) error
+}
+
 type userService struct {
-	db *gorm.DB
+	repo UserRepository
 }
 
-func NewUserService(db *gorm.DB) *userService {
+func NewUserService(r UserRepository) *userService {
 	return &userService{
-		db: db,
+		repo: r,
 	}
 }
 
-func (u *userService) Create(user *models.User) error {
-	return u.db.Create(user).Error
+func (s *userService) Create(user *models.User) error {
+	return errors.Join(
+		user.Validate(),
+		s.repo.Create(user),
+	)
 }
 
-// TODO: do a loop to get by providerID or something
-
-func (u *userService) GetById(id string) (*models.User, error) {
-	var user models.User
-	if err := u.db.First(&user, id).Error; err != nil {
-		return nil, err
-	}
-	return &user, nil
+// TODO: do a loop to get by provider given
+func (s *userService) GetById(id string) (*models.User, error) {
+	return s.repo.GetById(id)
 }
 
-func (u *userService) GetByGoogleID(googleID string) (*models.User, error) {
-	var user models.User
-	err := u.db.First(&user, "google_id = ?", googleID).Error
-	if err == nil {
-		return &user, nil
-	}
-
-	return nil, err
+func (s *userService) GetByGoogleID(googleID string) (*models.User, error) {
+	return s.repo.GetByGoogleID(googleID)
 }
 
-func (u *userService) GetByEmail(email string) (*models.User, error) {
-	var user models.User
-	err := u.db.First(&user, "email = ?", email).Error
-	if err == nil {
-		return &user, nil
-	}
-	if err == gorm.ErrRecordNotFound {
-		return nil, nil
-	}
-
-	return nil, err
+func (s *userService) GetByEmail(email string) (*models.User, error) {
+	return s.repo.GetByEmail(email)
 }
 
-func (u *userService) GetAll() ([]models.User, error) {
-	var users []models.User
-	if err := u.db.Find(&users).Error; err != nil {
-		return nil, err
-	}
-	return users, nil
+func (s *userService) GetAll() ([]models.User, error) {
+	return s.repo.GetAll()
 }
 
-func (u *userService) Update(user *models.User) error {
-	return u.db.Save(user).Error
+func (s *userService) Update(user *models.User) error {
+	return s.repo.Update(user)
 }
 
-func (u *userService) Delete(user models.User) error {
-	return u.db.Delete(user).Error
+func (s *userService) Delete(user models.User) error {
+	return s.repo.Delete(user)
 }
