@@ -9,8 +9,6 @@ import (
 	"github.com/FilipBudzynski/book_it/internal/models"
 )
 
-var ErrDailyTargetPagesNegative = errors.New("something went wrong with the count of daily logs")
-
 type ProgressRepository interface {
 	Create(progress models.ReadingProgress) error
 	GetById(id string) (*models.ReadingProgress, error)
@@ -44,7 +42,7 @@ func (s *progressService) Create(bookId uint, totalPages int, bookTitle, startDa
 
 	days := int(endDateParsed.Sub(startDateParsed).Hours() / 24)
 	if days <= 0 {
-		return models.ReadingProgress{}, errors.New("end date must be after start date")
+		return models.ReadingProgress{}, models.ErrProgressInvalidEndDate
 	}
 
 	targetPages := int((totalPages + days - 1) / days)
@@ -113,15 +111,14 @@ func (s *progressService) UpdateLogPagesRead(id, pagesReadString string) error {
 
 	log.PagesRead = pagesRead
 
-	if errs := errors.Join(
-		log.Validate(),
-		s.repo.UpdateLog(log),
-		s.updateTargetPages(log.ReadingProgressID, log.Date),
-	); errs != nil {
-		return errs
+	if err := log.Validate(); err != nil {
+		return err
+	}
+	if err := s.repo.UpdateLog(log); err != nil {
+		return err
 	}
 
-	return nil
+	return s.updateTargetPages(log.ReadingProgressID, log.Date)
 }
 
 func (s *progressService) updateTargetPages(progressId uint, logDate time.Time) error {
@@ -130,7 +127,7 @@ func (s *progressService) updateTargetPages(progressId uint, logDate time.Time) 
 		return err
 	}
 
-	pagesLeft := progress.TotalPages - progress.CurrentPage
+	pagesLeft := progress.PagesLeft()
 	daysLeft := int(progress.EndDate.Sub(logDate).Hours()/24) - 1
 	var targetPages int
 
@@ -144,18 +141,18 @@ func (s *progressService) updateTargetPages(progressId uint, logDate time.Time) 
 	}
 
 	progress.DailyTargetPages = targetPages
+	if err := progress.Validate(); err != nil {
+		return err
+	}
+
 	for i := range progress.DailyProgress {
 		progress.DailyProgress[i].TargetPages = targetPages
 	}
 
-	return errors.Join(
-		progress.Validate(),
-		s.repo.Update(progress),
-		s.checkComplete(daysLeft, pagesLeft),
-	)
-}
+	if err := s.repo.Update(progress); err != nil {
+		return err
+	}
 
-func (s *progressService) checkComplete(daysLeft, pagesLeft int) error {
 	if daysLeft == 0 && pagesLeft > 0 {
 		return models.ErrProgressPastEndDate
 	}

@@ -11,6 +11,8 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+const CompletedBookMessage = "CONGRATULATIONS! You have completed the book!"
+
 type ProgressService interface {
 	// standard methods
 	Create(bookId uint, totalPages int, bookTitle, startDateString, endDateString string) (models.ReadingProgress, error)
@@ -90,7 +92,7 @@ func (s *progressHandler) UpdatePagesRead(c echo.Context) error {
 	if errors.Is(err, models.ErrProgressPastEndDate) {
 		_ = toast.Info(c, err.Error())
 	} else if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, toast.Warning(c, err.Error()))
+		return echo.NewHTTPError(http.StatusInternalServerError, toast.Danger(c, err.Error()))
 	}
 
 	progress, err := s.progressService.GetProgressByAssosiatedLogId(id)
@@ -98,6 +100,9 @@ func (s *progressHandler) UpdatePagesRead(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
+	if progress.Completed {
+		toast.Success(c, CompletedBookMessage)
+	}
 	return utils.RenderView(c, webProgress.ProgressStatistics(progress))
 }
 
