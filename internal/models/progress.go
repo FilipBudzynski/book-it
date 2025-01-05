@@ -54,11 +54,13 @@ func (r *ReadingProgress) Validate() error {
 		return ErrProgressPagesLeftNegative
 	}
 
+	r.CheckCompleted()
+
 	return nil
 }
 
 func (r *ReadingProgress) PagesLeft() int {
-    return r.TotalPages - r.CurrentPage
+	return r.TotalPages - r.CurrentPage
 }
 
 func (r *ReadingProgress) IsCompleted() bool {
@@ -66,11 +68,11 @@ func (r *ReadingProgress) IsCompleted() bool {
 }
 
 func (r *ReadingProgress) CheckCompleted() bool {
-    if r.IsCompleted() {
-        r.Completed = true
-    } else {
-        r.Completed = false
-    }
+	if r.IsCompleted() {
+		r.Completed = true
+	} else {
+		r.Completed = false
+	}
 
-    return r.Completed
+	return r.Completed
 }

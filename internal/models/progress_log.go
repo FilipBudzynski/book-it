@@ -32,8 +32,8 @@ func (d *DailyProgressLog) Validate() error {
 	if d.PagesRead >= d.TargetPages {
 		d.Completed = true
 	} else {
-        d.Completed = false
-    }
+		d.Completed = false
+	}
 
 	return nil
 }
@@ -58,7 +58,6 @@ func (d *DailyProgressLog) AfterSave(db *gorm.DB) error {
 	if err := readingProgress.Validate(); err != nil {
 		return err
 	}
-	readingProgress.CheckCompleted()
 
 	if err := db.Save(&readingProgress).Error; err != nil {
 		return err

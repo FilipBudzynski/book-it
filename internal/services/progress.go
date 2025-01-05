@@ -86,8 +86,8 @@ func (s *progressService) Get(id string) (*models.ReadingProgress, error) {
 	return s.repo.GetById(id)
 }
 
-func (s *progressService) GetProgressByAssosiatedLogId(id string) (*models.ReadingProgress, error) {
-	log, err := s.GetLog(id)
+func (s *progressService) GetProgressAssosiatedWithLogId(logId string) (*models.ReadingProgress, error) {
+	log, err := s.GetLog(logId)
 	if err != nil {
 		return nil, err
 	}
@@ -156,6 +156,7 @@ func (s *progressService) updateTargetPages(progressId uint, logDate time.Time) 
 	if daysLeft == 0 && pagesLeft > 0 {
 		return models.ErrProgressPastEndDate
 	}
+
 	return nil
 }
 

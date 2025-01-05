@@ -11,19 +11,22 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-const CompletedBookMessage = "CONGRATULATIONS! You have completed the book!"
+const (
+	CompletedBookMessage  = "CONGRATULATIONS! You have completed the book!"
+	TrackingBeginsMessage = "Tracking Begins!"
+)
 
 type ProgressService interface {
 	// standard methods
 	Create(bookId uint, totalPages int, bookTitle, startDateString, endDateString string) (models.ReadingProgress, error)
 	Get(id string) (*models.ReadingProgress, error)
 	GetByUserBookId(userBookId string) (*models.ReadingProgress, error)
+	GetProgressAssosiatedWithLogId(id string) (*models.ReadingProgress, error)
 	Delete(id string) error
 
 	// log methods
 	GetLog(id string) (*models.DailyProgressLog, error)
 	UpdateLogPagesRead(id, pagesReadString string) error
-	GetProgressByAssosiatedLogId(id string) (*models.ReadingProgress, error)
 }
 
 type progressHandler struct {
@@ -71,7 +74,7 @@ func (s *progressHandler) Create(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, toast.Warning(c, err.Error()))
 	}
 
-	toast.Success(c, "Tracking Begins!")
+	toast.Success(c, TrackingBeginsMessage)
 	return utils.RenderView(c, webProgress.TrackingButton(progress.UserBookID))
 }
 
@@ -82,6 +85,15 @@ func (s *progressHandler) GetByUserBookId(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, toast.Warning(c, err.Error()))
 	}
 	return utils.RenderView(c, webProgress.ProgressStatistics(progress))
+}
+
+func (s *progressHandler) Delete(c echo.Context) error {
+	id := c.Param("id")
+	err := s.progressService.Delete(id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+	return c.NoContent(http.StatusNoContent)
 }
 
 func (s *progressHandler) UpdatePagesRead(c echo.Context) error {
@@ -95,7 +107,7 @@ func (s *progressHandler) UpdatePagesRead(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, toast.Danger(c, err.Error()))
 	}
 
-	progress, err := s.progressService.GetProgressByAssosiatedLogId(id)
+	progress, err := s.progressService.GetProgressAssosiatedWithLogId(id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
@@ -106,7 +118,6 @@ func (s *progressHandler) UpdatePagesRead(c echo.Context) error {
 	return utils.RenderView(c, webProgress.ProgressStatistics(progress))
 }
 
-// GetModal return reading log modal component if log with given id exists
 func (s *progressHandler) GetLogModal(c echo.Context) error {
 	id := c.Param("id")
 	log, err := s.progressService.GetLog(id)
@@ -114,13 +125,4 @@ func (s *progressHandler) GetLogModal(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 	return utils.RenderView(c, webProgress.ProgressLogModal(*log))
-}
-
-func (s *progressHandler) Delete(c echo.Context) error {
-	id := c.Param("id")
-	err := s.progressService.Delete(id)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
-	}
-	return c.NoContent(http.StatusNoContent)
 }
