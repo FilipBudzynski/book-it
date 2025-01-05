@@ -31,6 +31,10 @@ func (s *userBookService) Delete(id string) error {
 	return s.db.Delete(&models.UserBook{}, id).Error
 }
 
+func (s *userBookService) DeleteByBookId(bookId string) error {
+	return s.db.Where("book_id = ?", bookId).Delete(&models.UserBook{}).Error
+}
+
 func (s *userBookService) GetAll(userId string) ([]*models.UserBook, error) {
 	var userBooks []*models.UserBook
 	if err := s.db.Preload("Book").Preload("ReadingProgress").

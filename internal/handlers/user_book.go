@@ -17,6 +17,7 @@ type UserBookService interface {
 	Create(userId, bookId string) error
 	Update(userBook *models.UserBook) error
 	Delete(id string) error
+	DeleteByBookId(bookId string) error
 	GetAll(userId string) ([]*models.UserBook, error)
 	GetById(id string) (*models.UserBook, error)
 }
@@ -57,6 +58,20 @@ func (h *UserBookHandler) Delete(c echo.Context) error {
 	}
 
 	err := h.userBookService.Delete(bookID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	return c.NoContent(http.StatusOK)
+}
+
+func (h *UserBookHandler) RemoveWithButtonSwap(c echo.Context) error {
+	bookID := c.Param("book_id")
+	if bookID == "" {
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("Something went wrong with the request. Book ID was not provided in query parameters"))
+	}
+
+	err := h.userBookService.DeleteByBookId(bookID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
@@ -102,6 +117,7 @@ func (h *UserBookHandler) RegisterRoutes(app *echo.Echo) {
 	// UserBook endpoints
 	group.POST("/:book_id", h.Create)
 	group.DELETE("/:book_id", h.Delete)
+	group.DELETE("/search/:book_id", h.RemoveWithButtonSwap)
 	group.GET("", h.List)
 	group.GET("/create_modal/:user_book_id", h.GetCreateTrackingModal)
 }
