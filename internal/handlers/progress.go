@@ -48,6 +48,7 @@ func (h *progressHandler) RegisterRoutes(app *echo.Echo) {
 	// progress endpoints
 	group.POST("", h.Create)
 	group.GET("/:id", h.GetByUserBookId)
+	// group.PUT("/:id", h.Edit)
 	group.DELETE("/:id", h.Delete)
 
 	// progress log endpoints
@@ -57,7 +58,7 @@ func (h *progressHandler) RegisterRoutes(app *echo.Echo) {
 	group.GET("/log/modal/:id", h.GetLogModal)
 }
 
-func (s *progressHandler) Create(c echo.Context) error {
+func (h *progressHandler) Create(c echo.Context) error {
 	progressBind := &models.ReadingProgress{}
 	if err := c.Bind(progressBind); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
@@ -65,7 +66,7 @@ func (s *progressHandler) Create(c echo.Context) error {
 	startDateString := c.FormValue("start-date")
 	endDateString := c.FormValue("end-date")
 
-	progress, err := s.progressService.Create(
+	progress, err := h.progressService.Create(
 		progressBind.UserBookID,
 		progressBind.TotalPages,
 		progressBind.BookTitle,
@@ -77,44 +78,62 @@ func (s *progressHandler) Create(c echo.Context) error {
 	}
 
 	toast.Success(c, TrackingBeginsMessage)
-	return utils.RenderView(c, webProgress.TrackingButton(progress.UserBookID))
+	return utils.RenderView(c, webProgress.TrackingButton(progress.UserBookID, progress.Completed))
 }
 
-func (s *progressHandler) GetByUserBookId(c echo.Context) error {
+func (h *progressHandler) GetByUserBookId(c echo.Context) error {
 	id := c.Param("id")
-	progress, err := s.progressService.GetByUserBookId(id)
+	progress, err := h.progressService.GetByUserBookId(id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, toast.Warning(c, err.Error()))
 	}
 	return utils.RenderView(c, webProgress.ProgressStatistics(progress))
 }
 
-func (s *progressHandler) Delete(c echo.Context) error {
+// func (h *progressHandler) Edit(c echo.Context) error {
+// 	progressBind := &models.ReadingProgress{}
+// 	if err := c.Bind(progressBind); err != nil {
+// 		return echo.NewHTTPError(http.StatusBadRequest, err)
+// 	}
+// 	endDateString := c.FormValue("end-date")
+//
+// 	progress, err := h.progressService.Edit(progressBind.ID, progressBind.TotalPages, endDateString)
+// 	if err != nil {
+// 		return echo.NewHTTPError(http.StatusBadRequest, toast.Warning(c, err.Error()))
+// 	}
+//
+// 	return utils.RenderView(c, webProgress.ProgressStatistics(progress))
+// }
+
+func (h *progressHandler) Delete(c echo.Context) error {
 	id := c.Param("id")
-	err := s.progressService.Delete(id)
+	err := h.progressService.Delete(id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	return c.NoContent(http.StatusNoContent)
+
+	// return utils.RenderView(c, web.Empty())
+	c.Response().Header().Set("HX-Redirect", "/user-books")
+	return c.NoContent(http.StatusOK)
 }
 
-func (s *progressHandler) UpdatePagesRead(c echo.Context) error {
+func (h *progressHandler) UpdatePagesRead(c echo.Context) error {
 	id := c.Param("id")
 	pagesRead := c.FormValue("pages-read")
 
-	log, err := s.progressService.UpdateLogPagesRead(id, pagesRead)
+	log, err := h.progressService.UpdateLogPagesRead(id, pagesRead)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, toast.Danger(c, err.Error()))
 	}
 
-	err = s.progressService.UpdateTargetPages(log.ReadingProgressID, log.Date)
+	err = h.progressService.UpdateTargetPages(log.ReadingProgressID, log.Date)
 	if errors.Is(err, models.ErrProgressLastDayNotFinished) {
 		_ = toast.Info(c, err.Error())
 	} else if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, toast.Danger(c, err.Error()))
 	}
 
-	progress, err := s.progressService.GetProgressAssosiatedWithLogId(id)
+	progress, err := h.progressService.GetProgressAssosiatedWithLogId(id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
@@ -125,9 +144,9 @@ func (s *progressHandler) UpdatePagesRead(c echo.Context) error {
 	return utils.RenderView(c, webProgress.ProgressStatistics(progress))
 }
 
-func (s *progressHandler) GetLogModal(c echo.Context) error {
+func (h *progressHandler) GetLogModal(c echo.Context) error {
 	id := c.Param("id")
-	log, err := s.progressService.GetLog(id)
+	log, err := h.progressService.GetLog(id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}

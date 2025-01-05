@@ -2,13 +2,19 @@ package web_tracking
 
 import "fmt"
 
-templ TrackingButton(bookid uint) {
+templ TrackingButton(bookid uint, completed bool) {
 	<div>
 		<button
 			hx-get={ fmt.Sprintf("/progress/%d", bookid) }
 			hx-target="#progress-statistics"
 			hx-swap="innerHTML"
 			class="btn"
-		>👀 tracking</button>
+		>
+			if completed {
+				✅ finished
+			} else {
+				👀 in progress
+			}
+		</button>
 	</div>
 }

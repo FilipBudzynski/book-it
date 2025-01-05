@@ -6,7 +6,6 @@ import "gorm.io/gorm"
 // It bounds book to a user providing more information about user interactions with a book
 type UserBook struct {
 	gorm.Model
-	IsTracked       bool   `gorm:"not null;default:false"`
 	UserGoogleId    string `gorm:"not null"` // foreignKey
 	BookID          string `gorm:"not null"`
 	Book            Book

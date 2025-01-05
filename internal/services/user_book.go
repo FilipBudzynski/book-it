@@ -19,7 +19,6 @@ func (s *userBookService) Create(userID, bookID string) error {
 	userBook := &models.UserBook{
 		UserGoogleId: userID,
 		BookID:       bookID,
-		IsTracked:    false,
 	}
 	return s.db.Create(userBook).Error
 }

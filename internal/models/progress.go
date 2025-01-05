@@ -78,3 +78,18 @@ func (r *ReadingProgress) PagesLeft() int {
 func (r *ReadingProgress) IsCompleted() bool {
 	return r.CurrentPage == r.TotalPages
 }
+
+func (r *ReadingProgress) UpdateTargetPages(targetPages int, logDate time.Time) error {
+	r.DailyTargetPages = targetPages
+	if err := r.Validate(); err != nil {
+		return err
+	}
+
+	for i := range r.DailyProgress {
+		if r.DailyProgress[i].Date.Before(logDate) {
+			continue
+		}
+		r.DailyProgress[i].TargetPages = targetPages
+	}
+    return nil
+}
