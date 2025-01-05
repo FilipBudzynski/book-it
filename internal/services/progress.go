@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/FilipBudzynski/book_it/internal/handlers"
 	"github.com/FilipBudzynski/book_it/internal/models"
 )
 
@@ -25,7 +24,7 @@ type progressService struct {
 	repo ProgressRepository
 }
 
-func NewProgressService(repo ProgressRepository) handlers.ProgressService {
+func NewProgressService(repo ProgressRepository) *progressService {
 	return &progressService{repo: repo}
 }
 
@@ -40,7 +39,7 @@ func (s *progressService) Create(bookId uint, totalPages int, bookTitle, startDa
 		return models.ReadingProgress{}, err
 	}
 
-	days := int(endDateParsed.Sub(startDateParsed).Hours() / 24)
+	days := int(endDateParsed.Sub(startDateParsed).Hours()/24) + 1
 	if days <= 0 {
 		return models.ReadingProgress{}, models.ErrProgressInvalidEndDate
 	}
@@ -94,41 +93,38 @@ func (s *progressService) GetProgressAssosiatedWithLogId(logId string) (*models.
 	return s.Get(strconv.Itoa(int(log.ReadingProgressID)))
 }
 
-func (s *progressService) UpdateLogPagesRead(id, pagesReadString string) error {
+func (s *progressService) UpdateLogPagesRead(id, pagesReadString string) (*models.DailyProgressLog, error) {
 	if pagesReadString == "" {
-		return models.ErrProgressLogPagesReadNotSpecified
+		return nil, models.ErrProgressLogPagesReadNotSpecified
 	}
 
 	pagesRead, err := strconv.Atoi(pagesReadString)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	log, err := s.repo.GetLogById(id)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	log.PagesRead = pagesRead
 
 	if err := log.Validate(); err != nil {
-		return err
-	}
-	if err := s.repo.UpdateLog(log); err != nil {
-		return err
+		return nil, err
 	}
 
-	return s.updateTargetPages(log.ReadingProgressID, log.Date)
+	return log, s.repo.UpdateLog(log)
 }
 
-func (s *progressService) updateTargetPages(progressId uint, logDate time.Time) error {
+func (s *progressService) UpdateTargetPages(progressId uint, logDate time.Time) error {
 	progress, err := s.repo.GetById(strconv.FormatUint(uint64(progressId), 10))
 	if err != nil {
 		return err
 	}
 
 	pagesLeft := progress.PagesLeft()
-	daysLeft := int(progress.EndDate.Sub(logDate).Hours()/24) - 1
+	daysLeft := int(progress.EndDate.Sub(logDate).Hours() / 24)
 	var targetPages int
 
 	switch {
@@ -146,6 +142,9 @@ func (s *progressService) updateTargetPages(progressId uint, logDate time.Time) 
 	}
 
 	for i := range progress.DailyProgress {
+		if progress.DailyProgress[i].Date.Before(logDate) {
+			continue
+		}
 		progress.DailyProgress[i].TargetPages = targetPages
 	}
 
@@ -154,7 +153,7 @@ func (s *progressService) updateTargetPages(progressId uint, logDate time.Time) 
 	}
 
 	if daysLeft == 0 && pagesLeft > 0 {
-		return models.ErrProgressPastEndDate
+		return models.ErrProgressLastDayNotFinished
 	}
 
 	return nil

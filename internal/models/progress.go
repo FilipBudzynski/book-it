@@ -26,7 +26,7 @@ var (
 	ErrProgressDailyTargetPagesNegative    = errors.New("daily target pages cannot be negative")
 	ErrProgressDaysLeftNegative            = errors.New("days left cannot be negative")
 	ErrProgressInvalidEndDate              = errors.New("end date must be after start date")
-	ErrProgressPastEndDate                 = errors.New("this is the last day - finish reading today or change the end date to add more days")
+	ErrProgressLastDayNotFinished          = errors.New("this is the last day - finish reading today or change the end date to add more days")
 	ErrProgressPagesLeftNegative           = errors.New("pages left cannot be negative")
 )
 
@@ -54,8 +54,20 @@ func (r *ReadingProgress) Validate() error {
 		return ErrProgressPagesLeftNegative
 	}
 
-	r.CheckCompleted()
+	if r.IsCompleted() {
+		r.Completed = true
+	} else {
+		r.Completed = false
+	}
 
+	return nil
+}
+
+func (r *ReadingProgress) IsFinishedByEndDate(date time.Time) error {
+	daysLeft := int(r.EndDate.Sub(date).Hours() / 24)
+	if daysLeft == 0 && r.PagesLeft() > 0 {
+		return ErrProgressLastDayNotFinished
+	}
 	return nil
 }
 
@@ -65,14 +77,4 @@ func (r *ReadingProgress) PagesLeft() int {
 
 func (r *ReadingProgress) IsCompleted() bool {
 	return r.CurrentPage == r.TotalPages
-}
-
-func (r *ReadingProgress) CheckCompleted() bool {
-	if r.IsCompleted() {
-		r.Completed = true
-	} else {
-		r.Completed = false
-	}
-
-	return r.Completed
 }

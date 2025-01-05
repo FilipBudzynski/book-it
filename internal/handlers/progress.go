@@ -3,6 +3,7 @@ package handlers
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	webProgress "github.com/FilipBudzynski/book_it/cmd/web/progress"
 	"github.com/FilipBudzynski/book_it/internal/models"
@@ -22,11 +23,12 @@ type ProgressService interface {
 	Get(id string) (*models.ReadingProgress, error)
 	GetByUserBookId(userBookId string) (*models.ReadingProgress, error)
 	GetProgressAssosiatedWithLogId(id string) (*models.ReadingProgress, error)
+	UpdateTargetPages(progressId uint, logDate time.Time) error
 	Delete(id string) error
 
 	// log methods
 	GetLog(id string) (*models.DailyProgressLog, error)
-	UpdateLogPagesRead(id, pagesReadString string) error
+	UpdateLogPagesRead(id, pagesReadString string) (*models.DailyProgressLog, error)
 }
 
 type progressHandler struct {
@@ -100,8 +102,13 @@ func (s *progressHandler) UpdatePagesRead(c echo.Context) error {
 	id := c.Param("id")
 	pagesRead := c.FormValue("pages-read")
 
-	err := s.progressService.UpdateLogPagesRead(id, pagesRead)
-	if errors.Is(err, models.ErrProgressPastEndDate) {
+	log, err := s.progressService.UpdateLogPagesRead(id, pagesRead)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, toast.Danger(c, err.Error()))
+	}
+
+	err = s.progressService.UpdateTargetPages(log.ReadingProgressID, log.Date)
+	if errors.Is(err, models.ErrProgressLastDayNotFinished) {
 		_ = toast.Info(c, err.Error())
 	} else if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, toast.Danger(c, err.Error()))
