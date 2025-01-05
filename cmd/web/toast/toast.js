@@ -15,8 +15,18 @@ class Toast {
    */
   #makeToastContainerButton() {
     const toastContainer = document.createElement("div");
-    toastContainer.classList.add("alert");
-    toastContainer.classList.add(`alert-${this.level}`);
+    toastContainer.classList.add(
+      "alert",
+      `alert-${this.level}`,
+      "transition-opacity",
+      "duration-500",
+      "ease-in-out",
+      "opacity-100",
+    );
+
+    setTimeout(() => {
+      toastContainer.classList.replace("opacity-100", "opacity-0");
+    }, 4500);
 
     setTimeout(() => {
       toastContainer.remove();

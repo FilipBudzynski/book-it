@@ -11,7 +11,7 @@ const (
 	INFO    = "info"
 	SUCCESS = "success"
 	WARNING = "warning"
-	DANGER  = "danger"
+	DANGER  = "error"
 )
 
 type Toast struct {
@@ -23,20 +23,26 @@ func New(level string, message string) Toast {
 	return Toast{level, message}
 }
 
-func Info(message string) Toast {
-	return New(INFO, message)
-}
-
 func Success(c echo.Context, message string) {
 	New(SUCCESS, message).SetHXTriggerHeader(c)
 }
 
-func Warning(message string) Toast {
-	return New(WARNING, message)
+func Info(c echo.Context, message string) Toast {
+	toast := New(INFO, message)
+	toast.SetHXTriggerHeader(c)
+	return toast
 }
 
-func Danger(message string) Toast {
-	return New(DANGER, message)
+func Warning(c echo.Context, message string) Toast {
+	toast := New(WARNING, message)
+	toast.SetHXTriggerHeader(c)
+	return toast
+}
+
+func Danger(c echo.Context, message string) Toast {
+	toast := New(DANGER, message)
+	toast.SetHXTriggerHeader(c)
+	return toast
 }
 
 func (t Toast) Error() string {
@@ -56,6 +62,10 @@ func (t Toast) jsonify() (string, error) {
 }
 
 func (t Toast) SetHXTriggerHeader(c echo.Context) {
+	if t.Level != SUCCESS && t.Level != INFO {
+		c.Response().Header().Set("HX-Reswap", "none")
+	}
+
 	jsonData, _ := t.jsonify()
 	c.Response().Header().Set("HX-Trigger", jsonData)
 }

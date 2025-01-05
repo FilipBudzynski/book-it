@@ -36,14 +36,14 @@ func (h *UserHandler) CreateUser(c echo.Context) error {
 	user := new(models.User)
 
 	if err := c.Bind(user); err != nil {
-		return echo.NewHTTPError(echo.ErrInternalServerError.Code, err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	if err := h.userService.Create(user); err != nil {
-		return toast.Warning(err.Error())
-		// return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("creating user failed, err %v", err))
+		return echo.NewHTTPError(http.StatusInternalServerError, toast.Warning(c, err.Error()))
 	}
 
+	toast.Success(c, "Account created")
 	return c.NoContent(http.StatusCreated)
 }
 

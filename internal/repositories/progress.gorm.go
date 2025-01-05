@@ -19,8 +19,9 @@ func (r *progressRepository) Create(progress models.ReadingProgress) error {
 	return r.db.Create(&progress).Error
 }
 
-func (r *progressRepository) GetById(id string, progress *models.ReadingProgress) error {
-	return r.db.Preload("DailyProgress").First(progress, "id = ?", id).Error
+func (r *progressRepository) GetById(id string) (*models.ReadingProgress, error) {
+	progress := &models.ReadingProgress{}
+	return progress, r.db.Preload("DailyProgress").First(progress, "id = ?", id).Error
 }
 
 func (r *progressRepository) GetByUserBookId(userBookId string) (*models.ReadingProgress, error) {
@@ -32,6 +33,10 @@ func (r *progressRepository) GetByUserBookId(userBookId string) (*models.Reading
 func (r *progressRepository) GetLogById(id string) (*models.DailyProgressLog, error) {
 	log := &models.DailyProgressLog{}
 	return log, r.db.First(log, id).Error
+}
+
+func (r *progressRepository) Update(progress *models.ReadingProgress) error {
+	return r.db.Save(progress).Error
 }
 
 func (r *progressRepository) UpdateLog(log *models.DailyProgressLog) error {

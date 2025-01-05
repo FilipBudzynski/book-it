@@ -20,6 +20,7 @@ templ ProgressCreateModal(userBook *models.UserBook) {
 		<form method="dialog">
 			<div class="mb-4 grid grid-cols-2 gap-4">
 				<input name="user-book-id" value={ fmt.Sprintf("%d", userBook.ID) } class="input hidden input-bordered w-full mt-2"/>
+				<input name="book-title" value={ userBook.Book.Title } class="input hidden input-bordered w-full mt-2"/>
 				<div>
 					<label class="block text-sm font-medium text-gray-700">Start Date</label>
 					<input name="start-date" type="date" class="input input-bordered w-full mt-2"/>

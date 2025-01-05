@@ -9,15 +9,13 @@ import (
 	"github.com/FilipBudzynski/book_it/internal/models"
 )
 
-var (
-	ErrTrackingEndsBeforeStart = errors.New("End date must be after start date")
-	ErrPagesReadNotSpecified   = errors.New("Pages read must be a positive number")
-)
+var ErrDailyTargetPagesNegative = errors.New("something went wrong with the count of daily logs")
 
 type ProgressRepository interface {
 	Create(progress models.ReadingProgress) error
-	GetById(id string, progress *models.ReadingProgress) error
+	GetById(id string) (*models.ReadingProgress, error)
 	GetByUserBookId(userBookId string) (*models.ReadingProgress, error)
+	Update(progress *models.ReadingProgress) error
 	Delete(id string) error
 	// logs methods
 	// TODO: move to progressLogRepository
@@ -33,7 +31,7 @@ func NewProgressService(repo ProgressRepository) handlers.ProgressService {
 	return &progressService{repo: repo}
 }
 
-func (s *progressService) Create(bookId uint, totalPages int, startDate, endDate string) (models.ReadingProgress, error) {
+func (s *progressService) Create(bookId uint, totalPages int, bookTitle, startDate, endDate string) (models.ReadingProgress, error) {
 	startDateParsed, err := time.Parse(time.DateOnly, startDate)
 	if err != nil {
 		return models.ReadingProgress{}, err
@@ -46,10 +44,10 @@ func (s *progressService) Create(bookId uint, totalPages int, startDate, endDate
 
 	days := int(endDateParsed.Sub(startDateParsed).Hours() / 24)
 	if days <= 0 {
-		return models.ReadingProgress{}, errors.New("End date must be after start date")
+		return models.ReadingProgress{}, errors.New("end date must be after start date")
 	}
 
-	targetPages := int(totalPages / days)
+	targetPages := int((totalPages + days - 1) / days)
 
 	progressLogs := []models.DailyProgressLog{}
 	for i := range days {
@@ -60,11 +58,15 @@ func (s *progressService) Create(bookId uint, totalPages int, startDate, endDate
 			TotalPages:  totalPages,
 			Completed:   false,
 		}
+		if err := progressLog.Validate(); err != nil {
+			return models.ReadingProgress{}, err
+		}
 		progressLogs = append(progressLogs, *progressLog)
 	}
 
 	progress := models.ReadingProgress{
 		UserBookID:       bookId,
+		BookTitle:        bookTitle,
 		StartDate:        startDateParsed,
 		EndDate:          endDateParsed,
 		TotalPages:       totalPages,
@@ -74,23 +76,29 @@ func (s *progressService) Create(bookId uint, totalPages int, startDate, endDate
 		Completed:        false,
 	}
 
-	err = errors.Join(
+	errs := errors.Join(
 		progress.Validate(),
 		s.repo.Create(progress),
 	)
 
-	return progress, err
+	return progress, errs
 }
 
 func (s *progressService) Get(id string) (*models.ReadingProgress, error) {
-	progress := &models.ReadingProgress{}
-	err := s.repo.GetById(id, progress)
-	return progress, err
+	return s.repo.GetById(id)
+}
+
+func (s *progressService) GetProgressByAssosiatedLogId(id string) (*models.ReadingProgress, error) {
+	log, err := s.GetLog(id)
+	if err != nil {
+		return nil, err
+	}
+	return s.Get(strconv.Itoa(int(log.ReadingProgressID)))
 }
 
 func (s *progressService) UpdateLogPagesRead(id, pagesReadString string) error {
 	if pagesReadString == "" {
-		return ErrPagesReadNotSpecified
+		return models.ErrProgressLogPagesReadNotSpecified
 	}
 
 	pagesRead, err := strconv.Atoi(pagesReadString)
@@ -105,10 +113,53 @@ func (s *progressService) UpdateLogPagesRead(id, pagesReadString string) error {
 
 	log.PagesRead = pagesRead
 
-	return errors.Join(
+	if errs := errors.Join(
 		log.Validate(),
 		s.repo.UpdateLog(log),
+		s.updateTargetPages(log.ReadingProgressID, log.Date),
+	); errs != nil {
+		return errs
+	}
+
+	return nil
+}
+
+func (s *progressService) updateTargetPages(progressId uint, logDate time.Time) error {
+	progress, err := s.repo.GetById(strconv.FormatUint(uint64(progressId), 10))
+	if err != nil {
+		return err
+	}
+
+	pagesLeft := progress.TotalPages - progress.CurrentPage
+	daysLeft := int(progress.EndDate.Sub(logDate).Hours()/24) - 1
+	var targetPages int
+
+	switch {
+	case daysLeft == 0:
+		targetPages = pagesLeft
+	case daysLeft > 0:
+		targetPages = int((pagesLeft + daysLeft - 1) / daysLeft)
+	case daysLeft < 0:
+		return models.ErrProgressDaysLeftNegative
+	}
+
+	progress.DailyTargetPages = targetPages
+	for i := range progress.DailyProgress {
+		progress.DailyProgress[i].TargetPages = targetPages
+	}
+
+	return errors.Join(
+		progress.Validate(),
+		s.repo.Update(progress),
+		s.checkComplete(daysLeft, pagesLeft),
 	)
+}
+
+func (s *progressService) checkComplete(daysLeft, pagesLeft int) error {
+	if daysLeft == 0 && pagesLeft > 0 {
+		return models.ErrProgressPastEndDate
+	}
+	return nil
 }
 
 func (s *progressService) GetLog(id string) (*models.DailyProgressLog, error) {

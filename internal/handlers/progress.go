@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 
 	webProgress "github.com/FilipBudzynski/book_it/cmd/web/progress"
@@ -13,7 +13,7 @@ import (
 
 type ProgressService interface {
 	// standard methods
-	Create(bookId uint, totalPages int, startDateString, endDateString string) (models.ReadingProgress, error)
+	Create(bookId uint, totalPages int, bookTitle, startDateString, endDateString string) (models.ReadingProgress, error)
 	Get(id string) (*models.ReadingProgress, error)
 	GetByUserBookId(userBookId string) (*models.ReadingProgress, error)
 	Delete(id string) error
@@ -21,6 +21,7 @@ type ProgressService interface {
 	// log methods
 	GetLog(id string) (*models.DailyProgressLog, error)
 	UpdateLogPagesRead(id, pagesReadString string) error
+	GetProgressByAssosiatedLogId(id string) (*models.ReadingProgress, error)
 }
 
 type progressHandler struct {
@@ -60,22 +61,23 @@ func (s *progressHandler) Create(c echo.Context) error {
 	progress, err := s.progressService.Create(
 		progressBind.UserBookID,
 		progressBind.TotalPages,
+		progressBind.BookTitle,
 		startDateString,
 		endDateString,
 	)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
+		return echo.NewHTTPError(http.StatusBadRequest, toast.Warning(c, err.Error()))
 	}
 
 	toast.Success(c, "Tracking Begins!")
-	return utils.RenderView(c, webProgress.OnTrackIdentifiactor(progress.UserBookID))
+	return utils.RenderView(c, webProgress.TrackingButton(progress.UserBookID))
 }
 
 func (s *progressHandler) GetByUserBookId(c echo.Context) error {
 	id := c.Param("id")
 	progress, err := s.progressService.GetByUserBookId(id)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
+		return echo.NewHTTPError(http.StatusBadRequest, toast.Warning(c, err.Error()))
 	}
 	return utils.RenderView(c, webProgress.ProgressStatistics(progress))
 }
@@ -85,16 +87,18 @@ func (s *progressHandler) UpdatePagesRead(c echo.Context) error {
 	pagesRead := c.FormValue("pages-read")
 
 	err := s.progressService.UpdateLogPagesRead(id, pagesRead)
+	if errors.Is(err, models.ErrProgressPastEndDate) {
+		_ = toast.Info(c, err.Error())
+	} else if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, toast.Warning(c, err.Error()))
+	}
+
+	progress, err := s.progressService.GetProgressByAssosiatedLogId(id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	log, err := s.progressService.GetLog(id)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
-	}
-
-	return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/progress/%d", log.UserBookID))
+	return utils.RenderView(c, webProgress.ProgressStatistics(progress))
 }
 
 // GetModal return reading log modal component if log with given id exists

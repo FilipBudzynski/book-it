@@ -20,7 +20,7 @@ type RouteRegistrar interface {
 func (s *Server) WithMiddleware(e *echo.Echo) *Server {
 	e.Use(prettylogger.Logger)
 	e.Use(utils.CustomRecoverMiddleware)
-	e.HTTPErrorHandler = utils.CustomErrorHandler
+	//e.HTTPErrorHandler = utils.CustomErrorHandler
 	return s
 }
 

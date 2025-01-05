@@ -2,7 +2,7 @@ package web_tracking
 
 import "fmt"
 
-templ OnTrackIdentifiactor(bookid uint) {
+templ TrackingButton(bookid uint) {
 	<div>
 		<button
 			hx-get={ fmt.Sprintf("/progress/%d", bookid) }

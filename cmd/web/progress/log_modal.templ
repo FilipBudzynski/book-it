@@ -1,0 +1,37 @@
+package web_tracking
+
+import (
+	"fmt"
+	"github.com/FilipBudzynski/book_it/internal/models"
+)
+
+templ ProgressLogModal(dailyLog models.DailyProgressLog) {
+	<form method="dialog">
+		<button
+			class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+		>✕</button>
+	</form>
+	<h3 class="text-lg font-bold pb-8">Day: { dailyLog.Date.Format("2006-01-02") }</h3>
+	<p class="py-4">Submit your daily progress 🎉</p>
+	<div class="flex-row">
+		<form method="dialog">
+			<div class="mb-4">
+				<div>
+					<label class="block text-sm font-medium text-gray-700">Pages read today:</label>
+					<input name="pages-read" type="number" min="0" value={ fmt.Sprintf("%d", dailyLog.PagesRead) } class="input input-bordered w-full mt-2"/>
+				</div>
+			</div>
+			<!-- if there is a button in form, it will close the modal -->
+			<div class="modal-action">
+				<button
+					hx-post={ fmt.Sprintf("/progress/log/%d", dailyLog.ID) }
+					hx-target="#progress-statistics"
+					hx-swap="innerHTML"
+					hx-trigger="click"
+					class="btn"
+					onclick="my_modal_1.close()"
+				>Submit</button>
+			</div>
+		</form>
+	</div>
+}

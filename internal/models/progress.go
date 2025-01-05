@@ -1,0 +1,53 @@
+package models
+
+import (
+	"errors"
+	"time"
+
+	"gorm.io/gorm"
+)
+
+type ReadingProgress struct {
+	gorm.Model
+	UserBookID       uint   `gorm:"not null" form:"user-book-id"`
+	BookTitle        string `form:"book-title"`
+	StartDate        time.Time
+	EndDate          time.Time
+	TotalPages       int `form:"total-pages"`
+	CurrentPage      int `form:"current-page"`
+	DailyTargetPages int
+	DailyProgress    []DailyProgressLog `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Completed        bool
+}
+
+var (
+	ErrProgressCurrentPageGreaterThanTotal = errors.New("current page cannot be greater than total pages")
+	ErrProgressCurrentPageNegative         = errors.New("current page cannot be negative")
+	ErrProgressDailyTargetPagesNegative    = errors.New("daily target pages cannot be negative")
+	ErrProgressDaysLeftNegative            = errors.New("days left cannot be negative")
+	ErrProgressInvalidEndDate              = errors.New("end date must be after start date")
+	ErrProgressPastEndDate                 = errors.New("this is the last day - finish reading today or change the end date to add more days")
+)
+
+func (r *ReadingProgress) Validate() error {
+	if r.CurrentPage > r.TotalPages {
+		return ErrProgressCurrentPageGreaterThanTotal
+	}
+
+	if r.CurrentPage < 0 {
+		return ErrProgressCurrentPageNegative
+	}
+	if r.CurrentPage > r.TotalPages {
+		return ErrProgressCurrentPageGreaterThanTotal
+	}
+
+	if r.DailyTargetPages < 0 {
+		return ErrProgressDailyTargetPagesNegative
+	}
+
+	if r.StartDate.After(r.EndDate) {
+		return ErrProgressInvalidEndDate
+	}
+
+	return nil
+}

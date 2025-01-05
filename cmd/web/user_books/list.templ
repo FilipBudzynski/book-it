@@ -33,7 +33,7 @@ templ List(books []*models.UserBook) {
 templ UserBooksTable(books []*models.UserBook) {
 	<div id="modal-content"></div>
 	<div class="flex-grow max-w-[80rem] place-items-center relative mb-10 h-[30rem] rounded-3xl overflow-auto">
-		<table class="bg-base-100 table table-zebra table-md z-[1] ">
+		<table class="bg-base-100 table table-md z-1 ">
 			<thead>
 				<th></th>
 				<th>Name and Author</th>
@@ -71,7 +71,7 @@ templ UserBooksTable(books []*models.UserBook) {
 						<td>
 							<div id={ fmt.Sprintf(web_progress.HtmxTrackingButtonId, book.ID) }>
 								if book.ReadingProgress != nil {
-									@web_progress.OnTrackIdentifiactor(book.ID)
+									@web_progress.TrackingButton(book.ID)
 								} else {
 									<button
 										hx-get={ fmt.Sprintf("user-books/create_modal/%d", book.ID) }
