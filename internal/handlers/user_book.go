@@ -16,10 +16,10 @@ import (
 type UserBookService interface {
 	Create(userId, bookId string) error
 	Update(userBook *models.UserBook) error
+	Get(id string) (*models.UserBook, error)
+	GetAll(userId string) ([]*models.UserBook, error)
 	Delete(id string) error
 	DeleteByBookId(bookId string) error
-	GetAll(userId string) ([]*models.UserBook, error)
-	GetById(id string) (*models.UserBook, error)
 }
 
 type UserBookHandler struct {
@@ -39,7 +39,7 @@ func (h *UserBookHandler) RegisterRoutes(app *echo.Echo) {
 	// UserBook endpoints
 	group.POST("/:book_id", h.Create)
 	group.DELETE("/:book_id", h.Delete)
-	group.DELETE("/search/:book_id", h.RemoveWithButtonSwap)
+	group.DELETE("/search/:book_id", h.DeleteAndReplaceButton)
 	group.GET("", h.List)
 	group.GET("/create_modal/:user_book_id", h.GetCreateProgressModal)
 }
@@ -55,7 +55,7 @@ func (h *UserBookHandler) Create(c echo.Context) error {
 	userID, err := utils.GetUserIDFromSession(c.Request())
 	if err != nil {
 		return echo.NewHTTPError(
-			echo.ErrUnauthorized.Code,
+			http.StatusUnauthorized,
 			err.Error())
 	}
 
@@ -87,7 +87,7 @@ func (h *UserBookHandler) Delete(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-func (h *UserBookHandler) RemoveWithButtonSwap(c echo.Context) error {
+func (h *UserBookHandler) DeleteAndReplaceButton(c echo.Context) error {
 	bookID := c.Param("book_id")
 	if bookID == "" {
 		return echo.NewHTTPError(
@@ -131,7 +131,7 @@ func (h *UserBookHandler) GetCreateProgressModal(c echo.Context) error {
 			toast.Warning(c, models.ErrUserBookQueryWithoutId.Error()))
 	}
 
-	userBook, err := h.userBookService.GetById(bookID)
+	userBook, err := h.userBookService.Get(bookID)
 	if err != nil {
 		return echo.NewHTTPError(
 			http.StatusInternalServerError,

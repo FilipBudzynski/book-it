@@ -36,12 +36,12 @@ func (s *userBookService) Update(userBook *models.UserBook) error {
 	return s.repo.Update(userBook)
 }
 
-func (s *userBookService) GetAll(userId string) ([]*models.UserBook, error) {
-	return s.repo.GetAllUserBooks(userId)
+func (s *userBookService) Get(id string) (*models.UserBook, error) {
+	return s.repo.Get(id)
 }
 
-func (s *userBookService) GetById(id string) (*models.UserBook, error) {
-	return s.repo.Get(id)
+func (s *userBookService) GetAll(userId string) ([]*models.UserBook, error) {
+	return s.repo.GetAllUserBooks(userId)
 }
 
 func (s *userBookService) Delete(id string) error {
