@@ -8,6 +8,7 @@ import (
 	webProgress "github.com/FilipBudzynski/book_it/cmd/web/progress"
 	webUserBooks "github.com/FilipBudzynski/book_it/cmd/web/user_books"
 	"github.com/FilipBudzynski/book_it/internal/models"
+	"github.com/FilipBudzynski/book_it/internal/toast"
 	"github.com/FilipBudzynski/book_it/utils"
 	"github.com/labstack/echo/v4"
 )
@@ -35,7 +36,10 @@ func NewUserBookHandler(userBookService UserBookService) *UserBookHandler {
 func (h *UserBookHandler) Create(c echo.Context) error {
 	bookID := c.Param("book_id")
 	if bookID == "" {
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("Something went wrong with the request. Book ID was not provided in query parameters"))
+		return echo.NewHTTPError(
+			http.StatusInternalServerError,
+			toast.Warning(c, models.ErrUserBookQueryWithoutId.Error()),
+		)
 	}
 
 	userID, err := utils.GetUserIDFromSession(c.Request())
@@ -45,7 +49,7 @@ func (h *UserBookHandler) Create(c echo.Context) error {
 
 	err = h.userBookService.Create(userID, bookID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusConflict, err.Error())
+		return echo.NewHTTPError(http.StatusConflict, toast.Warning(c, err.Error()))
 	}
 
 	return utils.RenderView(c, webBooks.WantToReadButton(bookID, true))

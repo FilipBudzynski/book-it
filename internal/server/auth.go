@@ -9,10 +9,6 @@ import (
 	"github.com/markbates/goth/providers/google"
 )
 
-const (
-	maxAge = 86400
-)
-
 func UseAuth() {
 	err := godotenv.Load()
 	if err != nil {

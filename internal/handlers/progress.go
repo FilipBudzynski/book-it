@@ -90,21 +90,6 @@ func (h *progressHandler) GetByUserBookId(c echo.Context) error {
 	return utils.RenderView(c, webProgress.ProgressStatistics(progress))
 }
 
-// func (h *progressHandler) Edit(c echo.Context) error {
-// 	progressBind := &models.ReadingProgress{}
-// 	if err := c.Bind(progressBind); err != nil {
-// 		return echo.NewHTTPError(http.StatusBadRequest, err)
-// 	}
-// 	endDateString := c.FormValue("end-date")
-//
-// 	progress, err := h.progressService.Edit(progressBind.ID, progressBind.TotalPages, endDateString)
-// 	if err != nil {
-// 		return echo.NewHTTPError(http.StatusBadRequest, toast.Warning(c, err.Error()))
-// 	}
-//
-// 	return utils.RenderView(c, webProgress.ProgressStatistics(progress))
-// }
-
 func (h *progressHandler) Delete(c echo.Context) error {
 	id := c.Param("id")
 	err := h.progressService.Delete(id)
@@ -112,7 +97,6 @@ func (h *progressHandler) Delete(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
-	// return utils.RenderView(c, web.Empty())
 	c.Response().Header().Set("HX-Redirect", "/user-books")
 	return c.NoContent(http.StatusOK)
 }

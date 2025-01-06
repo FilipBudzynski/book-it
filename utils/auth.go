@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	sessionName = "_user_session"
+	SessionName = "_user_session"
 	userIDKey   = "user_id"
 	maxAge      = 1800
 )
@@ -27,7 +27,7 @@ func init() {
 
 // setSessionValue stores a value in the current user session.
 func setSessionValue(w http.ResponseWriter, r *http.Request, key, value any) error {
-	session, _ := gothic.Store.New(r, sessionName)
+	session, _ := gothic.Store.New(r, SessionName)
 	session.Options.MaxAge = maxAge
 	session.Values[key] = value
 	return session.Save(r, w)
@@ -35,7 +35,7 @@ func setSessionValue(w http.ResponseWriter, r *http.Request, key, value any) err
 
 // getFromSession retrives a previously-stored value from the session.
 func getFromSession(r *http.Request, key string) (string, error) {
-	session, err := gothic.Store.Get(r, sessionName)
+	session, err := gothic.Store.Get(r, SessionName)
 	if value, ok := session.Values[key]; ok {
 		return value.(string), nil
 	}
@@ -43,23 +43,13 @@ func getFromSession(r *http.Request, key string) (string, error) {
 }
 
 func IsUserLoggedIn(r *http.Request) bool {
-	session, _ := gothic.Store.Get(r, sessionName)
+	session, _ := gothic.Store.Get(r, SessionName)
 	_, ok := session.Values[userIDKey]
 	return ok
 }
 
-func CheckLoggedInMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		_, err := GetUserSessionFromStore(c.Request())
-		if err != nil {
-			return echo.NewHTTPError(echo.ErrUnauthorized.Code, "Unauthorized")
-		}
-		return next(c)
-	}
-}
-
 func GetUserSessionFromStore(r *http.Request) (UserSession, error) {
-	session, err := gothic.Store.Get(r, sessionName)
+	session, err := gothic.Store.Get(r, SessionName)
 	if value, ok := session.Values["userSession"]; ok {
 		return value.(UserSession), nil
 	}
@@ -81,7 +71,7 @@ func SetUserSession(w http.ResponseWriter, r *http.Request, userSession UserSess
 
 // SetSessionValue stores a value in the current user session.
 func SetSessionValueMap(w http.ResponseWriter, r *http.Request, values map[any]any) error {
-	session, _ := gothic.Store.New(r, sessionName)
+	session, _ := gothic.Store.New(r, SessionName)
 	session.Values = values
 	return session.Save(r, w)
 }
@@ -92,8 +82,31 @@ func SetSessionUserID(w http.ResponseWriter, r *http.Request, id string) error {
 }
 
 func RemoveCookieSession(w http.ResponseWriter, r *http.Request) error {
-	session, _ := gothic.Store.Get(r, sessionName)
+	session, _ := gothic.Store.Get(r, SessionName)
 	session.Options.MaxAge = -1
 	// session.Values = make(map[any]any)
 	return session.Save(r, w)
+}
+
+func CheckLoggedInMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		_, err := GetUserSessionFromStore(c.Request())
+		if err != nil {
+			return echo.NewHTTPError(echo.ErrUnauthorized.Code, "Unauthorized")
+		}
+		return next(c)
+	}
+}
+
+func RefreshSessionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		session, _ := gothic.Store.Get(c.Request(), SessionName)
+
+		if !session.IsNew {
+			session.Options.MaxAge = 1800
+			session.Save(c.Request(), c.Response().Writer)
+		}
+
+		return next(c)
+	}
 }

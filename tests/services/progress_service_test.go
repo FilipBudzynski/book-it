@@ -217,13 +217,6 @@ func setupMockProgress(t *testing.T, currentPage, totalPages, days int, startDat
 	return progress
 }
 
-func updatePagesRead(log *models.DailyProgressLog, pagesRead int, date time.Time) {
-	if log.Date.Before(date) {
-		return
-	}
-	log.PagesRead = pagesRead
-}
-
 func TestUpdateLogPagesRead(t *testing.T) {
 	mockRepo := new(MockProgressRepository)
 	service := services.NewProgressService(mockRepo)
