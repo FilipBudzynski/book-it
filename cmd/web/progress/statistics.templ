@@ -36,7 +36,7 @@ templ ProgressStatistics(readingProgress *models.ReadingProgress) {
 						</svg>
 					</div>
 					<div class="stat-title">Days Left</div>
-					<div class="stat-value text-primary">{ fmt.Sprintf("%d", int(readingProgress.EndDate.Sub(time.Now()).Hours() / 24 )) }</div>
+					<div class="stat-value text-primary">{ fmt.Sprintf("%d",  max(0, readingProgress.DaysLeft(time.Now()) + 1)) }</div>
 					<div class="stat-desc">{ "Started at: " + readingProgress.StartDate.Format("2006-01-02") }</div>
 				</div>
 				<div class="stat">

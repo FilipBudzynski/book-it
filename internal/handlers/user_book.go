@@ -81,7 +81,7 @@ func (h *UserBookHandler) Delete(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(
 			http.StatusInternalServerError,
-			toast.Danger(c, err.Error()))
+			toast.Danger(err.Error()))
 	}
 
 	return c.NoContent(http.StatusOK)
@@ -99,7 +99,7 @@ func (h *UserBookHandler) DeleteAndReplaceButton(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(
 			http.StatusInternalServerError,
-			toast.Danger(c, err.Error()))
+			toast.Danger(err.Error()))
 	}
 
 	return utils.RenderView(c, webBooks.WantToReadButton(bookID, false))
@@ -117,7 +117,7 @@ func (h *UserBookHandler) List(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(
 			http.StatusInternalServerError,
-			toast.Danger(c, err.Error()))
+			toast.Danger(err.Error()))
 	}
 
 	return utils.RenderView(c, webUserBooks.List(userBooks))
@@ -135,7 +135,7 @@ func (h *UserBookHandler) GetCreateProgressModal(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(
 			http.StatusInternalServerError,
-			toast.Danger(c, err.Error()))
+			toast.Danger(err.Error()))
 	}
 
 	return utils.RenderView(c, webProgress.ProgressCreateModal(userBook))

@@ -93,19 +93,14 @@ func (s *progressService) GetProgressAssosiatedWithLogId(logId string) (*models.
 	return s.Get(strconv.Itoa(int(log.ReadingProgressID)))
 }
 
-func (s *progressService) UpdateLogPagesRead(id, pagesReadString string) (*models.DailyProgressLog, error) {
-	if pagesReadString == "" {
-		return nil, models.ErrProgressLogPagesReadNotSpecified
-	}
-
-	pagesRead, err := strconv.Atoi(pagesReadString)
-	if err != nil {
-		return nil, err
-	}
-
+func (s *progressService) UpdateLogPagesRead(id string, pagesRead int) (*models.DailyProgressLog, error) {
 	log, err := s.repo.GetLogById(id)
 	if err != nil {
 		return nil, err
+	}
+
+	if log.PagesRead == pagesRead {
+		return log, nil
 	}
 
 	log.PagesRead = pagesRead
@@ -114,7 +109,11 @@ func (s *progressService) UpdateLogPagesRead(id, pagesReadString string) (*model
 		return nil, err
 	}
 
-	return log, s.repo.UpdateLog(log)
+	if err := s.repo.UpdateLog(log); err != nil {
+		return nil, err
+	}
+
+	return log, s.UpdateTargetPages(log.ReadingProgressID, log.Date)
 }
 
 func (s *progressService) UpdateTargetPages(progressId uint, logDate time.Time) error {
@@ -123,33 +122,32 @@ func (s *progressService) UpdateTargetPages(progressId uint, logDate time.Time) 
 		return err
 	}
 
-	pagesLeft := progress.PagesLeft()
-	daysLeft := int(progress.EndDate.Sub(logDate).Hours() / 24)
-	var targetPages int
+	progress.DailyTargetPages = CalculateTargetPages(
+		progress.PagesLeft(),
+		progress.DaysLeft(logDate),
+		logDate)
+
+	if err := progress.Validate(); err != nil {
+		return err
+	}
+	progress.UpdateLogTargetPagesBeforeDate(logDate)
+
+	return s.repo.Update(progress)
+}
+
+func CalculateTargetPages(pagesLeft, daysLeft int, logDate time.Time) int {
+	if pagesLeft < 0 {
+		return -1
+	}
 
 	switch {
 	case daysLeft == 0:
-		targetPages = pagesLeft
+		return pagesLeft
 	case daysLeft > 0:
-		targetPages = int((pagesLeft + daysLeft - 1) / daysLeft)
-	case daysLeft < 0:
-		return models.ErrProgressDaysLeftNegative
+		return int((pagesLeft + daysLeft - 1) / daysLeft)
+	default:
+		return -1
 	}
-
-	err = progress.UpdateTargetPages(targetPages, logDate)
-	if err != nil {
-		return err
-	}
-
-	if err := s.repo.Update(progress); err != nil {
-		return err
-	}
-
-	if daysLeft == 0 && pagesLeft > 0 {
-		return models.ErrProgressLastDayNotFinished
-	}
-
-	return nil
 }
 
 func (s *progressService) GetLog(id string) (*models.DailyProgressLog, error) {

@@ -63,8 +63,12 @@ func (r *ReadingProgress) Validate() error {
 	return nil
 }
 
+func (r *ReadingProgress) DaysLeft(date time.Time) int {
+	return int(r.EndDate.Sub(date).Hours() / 24)
+}
+
 func (r *ReadingProgress) IsFinishedByEndDate(date time.Time) error {
-	daysLeft := int(r.EndDate.Sub(date).Hours() / 24)
+	daysLeft := r.DaysLeft(date)
 	if daysLeft == 0 && r.PagesLeft() > 0 {
 		return ErrProgressLastDayNotFinished
 	}
@@ -79,17 +83,15 @@ func (r *ReadingProgress) IsCompleted() bool {
 	return r.CurrentPage == r.TotalPages
 }
 
-func (r *ReadingProgress) UpdateTargetPages(targetPages int, logDate time.Time) error {
-	r.DailyTargetPages = targetPages
-	if err := r.Validate(); err != nil {
-		return err
-	}
-
+func (r *ReadingProgress) UpdateLogTargetPagesBeforeDate(logDate time.Time) {
 	for i := range r.DailyProgress {
 		if r.DailyProgress[i].Date.Before(logDate) {
 			continue
 		}
-		r.DailyProgress[i].TargetPages = targetPages
+		r.DailyProgress[i].TargetPages = r.DailyTargetPages
 	}
-    return nil
+}
+
+func (r *ReadingProgress) IsFinishedOnLastLog(logDate time.Time) bool {
+	return r.DaysLeft(logDate) != 0 || r.PagesLeft() < 0
 }

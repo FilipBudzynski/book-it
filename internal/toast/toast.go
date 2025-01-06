@@ -27,10 +27,8 @@ func Success(c echo.Context, message string) {
 	New(SUCCESS, message).SetHXTriggerHeader(c)
 }
 
-func Info(c echo.Context, message string) Toast {
-	toast := New(INFO, message)
-	toast.SetHXTriggerHeader(c)
-	return toast
+func Info(message string) Toast {
+	return New(INFO, message)
 }
 
 func Warning(c echo.Context, message string) Toast {
@@ -39,10 +37,8 @@ func Warning(c echo.Context, message string) Toast {
 	return toast
 }
 
-func Danger(c echo.Context, message string) Toast {
-	toast := New(DANGER, message)
-	toast.SetHXTriggerHeader(c)
-	return toast
+func Danger(message string) Toast {
+	return New(DANGER, message)
 }
 
 func (t Toast) Error() string {

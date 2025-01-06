@@ -93,7 +93,7 @@ func setupMockRepoAndService(t *testing.T) (*MockProgressRepository, handlers.Pr
 }
 
 func TestUpdateTargetPages(t *testing.T) {
-	t.Run("Valid First Log Update", func(t *testing.T) {
+	t.Run("Valid Target Pages Update", func(t *testing.T) {
 		mockRepo, service := setupMockRepoAndService(t)
 		logDate := time.Date(2025, 1, 5, 0, 0, 0, 0, time.UTC)
 		endDate := time.Date(2025, 1, 9, 0, 0, 0, 0, time.UTC)
@@ -178,26 +178,9 @@ func TestUpdateTargetPages(t *testing.T) {
 		mockRepo.On("GetById", "1").Return(mockProgress, nil)
 		mockRepo.On("Update", mockProgress).Return(nil)
 
-		err := service.UpdateTargetPages(1, logDate)
+		_ = service.UpdateTargetPages(1, logDate)
 
-		assert.ErrorIs(t, err, models.ErrProgressLastDayNotFinished)
 		assert.Equal(t, 5, mockProgress.DailyTargetPages)
-		mockRepo.AssertExpectations(t)
-	})
-
-	t.Run("Negative Days Left", func(t *testing.T) {
-		logDate := time.Date(2025, 1, 15, 0, 0, 0, 0, time.UTC)
-		endDate := time.Date(2025, 1, 10, 0, 0, 0, 0, time.UTC)
-		mockProgress := &models.ReadingProgress{EndDate: endDate}
-
-		mockRepo, service := setupMockRepoAndService(t)
-
-		mockRepo.On("GetById", "1").Return(mockProgress, nil)
-
-		err := service.UpdateTargetPages(1, logDate)
-
-		assert.Equal(t, models.ErrProgressDaysLeftNegative, err)
-		mockRepo.AssertNotCalled(t, "Update", mockProgress)
 		mockRepo.AssertExpectations(t)
 	})
 }
@@ -223,32 +206,52 @@ func TestUpdateLogPagesRead(t *testing.T) {
 
 	t.Run("Valid Log Update", func(t *testing.T) {
 		logId := "1"
-		pagesRead := "50"
+		pagesRead := 10
+		mockTime := time.Now()
 		mockLog := &models.DailyProgressLog{
-			PagesRead:         0,
 			ReadingProgressID: 1,
-			Date:              time.Now(),
+			Date:              mockTime,
 		}
 
+		mockProgress := setupMockProgress(t, 50, 100, 10, mockTime)
+		mockProgress.EndDate = time.Now().Add(10 * time.Hour * 24)
+
+		mockRepo.On("GetById", "1").Return(mockProgress, nil)
+		mockRepo.On("Update", mockProgress).Return(nil)
 		mockRepo.On("GetLogById", logId).Return(mockLog, nil)
 		mockRepo.On("UpdateLog", mockLog).Return(nil)
 
 		_, err := service.UpdateLogPagesRead(logId, pagesRead)
 
 		assert.NoError(t, err)
-		assert.Equal(t, 50, mockLog.PagesRead)
-		mockRepo.AssertCalled(t, "GetLogById", logId)
-		mockRepo.AssertExpectations(t)
+		assert.Equal(t, pagesRead, mockLog.PagesRead)
 		mockRepo.AssertCalled(t, "UpdateLog", mockLog)
 	})
 
-	t.Run("Empty PagesRead Input", func(t *testing.T) {
-		_, err := service.UpdateLogPagesRead("1", "")
-		assert.Equal(t, models.ErrProgressLogPagesReadNotSpecified, err)
+	t.Run("Pages read not changed", func(t *testing.T) {
+		logId := "1"
+		pagesRead := 0
+		mockLog := &models.DailyProgressLog{
+			PagesRead:         0,
+			ReadingProgressID: 1,
+			Date:              time.Now(),
+		}
+
+		mockProgress := setupMockProgress(t, 50, 100, 10, time.Now())
+		mockRepo.On("GetById", "1").Return(mockProgress, nil)
+		mockRepo.On("Update", mockProgress).Return(nil)
+		mockRepo.On("GetLogById", logId).Return(mockLog, nil)
+		mockRepo.On("UpdateLog", mockLog).Return(nil)
+
+		_, err := service.UpdateLogPagesRead(logId, pagesRead)
+
+		assert.NoError(t, err)
+		assert.Equal(t, 0, mockLog.PagesRead)
+		mockRepo.AssertNotCalled(t, "UpdateLog", mockLog)
 	})
 
-	t.Run("Invalid PagesRead Input", func(t *testing.T) {
-		_, err := service.UpdateLogPagesRead("1", "not-a-number")
+	t.Run("Negative PagesRead Input", func(t *testing.T) {
+		_, err := service.UpdateLogPagesRead("1", -1)
 		assert.Error(t, err)
 	})
 }

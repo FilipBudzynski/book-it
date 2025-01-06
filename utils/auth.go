@@ -33,15 +33,6 @@ func setSessionValue(w http.ResponseWriter, r *http.Request, key, value any) err
 	return session.Save(r, w)
 }
 
-// getFromSession retrives a previously-stored value from the session.
-func getFromSession(r *http.Request, key string) (string, error) {
-	session, err := gothic.Store.Get(r, SessionName)
-	if value, ok := session.Values[key]; ok {
-		return value.(string), nil
-	}
-	return "", err
-}
-
 func IsUserLoggedIn(r *http.Request) bool {
 	session, _ := gothic.Store.Get(r, SessionName)
 	_, ok := session.Values[userIDKey]
@@ -104,7 +95,9 @@ func RefreshSessionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 		if !session.IsNew {
 			session.Options.MaxAge = 1800
-			session.Save(c.Request(), c.Response().Writer)
+			if err := session.Save(c.Request(), c.Response().Writer); err != nil {
+				return err
+			}
 		}
 
 		return next(c)
