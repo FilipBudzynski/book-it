@@ -30,9 +30,10 @@ func (s *Server) WithRegisterRoutes(e *echo.Echo) *Server {
 
 	progressRepo := repositories.NewProgressRepository(db)
 	userRepo := repositories.NewUserRepository(db)
+	userBookRepo := repositories.NewUserBookRepository(db)
 
 	userService := services.NewUserService(userRepo)
-	userBookService := services.NewUserBookService(db)
+	userBookService := services.NewUserBookService(userBookRepo)
 	progressService := services.NewProgressService(progressRepo)
 	bookService := services.NewBookService(db).
 		WithProvider(providers.NewGoogleProvider().
