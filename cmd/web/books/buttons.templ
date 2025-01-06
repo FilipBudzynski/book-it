@@ -6,7 +6,7 @@ templ WantToReadButton(bookID string, isBookInUserBooks bool) {
 	if isBookInUserBooks {
 		<div class="w-full pr-4 outer-div">
 			<div
-				hx-delete={ fmt.Sprintf("/user-books/%s", bookID) }
+				hx-delete={ fmt.Sprintf("/user-books/search/%s", bookID) }
 				hx-swap="outerHTML transition:true"
 				hx-target="closest .outer-div"
 				role="button"

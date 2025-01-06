@@ -19,7 +19,6 @@ func (s *userBookService) Create(userID, bookID string) error {
 	userBook := &models.UserBook{
 		UserGoogleId: userID,
 		BookID:       bookID,
-		IsTracked:    false,
 	}
 	return s.db.Create(userBook).Error
 }
@@ -30,6 +29,10 @@ func (s *userBookService) Update(userBook *models.UserBook) error {
 
 func (s *userBookService) Delete(id string) error {
 	return s.db.Delete(&models.UserBook{}, id).Error
+}
+
+func (s *userBookService) DeleteByBookId(bookId string) error {
+	return s.db.Where("book_id = ?", bookId).Delete(&models.UserBook{}).Error
 }
 
 func (s *userBookService) GetAll(userId string) ([]*models.UserBook, error) {

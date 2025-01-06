@@ -1,12 +1,17 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"errors"
+
+	"gorm.io/gorm"
+)
+
+var ErrUserBookQueryWithoutId = errors.New("something went wrong with the request. Book ID was not provided in query parameters")
 
 // UserBook model is an abstraction for link between user and a book
 // It bounds book to a user providing more information about user interactions with a book
 type UserBook struct {
 	gorm.Model
-	IsTracked       bool   `gorm:"not null;default:false"`
 	UserGoogleId    string `gorm:"not null"` // foreignKey
 	BookID          string `gorm:"not null"`
 	Book            Book

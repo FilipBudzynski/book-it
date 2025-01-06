@@ -136,16 +136,9 @@ func (s *progressService) UpdateTargetPages(progressId uint, logDate time.Time) 
 		return models.ErrProgressDaysLeftNegative
 	}
 
-	progress.DailyTargetPages = targetPages
-	if err := progress.Validate(); err != nil {
+	err = progress.UpdateTargetPages(targetPages, logDate)
+	if err != nil {
 		return err
-	}
-
-	for i := range progress.DailyProgress {
-		if progress.DailyProgress[i].Date.Before(logDate) {
-			continue
-		}
-		progress.DailyProgress[i].TargetPages = targetPages
 	}
 
 	if err := s.repo.Update(progress); err != nil {

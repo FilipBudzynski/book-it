@@ -79,6 +79,20 @@ templ ProgressStatistics(readingProgress *models.ReadingProgress) {
 					<div class="stat-title">Pages Left</div>
 					<div class="stat-desc text-secondary">{ fmt.Sprintf("%d", readingProgress.TotalPages - readingProgress.CurrentPage) }</div>
 				</div>
+				<div class="stat">
+					<div class="stat-title">Options</div>
+					<div class="stat-value"></div>
+					<div class="stat-actions">
+						<button
+							hx-delete={ fmt.Sprintf("/progress/%d", readingProgress.ID) }
+							hx-target="#progress-statistics"
+							hx-confirm="Are you sure?"
+							hx-swap="innerHTML"
+							class="btn btn-sm btn-error"
+						>Stop Tracking</button>
+						<button class="btn btn-sm btn-info">Edit</button>
+					</div>
+				</div>
 			</div>
 		</div>
 	</div>
