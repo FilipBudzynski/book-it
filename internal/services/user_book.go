@@ -2,16 +2,24 @@ package services
 
 import (
 	"github.com/FilipBudzynski/book_it/internal/models"
-	"gorm.io/gorm"
 )
 
-type userBookService struct {
-	db *gorm.DB
+type UserBookRepository interface {
+	Create(userBook *models.UserBook) error
+	GetAllUserBooks(userId string) ([]*models.UserBook, error)
+	Get(id string) (*models.UserBook, error)
+	Update(userBook *models.UserBook) error
+	Delete(id string) error
+	DeleteWhereBookId(bookId string) error
 }
 
-func NewUserBookService(db *gorm.DB) *userBookService {
+type userBookService struct {
+	repo UserBookRepository
+}
+
+func NewUserBookService(r UserBookRepository) *userBookService {
 	return &userBookService{
-		db: db,
+		repo: r,
 	}
 }
 
@@ -20,37 +28,26 @@ func (s *userBookService) Create(userID, bookID string) error {
 		UserGoogleId: userID,
 		BookID:       bookID,
 	}
-	return s.db.Create(userBook).Error
+
+	return s.repo.Create(userBook)
 }
 
 func (s *userBookService) Update(userBook *models.UserBook) error {
-	return s.db.Save(userBook).Error
-}
-
-func (s *userBookService) Delete(id string) error {
-	return s.db.Delete(&models.UserBook{}, id).Error
-}
-
-func (s *userBookService) DeleteByBookId(bookId string) error {
-	return s.db.Where("book_id = ?", bookId).Delete(&models.UserBook{}).Error
+	return s.repo.Update(userBook)
 }
 
 func (s *userBookService) GetAll(userId string) ([]*models.UserBook, error) {
-	var userBooks []*models.UserBook
-	if err := s.db.Preload("Book").Preload("ReadingProgress").
-		Where("user_google_id = ?", userId).
-		Where("deleted_at IS NULL").
-		Find(&userBooks).Error; err != nil {
-		return nil, err
-	}
-
-	return userBooks, nil
+	return s.repo.GetAllUserBooks(userId)
 }
 
 func (s *userBookService) GetById(id string) (*models.UserBook, error) {
-	var userBook models.UserBook
-	if err := s.db.Preload("Book").First(&userBook, id).Error; err != nil {
-		return nil, err
-	}
-	return &userBook, nil
+	return s.repo.Get(id)
+}
+
+func (s *userBookService) Delete(id string) error {
+	return s.repo.Delete(id)
+}
+
+func (s *userBookService) DeleteByBookId(bookId string) error {
+	return s.repo.DeleteWhereBookId(bookId)
 }
