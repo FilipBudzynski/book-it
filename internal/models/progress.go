@@ -83,7 +83,7 @@ func (r *ReadingProgress) IsCompleted() bool {
 	return r.CurrentPage == r.TotalPages
 }
 
-func (r *ReadingProgress) UpdateLogTargetPagesBeforeDate(logDate time.Time) {
+func (r *ReadingProgress) UpdateLogTargetPagesFromDate(logDate time.Time) {
 	for i := range r.DailyProgress {
 		if r.DailyProgress[i].Date.Before(logDate) {
 			continue
@@ -94,4 +94,13 @@ func (r *ReadingProgress) UpdateLogTargetPagesBeforeDate(logDate time.Time) {
 
 func (r *ReadingProgress) IsFinishedOnLastLog(logDate time.Time) bool {
 	return r.DaysLeft(logDate) != 0 || r.PagesLeft() < 0
+}
+
+func (r *ReadingProgress) GetLatestPositiveLog() *DailyProgressLog {
+	for i := len(r.DailyProgress) - 1; i >= 0; i-- {
+		if r.DailyProgress[i].PagesRead > 0 {
+			return &r.DailyProgress[i]
+		}
+	}
+	return nil
 }

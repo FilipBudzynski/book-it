@@ -122,20 +122,22 @@ func (s *progressService) UpdateTargetPages(progressId uint, logDate time.Time) 
 		return err
 	}
 
+	latestLog := progress.GetLatestPositiveLog()
+
 	progress.DailyTargetPages = CalculateTargetPages(
 		progress.PagesLeft(),
-		progress.DaysLeft(logDate),
-		logDate)
+		progress.DaysLeft(latestLog.Date))
 
 	if err := progress.Validate(); err != nil {
 		return err
 	}
-	progress.UpdateLogTargetPagesBeforeDate(logDate)
+
+	progress.UpdateLogTargetPagesFromDate(latestLog.Date)
 
 	return s.repo.Update(progress)
 }
 
-func CalculateTargetPages(pagesLeft, daysLeft int, logDate time.Time) int {
+func CalculateTargetPages(pagesLeft, daysLeft int) int {
 	if pagesLeft < 0 {
 		return -1
 	}
