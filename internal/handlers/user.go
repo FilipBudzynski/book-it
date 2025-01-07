@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/FilipBudzynski/book_it/cmd/web"
+	"github.com/FilipBudzynski/book_it/internal/errs"
 	"github.com/FilipBudzynski/book_it/internal/models"
 	"github.com/FilipBudzynski/book_it/internal/toast"
 	"github.com/FilipBudzynski/book_it/utils"
@@ -32,15 +33,23 @@ func NewUserHandler(us UserService) *UserHandler {
 	}
 }
 
+func (h *UserHandler) RegisterRoutes(app *echo.Echo) {
+	app.GET("/", h.LandingPage)
+	app.GET("/navbar", h.Navbar)
+	group := app.Group("/users")
+	group.Use(utils.CheckLoggedInMiddleware)
+	group.GET("", h.ListUsers)
+}
+
 func (h *UserHandler) CreateUser(c echo.Context) error {
 	user := new(models.User)
 
 	if err := c.Bind(user); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
+		return errs.HttpErrorBadRequest(err)
 	}
 
 	if err := h.userService.Create(user); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, toast.Warning(c, err.Error()))
+		return errs.HttpErrorInternalServerError(err)
 	}
 
 	toast.Success(c, "Account created")
@@ -50,7 +59,7 @@ func (h *UserHandler) CreateUser(c echo.Context) error {
 func (h *UserHandler) ListUsers(c echo.Context) error {
 	users, err := h.userService.GetAll()
 	if err != nil {
-		return echo.NewHTTPError(echo.ErrInternalServerError.Code, err)
+		return errs.HttpErrorInternalServerError(err)
 	}
 
 	return utils.RenderView(c, web.UserForm(users))
@@ -65,7 +74,7 @@ func (h *UserHandler) LandingPage(c echo.Context) error {
 
 	dbUser, err := h.userService.GetByGoogleID(userSession.UserID)
 	if dbUser == nil {
-		return echo.NewHTTPError(echo.ErrInternalServerError.Code, err)
+		return errs.HttpErrorInternalServerError(err)
 	}
 
 	return utils.RenderView(c, web.HomePage(dbUser))
@@ -79,17 +88,8 @@ func (h *UserHandler) Navbar(c echo.Context) error {
 
 	user, err := h.userService.GetByGoogleID(userSession.UserID)
 	if err != nil {
-		return echo.NewHTTPError(echo.ErrInternalServerError.Code, err)
+		return errs.HttpErrorInternalServerError(err)
 	}
 
 	return utils.RenderView(c, web.Navbar(user))
-}
-
-func (h *UserHandler) RegisterRoutes(app *echo.Echo) {
-	app.GET("/", h.LandingPage)
-	app.GET("/navbar", h.Navbar)
-
-	group := app.Group("/users")
-	group.Use(utils.CheckLoggedInMiddleware)
-	group.GET("", h.ListUsers)
 }

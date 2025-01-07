@@ -23,18 +23,16 @@ func New(level string, message string) Toast {
 	return Toast{level, message}
 }
 
-func Success(c echo.Context, message string) {
-	New(SUCCESS, message).SetHXTriggerHeader(c)
+func Success(c echo.Context, message string) Toast {
+	return New(SUCCESS, message).SetHXTriggerHeader(c)
 }
 
 func Info(message string) Toast {
 	return New(INFO, message)
 }
 
-func Warning(c echo.Context, message string) Toast {
-	toast := New(WARNING, message)
-	toast.SetHXTriggerHeader(c)
-	return toast
+func Warning(message string) Toast {
+	return New(WARNING, message)
 }
 
 func Danger(message string) Toast {
@@ -57,11 +55,39 @@ func (t Toast) jsonify() (string, error) {
 	return string(jsonData), nil
 }
 
-func (t Toast) SetHXTriggerHeader(c echo.Context) {
+func (t Toast) SetHXTriggerHeader(c echo.Context) Toast {
 	if t.Level != SUCCESS && t.Level != INFO {
 		c.Response().Header().Set("HX-Reswap", "none")
 	}
 
 	jsonData, _ := t.jsonify()
 	c.Response().Header().Set("HX-Trigger", jsonData)
+	return t
+}
+
+func ToastMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		err := next(c)
+		handleToast(err, c)
+		return err
+	}
+}
+
+func handleToast(err error, c echo.Context) {
+	if err == nil {
+		return
+	}
+
+	te, ok := err.(Toast)
+
+	if !ok {
+		fmt.Println(err)
+		te = Danger("there has been an unexpected error")
+	}
+
+	if te.Level != SUCCESS && te.Level != INFO {
+		c.Response().Header().Set("HX-Reswap", "none")
+	}
+
+	_ = te.SetHXTriggerHeader(c)
 }

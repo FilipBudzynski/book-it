@@ -6,6 +6,7 @@ import (
 	"time"
 
 	webProgress "github.com/FilipBudzynski/book_it/cmd/web/progress"
+	"github.com/FilipBudzynski/book_it/internal/errs"
 	"github.com/FilipBudzynski/book_it/internal/models"
 	"github.com/FilipBudzynski/book_it/internal/toast"
 	"github.com/FilipBudzynski/book_it/utils"
@@ -74,10 +75,10 @@ func (h *progressHandler) Create(c echo.Context) error {
 		endDateString,
 	)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, toast.Warning(c, err.Error()))
+		return errs.HttpErrorBadRequest(err)
 	}
 
-	toast.Success(c, TrackingBeginsMessage)
+	_ = toast.Success(c, TrackingBeginsMessage)
 	return utils.RenderView(c, webProgress.TrackingButton(progress.UserBookID, progress.Completed))
 }
 
@@ -85,7 +86,7 @@ func (h *progressHandler) GetByUserBookId(c echo.Context) error {
 	id := c.Param("id")
 	progress, err := h.progressService.GetByUserBookId(id)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, toast.Warning(c, err.Error()))
+		return errs.HttpErrorBadRequest(err)
 	}
 	return utils.RenderView(c, webProgress.ProgressStatistics(progress))
 }
@@ -94,7 +95,7 @@ func (h *progressHandler) Delete(c echo.Context) error {
 	id := c.Param("id")
 	err := h.progressService.Delete(id)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
+		return errs.HttpErrorInternalServerError(err)
 	}
 
 	c.Response().Header().Set("HX-Redirect", "/user-books")
@@ -105,23 +106,17 @@ func (h *progressHandler) UpdatePagesRead(c echo.Context) error {
 	id := c.Param("id")
 	pagesRead, err := strconv.Atoi(c.FormValue("pages-read"))
 	if err != nil {
-		return echo.NewHTTPError(
-			http.StatusBadRequest,
-			toast.Danger(err.Error()))
+		return errs.HttpErrorBadRequest(err)
 	}
 
 	log, err := h.progressService.UpdateLogPagesRead(id, pagesRead)
 	if err != nil {
-		return echo.NewHTTPError(
-			http.StatusInternalServerError,
-			toast.Danger(err.Error()))
+		return errs.HttpErrorInternalServerError(err)
 	}
 
 	progress, err := h.progressService.GetProgressAssosiatedWithLogId(id)
 	if err != nil {
-		return echo.NewHTTPError(
-			http.StatusInternalServerError,
-			toast.Danger(err.Error()))
+		return errs.HttpErrorInternalServerError(err)
 	}
 
 	if !progress.IsFinishedOnLastLog(log.Date) {
@@ -131,6 +126,7 @@ func (h *progressHandler) UpdatePagesRead(c echo.Context) error {
 	if progress.Completed {
 		toast.Success(c, CompletedBookMessage)
 	}
+
 	return utils.RenderView(c, webProgress.ProgressStatistics(progress))
 }
 
@@ -138,7 +134,7 @@ func (h *progressHandler) GetLogModal(c echo.Context) error {
 	id := c.Param("id")
 	log, err := h.progressService.GetLog(id)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
+		return errs.HttpErrorInternalServerError(err)
 	}
 	return utils.RenderView(c, webProgress.ProgressLogModal(*log))
 }

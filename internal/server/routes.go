@@ -8,6 +8,7 @@ import (
 	"github.com/FilipBudzynski/book_it/internal/providers"
 	"github.com/FilipBudzynski/book_it/internal/repositories"
 	"github.com/FilipBudzynski/book_it/internal/services"
+	"github.com/FilipBudzynski/book_it/internal/toast"
 	"github.com/FilipBudzynski/book_it/utils"
 	"github.com/labstack/echo/v4"
 	prettylogger "github.com/rdbell/echo-pretty-logger"
@@ -21,6 +22,7 @@ func (s *Server) WithMiddleware(e *echo.Echo) *Server {
 	e.Use(prettylogger.Logger)
 	e.Use(utils.CustomRecoverMiddleware)
 	e.Use(utils.RefreshSessionMiddleware)
+	e.Use(toast.ToastMiddleware)
 	return s
 }
 
@@ -37,6 +39,7 @@ func (s *Server) WithRegisterRoutes(e *echo.Echo) *Server {
 	bookService := services.NewBookService(db).
 		WithProvider(providers.NewGoogleProvider().
 			WithLimit(15))
+	exchangeService := services.NewExchangeService()
 
 	routeRegistrars := []RouteRegistrar{
 		handlers.NewAuthHandler(userService),
@@ -44,6 +47,7 @@ func (s *Server) WithRegisterRoutes(e *echo.Echo) *Server {
 		handlers.NewBookHandler(bookService, userBookService),
 		handlers.NewUserBookHandler(userBookService),
 		handlers.NewProgressHandler(progressService),
+		handlers.NewExchangeHandler(exchangeService),
 	}
 
 	for _, routeRegistrar := range routeRegistrars {

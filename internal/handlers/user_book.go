@@ -6,8 +6,8 @@ import (
 	webBooks "github.com/FilipBudzynski/book_it/cmd/web/books"
 	webProgress "github.com/FilipBudzynski/book_it/cmd/web/progress"
 	webUserBooks "github.com/FilipBudzynski/book_it/cmd/web/user_books"
+	"github.com/FilipBudzynski/book_it/internal/errs"
 	"github.com/FilipBudzynski/book_it/internal/models"
-	"github.com/FilipBudzynski/book_it/internal/toast"
 	"github.com/FilipBudzynski/book_it/utils"
 	"github.com/labstack/echo/v4"
 )
@@ -34,9 +34,7 @@ func NewUserBookHandler(userBookService UserBookService) *UserBookHandler {
 
 func (h *UserBookHandler) RegisterRoutes(app *echo.Echo) {
 	group := app.Group("/user-books")
-	// middleware for protected routes
-	group.Use(utils.CheckLoggedInMiddleware)
-	// UserBook endpoints
+	group.Use(utils.CheckLoggedInMiddleware) // middleware for protected routes
 	group.POST("/:book_id", h.Create)
 	group.DELETE("/:book_id", h.Delete)
 	group.DELETE("/search/:book_id", h.DeleteAndReplaceButton)
@@ -47,23 +45,16 @@ func (h *UserBookHandler) RegisterRoutes(app *echo.Echo) {
 func (h *UserBookHandler) Create(c echo.Context) error {
 	bookID := c.Param("book_id")
 	if bookID == "" {
-		return echo.NewHTTPError(
-			http.StatusBadRequest,
-			toast.Warning(c, models.ErrUserBookQueryWithoutId.Error()))
+		return errs.HttpErrorBadRequest(models.ErrUserBookQueryWithoutId)
 	}
 
 	userID, err := utils.GetUserIDFromSession(c.Request())
 	if err != nil {
-		return echo.NewHTTPError(
-			http.StatusUnauthorized,
-			err.Error())
+		return errs.HttpErrorUnauthorized(err)
 	}
 
-	err = h.userBookService.Create(userID, bookID)
-	if err != nil {
-		return echo.NewHTTPError(
-			http.StatusConflict,
-			toast.Warning(c, err.Error()))
+	if err = h.userBookService.Create(userID, bookID); err != nil {
+		return errs.HttpErrorConflict(err)
 	}
 
 	return utils.RenderView(c, webBooks.WantToReadButton(bookID, true))
@@ -72,16 +63,11 @@ func (h *UserBookHandler) Create(c echo.Context) error {
 func (h *UserBookHandler) Delete(c echo.Context) error {
 	bookID := c.Param("book_id")
 	if bookID == "" {
-		return echo.NewHTTPError(
-			http.StatusBadRequest,
-			toast.Warning(c, models.ErrUserBookQueryWithoutId.Error()))
+		return errs.HttpErrorBadRequest(models.ErrUserBookQueryWithoutId)
 	}
 
-	err := h.userBookService.Delete(bookID)
-	if err != nil {
-		return echo.NewHTTPError(
-			http.StatusInternalServerError,
-			toast.Danger(err.Error()))
+	if err := h.userBookService.Delete(bookID); err != nil {
+		return errs.HttpErrorInternalServerError(err)
 	}
 
 	return c.NoContent(http.StatusOK)
@@ -90,16 +76,11 @@ func (h *UserBookHandler) Delete(c echo.Context) error {
 func (h *UserBookHandler) DeleteAndReplaceButton(c echo.Context) error {
 	bookID := c.Param("book_id")
 	if bookID == "" {
-		return echo.NewHTTPError(
-			http.StatusBadRequest,
-			toast.Warning(c, models.ErrUserBookQueryWithoutId.Error()))
+		return errs.HttpErrorBadRequest(models.ErrUserBookQueryWithoutId)
 	}
 
-	err := h.userBookService.DeleteByBookId(bookID)
-	if err != nil {
-		return echo.NewHTTPError(
-			http.StatusInternalServerError,
-			toast.Danger(err.Error()))
+	if err := h.userBookService.DeleteByBookId(bookID); err != nil {
+		return errs.HttpErrorInternalServerError(err)
 	}
 
 	return utils.RenderView(c, webBooks.WantToReadButton(bookID, false))
@@ -108,16 +89,12 @@ func (h *UserBookHandler) DeleteAndReplaceButton(c echo.Context) error {
 func (h *UserBookHandler) List(c echo.Context) error {
 	userId, err := utils.GetUserIDFromSession(c.Request())
 	if err != nil {
-		return echo.NewHTTPError(
-			http.StatusUnauthorized,
-			toast.Warning(c, err.Error()))
+		return errs.HttpErrorUnauthorized(err)
 	}
 
 	userBooks, err := h.userBookService.GetAll(userId)
 	if err != nil {
-		return echo.NewHTTPError(
-			http.StatusInternalServerError,
-			toast.Danger(err.Error()))
+		return errs.HttpErrorInternalServerError(err)
 	}
 
 	return utils.RenderView(c, webUserBooks.List(userBooks))
@@ -126,16 +103,12 @@ func (h *UserBookHandler) List(c echo.Context) error {
 func (h *UserBookHandler) GetCreateProgressModal(c echo.Context) error {
 	bookID := c.Param("user_book_id")
 	if bookID == "" {
-		return echo.NewHTTPError(
-			http.StatusBadRequest,
-			toast.Warning(c, models.ErrUserBookQueryWithoutId.Error()))
+		return errs.HttpErrorBadRequest(models.ErrUserBookQueryWithoutId)
 	}
 
 	userBook, err := h.userBookService.Get(bookID)
 	if err != nil {
-		return echo.NewHTTPError(
-			http.StatusInternalServerError,
-			toast.Danger(err.Error()))
+		return errs.HttpErrorInternalServerError(err)
 	}
 
 	return utils.RenderView(c, webProgress.ProgressCreateModal(userBook))
