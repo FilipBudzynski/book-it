@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	webBooks "github.com/FilipBudzynski/book_it/cmd/web/books"
+	webExchange "github.com/FilipBudzynski/book_it/cmd/web/exchange"
 	webProgress "github.com/FilipBudzynski/book_it/cmd/web/progress"
 	webUserBooks "github.com/FilipBudzynski/book_it/cmd/web/user_books"
 	"github.com/FilipBudzynski/book_it/internal/errs"
@@ -40,6 +41,7 @@ func (h *UserBookHandler) RegisterRoutes(app *echo.Echo) {
 	group.DELETE("/search/:book_id", h.DeleteAndReplaceButton)
 	group.GET("", h.List)
 	group.GET("/create_modal/:user_book_id", h.GetCreateProgressModal)
+	group.GET("/exchange/books", h.GetAdditionalOfferedBookInput)
 }
 
 func (h *UserBookHandler) Create(c echo.Context) error {
@@ -112,4 +114,18 @@ func (h *UserBookHandler) GetCreateProgressModal(c echo.Context) error {
 	}
 
 	return utils.RenderView(c, webProgress.ProgressCreateModal(userBook))
+}
+
+func (h *UserBookHandler) GetAdditionalOfferedBookInput(c echo.Context) error {
+	userID, err := utils.GetUserIDFromSession(c.Request())
+	if err != nil {
+		return errs.HttpErrorUnauthorized(err)
+	}
+
+	userBooks, err := h.userBookService.GetAll(userID)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+
+	return utils.RenderView(c, webExchange.OfferedBooks(userBooks))
 }

@@ -1,9 +1,24 @@
 package web_exchange
 
 templ List() {
-	<div class="flex flex-col items-center mx-10 md:mx-20">
+	<div class="flex flex-col items-center mx-10 md:mx-20 pb-4">
+		<dialog id="exchange_modal" class="modal modal-lg">
+			<div class="modal-box w-11/12 max-w-5xl h-auto overflow-visible" id="htmx_modal"></div>
+		</dialog>
 		<div>
 			<h1 class="text-3xl font-bold">My Requests</h1>
+		</div>
+	</div>
+	<div class="flex items-end justify-end mx-10 md:mx-20">
+		<div
+			hx-get="/exchange/modal/new"
+			hx-swap="innerHTML"
+			hx-target="#htmx_modal"
+			hx-trigerr="click"
+			onclick="exchange_modal.showModal()"
+			class="btn btn-primary"
+		>
+			Create Exchange Request
 		</div>
 	</div>
 }

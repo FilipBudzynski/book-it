@@ -6,4 +6,6 @@ var MigrateModels = []any{
 	&Book{},
 	&ReadingProgress{},
 	&DailyProgressLog{},
+	&ExchangeRequest{},
+	&OfferedBook{},
 }

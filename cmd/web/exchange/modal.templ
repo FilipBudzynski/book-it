@@ -1,0 +1,130 @@
+package web_exchange
+
+import (
+	"fmt"
+	"github.com/FilipBudzynski/book_it/internal/models"
+)
+
+templ ExchangeModal() {
+	<form method="dialog">
+		<button
+			class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+		>✕</button>
+	</form>
+	<h3 class="text-lg font-bold">New Exchange Request</h3>
+	<div class="flex-row relative">
+		<form id="exchange-form">
+			<div class="mb-4 grid grid-cols-2 gap-8">
+				<input name="desired-book-id" id="book-id-input" class="input hidden input-bordered w-full mt-2"/>
+				<div>
+					<label class="block text-sm font-medium text-gray-700">Desired Book</label>
+					<input
+						id="book-title"
+						name="book-title"
+						type="text"
+						class="input input-bordered w-full mt-2"
+						placeholder="Start typing to search for books..."
+						hx-get="/books/reduced/search"
+						hx-trigger="keyup changed delay:300ms"
+						hx-target="#book-results"
+						hx-swap="innerHTML"
+					/>
+					<div
+						id="book-results"
+						class="absolute z-9 mt-2 w-1/2 max-h-60 overflow-y-auto shadow-lg"
+					></div>
+				</div>
+				<div>
+					<label class="block text-sm font-medium text-gray-700">Offered Books</label>
+					<div class="grid gird-rows-1 gap-4">
+						<div
+							id="offered-books-containter"
+							hx-get="user-books/exchange/books"
+							hx-trigger="load"
+							hx-swap="innerHTML"
+						></div>
+					</div>
+				</div>
+			</div>
+			<!-- if there is a button in form, it will close the modal -->
+			<div class="modal-action">
+				<button
+					class="btn"
+					hx-post="/exchange"
+					onclick="exchange_modal.close()"
+				>Submit</button>
+			</div>
+		</form>
+	</div>
+}
+
+templ OfferedBooks(userBooks []*models.UserBook) {
+	<div class="flex items-center mt-2 offered_book">
+		@SelectFromMyBooks(userBooks, 0)
+		@AddMoreBooksButton()
+	</div>
+	for i := 1; i < 5; i++ {
+		<div class="flex hidden items-center mt-2 offered_book">
+			@SelectFromMyBooks(userBooks, i)
+			@RemoveBookButton()
+		</div>
+	}
+}
+
+templ SelectFromMyBooks(userBooks []*models.UserBook, index int) {
+	<select name={ fmt.Sprintf("user-book-%d", index) } class="select select-bordered w-full mt-2" value="" form="exchange-form">
+		<option disabled selected>Choose one of your books</option>
+		for _, userBook := range userBooks {
+			<option value={ fmt.Sprintf("%d", userBook.ID) }>{ userBook.Book.Title }</option>
+		}
+	</select>
+}
+
+templ RemoveBookButton() {
+	<button
+		class="btn btn-error ml-2"
+		_="on click 
+			event.preventDefault()
+			add .hidden to the closest <div/> to the parentElement of me
+			if (#offered-books-containter.querySelectorAll('.offered_book:not(.hidden)').length < 5) 
+				set {disabled: false} on #add-book-btn "
+	>
+		-
+	</button>
+}
+
+templ AddMoreBooksButton() {
+	<button
+		id="add-book-btn"
+		class="btn ml-2"
+		_="on click
+			event.preventDefault()
+			if (#offered-books-containter.querySelectorAll('.offered_book:not(.hidden)').length < 5) 
+                remove .hidden from next .hidden
+			if (#offered-books-containter.querySelectorAll('.offered_book:not(.hidden)').length == 5) then
+				set {disabled: true} on #add-book-btn"
+	>
+		+
+	</button>
+}
+
+templ AdditionalOfferedBookInput(userBooks []*models.UserBook) {
+	<div class="flex items-center mt-2 offered_book">
+		<select class="select select-bordered w-full mt-2">
+			<option disabled selected>Choose one of your books</option>
+			for _, userBook := range userBooks {
+				<option>{ userBook.Book.Title }</option>
+			}
+		</select>
+		<button
+			class="btn btn-error ml-2"
+			_="on click remove closest .offered_book
+                if (#offered-books-containter.querySelectorAll('.offered_book').length < 5)
+                    set {disabled: false} on #add-book-btn
+                end
+            "
+		>
+			-
+		</button>
+	</div>
+}
