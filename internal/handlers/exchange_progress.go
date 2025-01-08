@@ -1,9 +1,7 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
-	"reflect"
 
 	webExchange "github.com/FilipBudzynski/book_it/cmd/web/exchange"
 	"github.com/FilipBudzynski/book_it/internal/errs"
@@ -35,8 +33,8 @@ func (h *exchangeHandler) RegisterRoutes(app *echo.Echo) {
 }
 
 func (h *exchangeHandler) CreateExchange(c echo.Context) error {
-	exchangeBind := &ExchangeFormBinding{}
-	if err := exchangeBind.Bind(c); err != nil {
+	exchangeBind := &exchangeFormBinding{}
+	if err := exchangeBind.bind(c); err != nil {
 		return errs.HttpErrorInternalServerError(err)
 	}
 
@@ -45,7 +43,12 @@ func (h *exchangeHandler) CreateExchange(c echo.Context) error {
 		return errs.HttpErrorUnauthorized(err)
 	}
 
-	if err := h.exchangeService.Create(userId, exchangeBind.DesiredBookID, exchangeBind.UserBookIDs); err != nil {
+	err = h.exchangeService.Create(
+		userId,
+		exchangeBind.DesiredBookID,
+		exchangeBind.UserBookIDs,
+	)
+	if err != nil {
 		return errs.HttpErrorInternalServerError(err)
 	}
 
@@ -59,32 +62,4 @@ func (h *exchangeHandler) List(c echo.Context) error {
 
 func (h *exchangeHandler) GetNewExchangeModal(c echo.Context) error {
 	return utils.RenderView(c, webExchange.ExchangeModal())
-}
-
-type ExchangeFormBinding struct {
-	DesiredBookID string `form:"desired-book-id"`
-	UserBookIDs   []string
-}
-
-func (e *ExchangeFormBinding) Bind(c echo.Context) error {
-	val := reflect.ValueOf(e).Elem()
-	typ := reflect.TypeOf(*e)
-
-	for i := 0; i < typ.NumField(); i++ {
-		field := typ.Field(i)
-		formTag := field.Tag.Get("form")
-		if formTag != "" {
-			if value := c.FormValue(formTag); value != "" {
-				val.Field(i).SetString(value)
-			}
-		}
-	}
-	e.UserBookIDs = []string{}
-	for i := 0; i <= 4; i++ { // Adjust the range based on expected inputs
-		fieldName := fmt.Sprintf("user-book-%d", i)
-		if value := c.FormValue(fieldName); value != "" {
-			e.UserBookIDs = append(e.UserBookIDs, value)
-		}
-	}
-	return nil
 }

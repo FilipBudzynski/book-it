@@ -107,24 +107,3 @@ templ AddMoreBooksButton() {
 		+
 	</button>
 }
-
-templ AdditionalOfferedBookInput(userBooks []*models.UserBook) {
-	<div class="flex items-center mt-2 offered_book">
-		<select class="select select-bordered w-full mt-2">
-			<option disabled selected>Choose one of your books</option>
-			for _, userBook := range userBooks {
-				<option>{ userBook.Book.Title }</option>
-			}
-		</select>
-		<button
-			class="btn btn-error ml-2"
-			_="on click remove closest .offered_book
-                if (#offered-books-containter.querySelectorAll('.offered_book').length < 5)
-                    set {disabled: false} on #add-book-btn
-                end
-            "
-		>
-			-
-		</button>
-	</div>
-}

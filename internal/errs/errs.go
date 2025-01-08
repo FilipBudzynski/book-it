@@ -9,18 +9,26 @@ import (
 
 var (
 	HttpErrorBadRequest = func(err error) *echo.HTTPError {
-		return echo.NewHTTPError(http.StatusBadRequest, toast.Warning(err.Error()))
+		toast := toast.Warning(err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, toast).
+			SetInternal(toast)
 	}
 
 	HttpErrorUnauthorized = func(err error) *echo.HTTPError {
-		return echo.NewHTTPError(http.StatusUnauthorized, toast.Warning(err.Error()))
+		toast := toast.Warning(err.Error())
+		return echo.NewHTTPError(http.StatusUnauthorized, toast).
+			SetInternal(toast)
 	}
 
 	HttpErrorConflict = func(err error) *echo.HTTPError {
-		return echo.NewHTTPError(http.StatusConflict, toast.Danger(err.Error()))
+		toast := toast.Warning(err.Error())
+		return echo.NewHTTPError(http.StatusConflict, toast).
+			SetInternal(toast)
 	}
 
 	HttpErrorInternalServerError = func(err error) *echo.HTTPError {
-		return echo.NewHTTPError(http.StatusInternalServerError, toast.Danger(err.Error()))
+		toast := toast.Danger(err.Error())
+		return echo.NewHTTPError(http.StatusInternalServerError, toast).
+			SetInternal(toast)
 	}
 )

@@ -30,5 +30,9 @@ func (s *exchangeService) Create(userId, desiredBookID string, userBookIDs []str
 		OfferedBooks:  offeredBooks,
 	}
 
+	if err := exchange.Validate(); err != nil {
+		return err
+	}
+
 	return s.repo.Create(exchange)
 }

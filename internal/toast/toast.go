@@ -56,10 +56,6 @@ func (t Toast) jsonify() (string, error) {
 }
 
 func (t Toast) SetHXTriggerHeader(c echo.Context) Toast {
-	if t.Level != SUCCESS && t.Level != INFO {
-		c.Response().Header().Set("HX-Reswap", "none")
-	}
-
 	jsonData, _ := t.jsonify()
 	c.Response().Header().Set("HX-Trigger", jsonData)
 	return t
@@ -78,7 +74,8 @@ func handleToast(err error, c echo.Context) {
 		return
 	}
 
-	te, ok := err.(Toast)
+	he, _ := err.(*echo.HTTPError)
+	te, ok := he.Unwrap().(Toast)
 
 	if !ok {
 		fmt.Println(err)
@@ -90,4 +87,9 @@ func handleToast(err error, c echo.Context) {
 	}
 
 	_ = te.SetHXTriggerHeader(c)
+}
+
+func CustomToastErrorHandler(err error, c echo.Context) {
+	handleToast(err, c)
+	c.Echo().DefaultHTTPErrorHandler(err, c)
 }
