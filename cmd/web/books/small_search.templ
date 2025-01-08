@@ -1,0 +1,39 @@
+package web_books
+
+import (
+	"fmt"
+	"github.com/FilipBudzynski/book_it/internal/models"
+)
+
+templ ReducedList(books []*models.Book) {
+	<table class="bg-base-100 table table-lg">
+		<thead></thead>
+		<tbody id="books-container">
+			for _, book := range books {
+				<tr _={ fmt.Sprintf("on click set #book-id-input[@value] to `%s` then set #book-title's value to `%s` then hide #book-results", book.ID, book.Title) }>
+					<td class="w-1/12 px-3 py-2">
+						<div class="flex items-center gap-3">
+							<div class="avatar">
+								<div class="mask mask-squircle h-12 w-12">
+									<img src={ book.ImageLink } alt="img"/>
+								</div>
+							</div>
+						</div>
+					</td>
+					<td class="w-max px-3 py-2">
+						<div class="flex flex-col">
+							<span class="text-base">
+								<a class="transition ease-in-out delay-150 hover:text-black">{ book.Title } </a>
+							</span>
+							<span class="text-sm text-gray-300">
+								by 
+								{ book.Authors }
+							</span>
+						</div>
+					</td>
+				</tr>
+			}
+		</tbody>
+		<tfoot></tfoot>
+	</table>
+}

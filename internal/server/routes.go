@@ -32,6 +32,7 @@ func (s *Server) WithRegisterRoutes(e *echo.Echo) *Server {
 	progressRepo := repositories.NewProgressRepository(db)
 	userRepo := repositories.NewUserRepository(db)
 	userBookRepo := repositories.NewUserBookRepository(db)
+	exchangeRequestRepo := repositories.NewExchangeRequestRepository(db)
 
 	userService := services.NewUserService(userRepo)
 	userBookService := services.NewUserBookService(userBookRepo)
@@ -39,7 +40,7 @@ func (s *Server) WithRegisterRoutes(e *echo.Echo) *Server {
 	bookService := services.NewBookService(db).
 		WithProvider(providers.NewGoogleProvider().
 			WithLimit(15))
-	exchangeService := services.NewExchangeService()
+	exchangeService := services.NewExchangeService(exchangeRequestRepo)
 
 	routeRegistrars := []RouteRegistrar{
 		handlers.NewAuthHandler(userService),

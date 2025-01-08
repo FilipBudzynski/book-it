@@ -5,6 +5,7 @@ import (
 	"net/url"
 
 	web_books "github.com/FilipBudzynski/book_it/cmd/web/books"
+	"github.com/FilipBudzynski/book_it/internal/errs"
 	"github.com/FilipBudzynski/book_it/internal/models"
 	"github.com/FilipBudzynski/book_it/utils"
 	"github.com/labstack/echo/v4"
@@ -46,6 +47,14 @@ func NewBookHandler(bookService BookService, userBookService UserBookService) *B
 	}
 }
 
+func (h *BookHandler) RegisterRoutes(app *echo.Echo) {
+	group := app.Group("/books")
+	group.GET("", h.ListBooks)
+	group.POST("", h.ListBooks)
+	group.GET("/reduced/search", h.ReducedSearch)
+	//group.POST("/reduced/search", h.ReducedSearch)
+}
+
 func (h *BookHandler) ListBooks(c echo.Context) error {
 	if c.Request().Method == "GET" {
 		return utils.RenderView(c, web_books.BooksSearch())
@@ -76,8 +85,14 @@ func (h *BookHandler) List(c echo.Context) error {
 	return nil
 }
 
-func (h *BookHandler) RegisterRoutes(app *echo.Echo) {
-	group := app.Group("/books")
-	group.GET("", h.ListBooks)
-	group.POST("", h.ListBooks)
+func (h *BookHandler) ReducedSearch(c echo.Context) error {
+	query := c.FormValue("book-title")
+	encodedQuery := url.QueryEscape(query)
+
+	books, err := h.bookService.GetByQuery(encodedQuery, booksLimit)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+
+	return utils.RenderView(c, web_books.ReducedList(books))
 }
