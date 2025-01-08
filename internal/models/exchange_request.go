@@ -9,6 +9,7 @@ import (
 var (
 	ErrExchangeRequestNoOfferedBooksProvided = errors.New("no offered books provided in the request")
 	ErrExchangeRequestNoDesiredBookProvided  = errors.New("no desired book provided in the request")
+	ErrExchangeRequestDuplicateOfferedBooks  = errors.New("duplicate offered books in the request")
 )
 
 type ExchangeRequest struct {
@@ -29,6 +30,21 @@ func (e *ExchangeRequest) Validate() error {
 		return ErrExchangeRequestNoDesiredBookProvided
 	}
 
+	if err := e.checkDuplicates(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (e *ExchangeRequest) checkDuplicates() error {
+	seenBooks := make(map[string]bool)
+	for _, book := range e.OfferedBooks {
+		if seenBooks[book.BookId] {
+			return ErrExchangeRequestDuplicateOfferedBooks
+		}
+		seenBooks[book.BookId] = true
+	}
 	return nil
 }
 
