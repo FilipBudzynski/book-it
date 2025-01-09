@@ -13,9 +13,10 @@ import (
 
 type ExchangeService interface {
 	Create(userId, desiredBookID string, userBookIDs []string) (*models.ExchangeRequest, error)
-	Get(id string) (*models.ExchangeRequest, error)
+	Get(id, userId string) (*models.ExchangeRequest, error)
 	GetAll(userId string) ([]*models.ExchangeRequest, error)
 	Delete(id string) error
+	FindMatchingRequests(requestId, userId string) ([]*models.ExchangeRequest, error)
 }
 
 type exchangeHandler struct {
@@ -36,6 +37,7 @@ func (h *exchangeHandler) RegisterRoutes(app *echo.Echo) {
 	group.GET("/modal/new", h.GetNewExchangeModal)
 	group.GET("/list", h.GetAll)
 	group.GET("/details/:id", h.Details)
+	group.GET("/:id/matches", h.Matches)
 	group.DELETE("/:id", h.Delete)
 }
 
@@ -83,15 +85,40 @@ func (h *exchangeHandler) GetAll(c echo.Context) error {
 
 func (h *exchangeHandler) Details(c echo.Context) error {
 	id := c.Param("id")
-	exchange, err := h.exchangeService.Get(id)
+
+	userId, err := utils.GetUserIDFromSession(c.Request())
 	if err != nil {
-		return errs.HttpErrorInternalServerError(err)
+		return errs.HttpErrorUnauthorized(err)
+	}
+
+	exchange, err := h.exchangeService.Get(id, userId)
+	if err != nil {
+		if err == errs.ErrNotFound {
+			return errs.HttpErrorNotFound(err)
+		} else {
+			return errs.HttpErrorInternalServerError(err)
+		}
 	}
 	return utils.RenderView(c, webExchange.ExchangeDetails(exchange))
 }
 
 func (h *exchangeHandler) GetNewExchangeModal(c echo.Context) error {
 	return utils.RenderView(c, webExchange.ExchangeModal())
+}
+
+func (h *exchangeHandler) Matches(c echo.Context) error {
+	id := c.Param("id")
+
+	userId, err := utils.GetUserIDFromSession(c.Request())
+	if err != nil {
+		return errs.HttpErrorUnauthorized(err)
+	}
+
+	matches, err := h.exchangeService.FindMatchingRequests(id, userId)
+	if err != nil {
+		return errs.HttpErrorNotFound(err)
+	}
+	return utils.RenderView(c, webExchange.Matches(matches))
 }
 
 func (h *exchangeHandler) Delete(c echo.Context) error {

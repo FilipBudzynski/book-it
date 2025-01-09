@@ -23,6 +23,7 @@ func (s *Server) WithMiddleware(e *echo.Echo) *Server {
 	e.Use(utils.CustomRecoverMiddleware)
 	e.Use(utils.RefreshSessionMiddleware)
 	e.Use(toast.ToastMiddleware)
+	e.Use(utils.ErrorPagesMiddleware)
 	return s
 }
 

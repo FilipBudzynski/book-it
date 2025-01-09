@@ -1,7 +1,10 @@
 package utils
 
 import (
+	"net/http"
+
 	"github.com/FilipBudzynski/book_it/cmd/web"
+	webError "github.com/FilipBudzynski/book_it/cmd/web/error_pages"
 	"github.com/FilipBudzynski/book_it/internal/models"
 	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
@@ -10,6 +13,7 @@ import (
 func RenderView(c echo.Context, cmp templ.Component) error {
 	requestContext := c.Request().Context()
 	responseWriter := c.Response().Writer
+
 	if c.Request().Header.Get("HX-Request") == "true" {
 		return cmp.Render(requestContext, responseWriter)
 	} else {
@@ -25,4 +29,24 @@ func BookInUserBooks(bookID string, userBooks []*models.UserBook) bool {
 		}
 	}
 	return false
+}
+
+func ErrorPagesMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		err := next(c)
+		if err != nil {
+			if httpErr, ok := err.(*echo.HTTPError); ok {
+				c.Response().Header().Set("HX-Target", "#content-container")
+				switch httpErr.Code {
+				case http.StatusNotFound:
+					return RenderView(c, webError.ErrorPage404())
+				case http.StatusUnauthorized:
+					return RenderView(c, webError.ErrorPage401())
+				case http.StatusInternalServerError:
+					return RenderView(c, webError.ErrorPage500())
+				}
+			}
+		}
+		return err
+	}
 }

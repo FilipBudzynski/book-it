@@ -44,7 +44,7 @@ func GetUserSessionFromStore(r *http.Request) (UserSession, error) {
 	if value, ok := session.Values["userSession"]; ok {
 		return value.(UserSession), nil
 	}
-	return UserSession{}, fmt.Errorf("User session not found %s", err)
+	return UserSession{}, fmt.Errorf("eser session not found %s", err)
 }
 
 // GetUserIDFromSession is an abstraction over GetFromSession to retrive userID from session

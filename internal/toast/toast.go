@@ -88,8 +88,3 @@ func handleToast(err error, c echo.Context) {
 
 	_ = te.SetHXTriggerHeader(c)
 }
-
-func CustomToastErrorHandler(err error, c echo.Context) {
-	handleToast(err, c)
-	c.Echo().DefaultHTTPErrorHandler(err, c)
-}
