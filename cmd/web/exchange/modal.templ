@@ -5,6 +5,8 @@ import (
 	"github.com/FilipBudzynski/book_it/internal/models"
 )
 
+const API_KEY = "AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg"
+
 templ ExchangeModal() {
 	<form method="dialog">
 		<button
@@ -51,10 +53,18 @@ templ ExchangeModal() {
 				<button
 					class="btn"
 					hx-post="/exchange"
+					hx-target="#exchanges-table-body"
+					hx-swap="beforeend"
 					onclick="exchange_modal.close()"
 				>Submit</button>
 			</div>
 		</form>
+		<div id="map"></div>
+		<div id="infowindow-content">
+			<span id="place-name" class="title"></span>
+			<br/>
+			<span id="place-address"></span>
+		</div>
 	</div>
 }
 
@@ -75,7 +85,7 @@ templ SelectFromMyBooks(userBooks []*models.UserBook, index int) {
 	<select name={ fmt.Sprintf("user-book-%d", index) } class="select select-bordered w-full mt-2" value="" form="exchange-form">
 		<option disabled selected>Choose one of your books</option>
 		for _, userBook := range userBooks {
-			<option value={ fmt.Sprintf("%d", userBook.ID) }>{ userBook.Book.Title }</option>
+			<option value={ fmt.Sprintf("%s", userBook.Book.ID) }>{ userBook.Book.Title }</option>
 		}
 	</select>
 }

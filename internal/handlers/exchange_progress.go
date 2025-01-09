@@ -5,13 +5,17 @@ import (
 
 	webExchange "github.com/FilipBudzynski/book_it/cmd/web/exchange"
 	"github.com/FilipBudzynski/book_it/internal/errs"
+	"github.com/FilipBudzynski/book_it/internal/models"
 	"github.com/FilipBudzynski/book_it/internal/toast"
 	"github.com/FilipBudzynski/book_it/utils"
 	"github.com/labstack/echo/v4"
 )
 
 type ExchangeService interface {
-	Create(userId, desiredBookID string, userBookIDs []string) error
+	Create(userId, desiredBookID string, userBookIDs []string) (*models.ExchangeRequest, error)
+	Get(id string) (*models.ExchangeRequest, error)
+	GetAll(userId string) ([]*models.ExchangeRequest, error)
+	Delete(id string) error
 }
 
 type exchangeHandler struct {
@@ -28,8 +32,11 @@ func (h *exchangeHandler) RegisterRoutes(app *echo.Echo) {
 	group := app.Group("/exchange")
 	group.Use(utils.CheckLoggedInMiddleware) // protected routes
 	group.POST("", h.CreateExchange)
-	group.GET("", h.List)
+	group.GET("", h.Landing)
 	group.GET("/modal/new", h.GetNewExchangeModal)
+	group.GET("/list", h.GetAll)
+	group.GET("/details/:id", h.Details)
+	group.DELETE("/:id", h.Delete)
 }
 
 func (h *exchangeHandler) CreateExchange(c echo.Context) error {
@@ -43,7 +50,7 @@ func (h *exchangeHandler) CreateExchange(c echo.Context) error {
 		return errs.HttpErrorUnauthorized(err)
 	}
 
-	err = h.exchangeService.Create(
+	exchange_request, err := h.exchangeService.Create(
 		userId,
 		exchangeBind.DesiredBookID,
 		exchangeBind.UserBookIDs,
@@ -53,13 +60,45 @@ func (h *exchangeHandler) CreateExchange(c echo.Context) error {
 	}
 
 	_ = toast.Success(c, "Exchange created!")
-	return c.NoContent(http.StatusCreated)
+	return utils.RenderView(c, webExchange.ExchangeTableRow(*exchange_request))
 }
 
-func (h *exchangeHandler) List(c echo.Context) error {
-	return utils.RenderView(c, webExchange.List())
+func (h *exchangeHandler) Landing(c echo.Context) error {
+	return utils.RenderView(c, webExchange.Landing())
+}
+
+func (h *exchangeHandler) GetAll(c echo.Context) error {
+	userId, err := utils.GetUserIDFromSession(c.Request())
+	if err != nil {
+		return errs.HttpErrorUnauthorized(err)
+	}
+
+	exchanges, err := h.exchangeService.GetAll(userId)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+
+	return utils.RenderView(c, webExchange.List(exchanges))
+}
+
+func (h *exchangeHandler) Details(c echo.Context) error {
+	id := c.Param("id")
+	exchange, err := h.exchangeService.Get(id)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+	return utils.RenderView(c, webExchange.ExchangeDetails(exchange))
 }
 
 func (h *exchangeHandler) GetNewExchangeModal(c echo.Context) error {
 	return utils.RenderView(c, webExchange.ExchangeModal())
+}
+
+func (h *exchangeHandler) Delete(c echo.Context) error {
+	id := c.Param("id")
+	err := h.exchangeService.Delete(id)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+	return c.NoContent(http.StatusNoContent)
 }

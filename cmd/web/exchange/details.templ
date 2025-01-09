@@ -1,0 +1,106 @@
+package web_exchange
+
+import "github.com/FilipBudzynski/book_it/internal/models"
+import "time"
+
+templ ExchangeDetails(exchangeRequest *models.ExchangeRequest) {
+	<div class="flex flex-col items-center mx-10 md:mx-40 pb-4">
+		<div class="breadcrumbs text-lg">
+			<ul>
+				<li><a href="/exchange">My Requests</a></li>
+				<li>{ exchangeRequest.DesiredBook.Title }</li>
+			</ul>
+		</div>
+	</div>
+	<div class="flex justify-center relative mb-10 overflow-auto">
+		@DetailsDiv(exchangeRequest)
+	</div>
+	<div class="flex flex-col items-center mx-10 md:mx-40 pb-4">
+		<div class="breadcrumbs text-lg">
+			<ul>
+				<li>Matched Requestes</li>
+			</ul>
+		</div>
+	</div>
+}
+
+templ DetailsDiv(er *models.ExchangeRequest) {
+	<div class="grid grid-rows-1 items-start justify-center px-5 pb-5">
+		<div class="grid grid-cols-2 items-center justify-center px-5 py-5 gap-4">
+			<div class="card bg-base-100 shadow-xl">
+				<div class="card-body">
+					<h2 class="card-title">Your desired book</h2>
+				</div>
+				<figure>
+					<div class="flex items-center gap-3">
+						<div class="avatar">
+							<div class="mask h-60 w-40 rounded-xl  shadow-xl">
+								<img
+									src={ er.DesiredBook.ImageLink }
+									alt="Desired Book Image"
+								/>
+							</div>
+						</div>
+					</div>
+					<img/>
+				</figure>
+				<div class="card-body">
+					<div class="font-bold">{ er.DesiredBook.Title }</div>
+					<div class="text-sm opacity-50">by { er.DesiredBook.Authors }</div>
+				</div>
+			</div>
+			<!-- Books offered -->
+			<div class="card bg-base-100 w-full h-full shadow-xl">
+				<div class="card-body grid-cols-3">
+					<h2 class="card-title">Books you offer</h2>
+					<table class="bg-base-100 table table-lg">
+						<tbody>
+							for _, offeredBook := range er.OfferedBooks {
+								<tr>
+									<td>
+										<div class="flex items-center gap-3">
+											<div class="avatar">
+												<div class="mask h-20 w-12 rounded-sm  shadow-md">
+													<img
+														src={ offeredBook.Book.ImageLink }
+														alt="Desired Book Image"
+														class="rounded-sm"
+													/>
+												</div>
+											</div>
+										</div>
+									</td>
+									<td>
+										<div class="font-bold">{ offeredBook.Book.Title }</div>
+										<div class="text-sm opacity-50">by { offeredBook.Book.Authors }</div>
+									</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+		<div class="grid grid-cols-2 items-start justify-center px-5 py-5 gap-4">
+			<div class="card bg-base-100 shadow-xl">
+				<div class="card-body">
+					<div class="grid grid-cols-2">
+						<div class="grid grid-rows-2">
+							<h2 class="card-title mb-2">Created</h2>
+							<div>
+								<div>
+									{ er.CreatedAt.Format(time.DateOnly) }
+									at { er.CreatedAt.Format(time.TimeOnly) }
+								</div>
+							</div>
+						</div>
+						<div class="grid grid-rows-2">
+							<h2 class="card-title mb-2">Status</h2>
+							<div class="badge badge-neutral">{ er.Status.String() }</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+}
