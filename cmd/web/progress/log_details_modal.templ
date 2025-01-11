@@ -1,0 +1,61 @@
+package web_tracking
+
+import (
+	"fmt"
+	"github.com/FilipBudzynski/book_it/internal/models"
+)
+
+templ ProgressLogModal(dailyLog models.DailyProgressLog) {
+	<form method="dialog">
+		<button
+			class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+		>✕</button>
+	</form>
+	<h3 class="text-lg font-bold">Day: { dailyLog.Date.Format("2006-01-02") }</h3>
+	<p class="py-4">Submit your progress 🎉</p>
+	<!-- <h3>{ fmt.Sprintf("Target Pages for this day: %d", dailyLog.TargetPages) }</h3> -->
+	<div class="stats shadow w-full">
+		<div class="stat">
+			<div class="stat-title">Target Pages</div>
+			<div class="stat-value">{ fmt.Sprintf("%d", dailyLog.TargetPages) }</div>
+			<div class="stat-desc"></div>
+		</div>
+	</div>
+	<form method="dialog" id="log-form">
+		<div class="mb-2">
+			<div class="pt-4">
+				<label class="block text-md font-medium text-gray-700">Pages Read:</label>
+				<input
+					name="pages-read"
+					type="number"
+					min="0"
+					class="input input-bordered w-full"
+					value={ fmt.Sprintf("%d", dailyLog.PagesRead) }
+				/>
+			</div>
+		</div>
+		<div class="mb-2">
+			<div class="pt-4">
+				<textarea
+					name="comment"
+					class="w-full textarea textarea-bordered"
+					placeholder="Note"
+					form="log-form"
+				>{ dailyLog.Comment }</textarea>
+			</div>
+		</div>
+		<div class="flex-row">
+			<div class="modal-action">
+				<button
+					hx-put={ fmt.Sprintf("/progress/log/%d", dailyLog.ID) }
+					hx-target="#progress-statistics"
+					hx-swap="innerHTML"
+					hx-trigger="click"
+					class="btn"
+					onclick="my_modal_1.close()"
+				>Submit</button>
+			</div>
+			<!-- </form> -->
+		</div>
+	</form>
+}

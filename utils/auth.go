@@ -25,10 +25,9 @@ func init() {
 	gob.Register(UserSession{})
 }
 
-// setSessionValue stores a value in the current user session.
-func setSessionValue(w http.ResponseWriter, r *http.Request, key, value any) error {
-	session, _ := gothic.Store.New(r, SessionName)
-	session.Options.MaxAge = maxAge
+// SetSessionValue stores a value in the current user session.
+func SetSessionValue(w http.ResponseWriter, r *http.Request, key, value any) error {
+	session, _ := gothic.Store.Get(r, SessionName)
 	session.Values[key] = value
 	return session.Save(r, w)
 }
@@ -57,7 +56,7 @@ func GetUserIDFromSession(r *http.Request) (string, error) {
 }
 
 func SetUserSession(w http.ResponseWriter, r *http.Request, userSession UserSession) error {
-	return setSessionValue(w, r, "userSession", userSession)
+	return SetSessionValue(w, r, "userSession", userSession)
 }
 
 // SetSessionValue stores a value in the current user session.
@@ -69,7 +68,7 @@ func SetSessionValueMap(w http.ResponseWriter, r *http.Request, values map[any]a
 
 // GetFromSession is an abstraction over SetSessionValue to store userID in session.
 func SetSessionUserID(w http.ResponseWriter, r *http.Request, id string) error {
-	return setSessionValue(w, r, userIDKey, id)
+	return SetSessionValue(w, r, userIDKey, id)
 }
 
 func RemoveCookieSession(w http.ResponseWriter, r *http.Request) error {

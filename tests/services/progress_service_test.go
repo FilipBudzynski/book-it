@@ -104,7 +104,7 @@ func TestUpdateTargetPages(t *testing.T) {
 		mockRepo.On("GetById", "1").Return(mockProgress, nil)
 		mockRepo.On("Update", mockProgress).Return(nil)
 
-		err := service.UpdateTargetPages(1, logDate)
+		err := service.UpdateTargetPages(1)
 
 		assert.NoError(t, err)
 		assert.Equal(t, 20, mockProgress.DailyTargetPages)
@@ -125,7 +125,7 @@ func TestUpdateTargetPages(t *testing.T) {
 		mockRepo.On("GetById", "1").Return(mockProgress, nil)
 		mockRepo.On("Update", mockProgress).Return(nil)
 
-		err := service.UpdateTargetPages(1, logDate)
+		err := service.UpdateTargetPages(1)
 
 		assert.NoError(t, err)
 		assert.Equal(t, 10, mockProgress.DailyTargetPages)
@@ -153,7 +153,7 @@ func TestUpdateTargetPages(t *testing.T) {
 		mockRepo.On("GetById", "1").Return(mockProgress, nil)
 		mockRepo.On("Update", mockProgress).Return(nil)
 
-		err := service.UpdateTargetPages(1, logDate)
+		err := service.UpdateTargetPages(1)
 
 		assert.NoError(t, err)
 		assert.Equal(t, 14, mockProgress.DailyTargetPages)
@@ -178,7 +178,7 @@ func TestUpdateTargetPages(t *testing.T) {
 		mockRepo.On("GetById", "1").Return(mockProgress, nil)
 		mockRepo.On("Update", mockProgress).Return(nil)
 
-		_ = service.UpdateTargetPages(1, logDate)
+		_ = service.UpdateTargetPages(1)
 
 		assert.Equal(t, 5, mockProgress.DailyTargetPages)
 		mockRepo.AssertExpectations(t)
@@ -221,7 +221,7 @@ func TestUpdateLogPagesRead(t *testing.T) {
 		mockRepo.On("GetLogById", logId).Return(mockLog, nil)
 		mockRepo.On("UpdateLog", mockLog).Return(nil)
 
-		_, err := service.UpdateLogPagesRead(logId, pagesRead)
+		_, err := service.UpdateLog(logId, pagesRead, "")
 
 		assert.NoError(t, err)
 		assert.Equal(t, pagesRead, mockLog.PagesRead)
@@ -243,7 +243,7 @@ func TestUpdateLogPagesRead(t *testing.T) {
 		mockRepo.On("GetLogById", logId).Return(mockLog, nil)
 		mockRepo.On("UpdateLog", mockLog).Return(nil)
 
-		_, err := service.UpdateLogPagesRead(logId, pagesRead)
+		_, err := service.UpdateLog(logId, pagesRead, "")
 
 		assert.NoError(t, err)
 		assert.Equal(t, 0, mockLog.PagesRead)
@@ -251,7 +251,7 @@ func TestUpdateLogPagesRead(t *testing.T) {
 	})
 
 	t.Run("Negative PagesRead Input", func(t *testing.T) {
-		_, err := service.UpdateLogPagesRead("1", -1)
+		_, err := service.UpdateLog("1", -1, "")
 		assert.Error(t, err)
 	})
 }

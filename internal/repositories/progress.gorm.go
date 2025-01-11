@@ -36,7 +36,7 @@ func (r *progressRepository) GetLogById(id string) (*models.DailyProgressLog, er
 }
 
 func (r *progressRepository) Update(progress *models.ReadingProgress) error {
-	return r.db.Save(progress).Error
+	return r.db.Session(&gorm.Session{FullSaveAssociations: true}).Updates(progress).Error
 }
 
 func (r *progressRepository) UpdateLog(log *models.DailyProgressLog) error {

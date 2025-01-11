@@ -52,7 +52,7 @@ func (h *UserHandler) CreateUser(c echo.Context) error {
 		return errs.HttpErrorInternalServerError(err)
 	}
 
-	toast.Success(c, "Account created")
+	_ = toast.Success(c, "Account created")
 	return c.NoContent(http.StatusCreated)
 }
 

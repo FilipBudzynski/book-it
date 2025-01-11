@@ -3,7 +3,6 @@ package handlers
 import (
 	"net/http"
 	"strconv"
-	"time"
 
 	webProgress "github.com/FilipBudzynski/book_it/cmd/web/progress"
 	"github.com/FilipBudzynski/book_it/internal/errs"
@@ -24,12 +23,12 @@ type ProgressService interface {
 	Get(id string) (*models.ReadingProgress, error)
 	GetByUserBookId(userBookId string) (*models.ReadingProgress, error)
 	GetProgressAssosiatedWithLogId(id string) (*models.ReadingProgress, error)
-	UpdateTargetPages(progressId uint, logDate time.Time) error
+	UpdateTargetPages(progressId uint) error
 	Delete(id string) error
 
 	// log methods
 	GetLog(id string) (*models.DailyProgressLog, error)
-	UpdateLogPagesRead(id string, pagesRead int) (*models.DailyProgressLog, error)
+	UpdateLog(id string, pagesRead int, comment string) (*models.DailyProgressLog, error)
 }
 
 type progressHandler struct {
@@ -44,19 +43,15 @@ func NewProgressHandler(s ProgressService) *progressHandler {
 
 func (h *progressHandler) RegisterRoutes(app *echo.Echo) {
 	group := app.Group("/progress")
-	// middleware for protected routes
-	group.Use(utils.CheckLoggedInMiddleware)
-	// progress endpoints
+	group.Use(utils.CheckLoggedInMiddleware) // middleware for protected routes
 	group.POST("", h.Create)
 	group.GET("/:id", h.GetByUserBookId)
-	// group.PUT("/:id", h.Edit)
 	group.DELETE("/:id", h.Delete)
-
 	// progress log endpoints
 	group.Use(utils.CheckLoggedInMiddleware)
-	group.POST("/log/:id", h.UpdatePagesRead)
+	group.PUT("/log/:id", h.UpdateLog)
 	// htmx routes
-	group.GET("/log/modal/:id", h.GetLogModal)
+	group.GET("/log/details/modal/:id", h.GetLogModal)
 }
 
 func (h *progressHandler) Create(c echo.Context) error {
@@ -102,15 +97,20 @@ func (h *progressHandler) Delete(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-func (h *progressHandler) UpdatePagesRead(c echo.Context) error {
+func (h *progressHandler) UpdateLog(c echo.Context) error {
 	id := c.Param("id")
+	comment := c.FormValue("comment")
 	pagesRead, err := strconv.Atoi(c.FormValue("pages-read"))
 	if err != nil {
 		return errs.HttpErrorBadRequest(err)
 	}
 
-	log, err := h.progressService.UpdateLogPagesRead(id, pagesRead)
+	log, err := h.progressService.UpdateLog(id, pagesRead, comment)
 	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+
+	if err := h.progressService.UpdateTargetPages(log.ReadingProgressID); err != nil {
 		return errs.HttpErrorInternalServerError(err)
 	}
 
@@ -120,14 +120,14 @@ func (h *progressHandler) UpdatePagesRead(c echo.Context) error {
 	}
 
 	if !progress.IsFinishedOnLastLog(log.Date) {
-		toast.Info(models.ErrProgressLastDayNotFinished.Error()).SetHXTriggerHeader(c)
+		_ = toast.Info(models.ErrProgressLastDayNotFinished.Error()).SetHXTriggerHeader(c)
 	}
 
 	if progress.Completed {
-		toast.Success(c, CompletedBookMessage)
+		_ = toast.Success(c, CompletedBookMessage)
 	}
 
-	return utils.RenderView(c, webProgress.ProgressStatistics(progress))
+	return utils.RenderView(c, webProgress.StatisticsAndButtonUpdate(progress))
 }
 
 func (h *progressHandler) GetLogModal(c echo.Context) error {

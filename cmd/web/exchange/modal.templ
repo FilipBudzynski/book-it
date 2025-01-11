@@ -5,8 +5,6 @@ import (
 	"github.com/FilipBudzynski/book_it/internal/models"
 )
 
-const API_KEY = "AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg"
-
 templ ExchangeModal() {
 	<form method="dialog">
 		<button
@@ -73,12 +71,28 @@ templ OfferedBooks(userBooks []*models.UserBook) {
 		@SelectFromMyBooks(userBooks, 0)
 		@AddMoreBooksButton()
 	</div>
-	for i := 1; i < 5; i++ {
-		<div class="flex hidden items-center mt-2 offered_book">
-			@SelectFromMyBooks(userBooks, i)
-			@RemoveBookButton()
-		</div>
-	}
+}
+
+templ AddMoreBooksButton() {
+	<button
+		id="add-book-btn"
+		class="btn ml-2"
+		_="on click
+			event.preventDefault()
+			if (#offered-books-containter.querySelectorAll('.offered_book:not(.hidden)').length < 5) 
+                remove .hidden from next .hidden
+			if (#offered-books-containter.querySelectorAll('.offered_book:not(.hidden)').length == 5) then
+				set {disabled: true} on #add-book-btn"
+	>
+		+
+	</button>
+}
+
+templ AdditioonalOfferedBook(userBooks []*models.UserBook, index int) {
+	<div class="flex hidden items-center mt-2 offered_book">
+		@SelectFromMyBooks(userBooks, index)
+		@RemoveBookButton()
+	</div>
 }
 
 templ SelectFromMyBooks(userBooks []*models.UserBook, index int) {
@@ -100,20 +114,5 @@ templ RemoveBookButton() {
 				set {disabled: false} on #add-book-btn "
 	>
 		-
-	</button>
-}
-
-templ AddMoreBooksButton() {
-	<button
-		id="add-book-btn"
-		class="btn ml-2"
-		_="on click
-			event.preventDefault()
-			if (#offered-books-containter.querySelectorAll('.offered_book:not(.hidden)').length < 5) 
-                remove .hidden from next .hidden
-			if (#offered-books-containter.querySelectorAll('.offered_book:not(.hidden)').length == 5) then
-				set {disabled: true} on #add-book-btn"
-	>
-		+
 	</button>
 }

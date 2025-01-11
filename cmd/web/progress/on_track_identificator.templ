@@ -7,7 +7,7 @@ templ TrackingButton(bookid uint, completed bool) {
 		<button
 			hx-get={ fmt.Sprintf("/progress/%d", bookid) }
 			hx-target="#progress-statistics"
-			hx-swap="innerHTML"
+			hx-swap="innerHTML focus-scroll:true"
 			class="btn"
 		>
 			if completed {
