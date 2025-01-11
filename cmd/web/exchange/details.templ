@@ -5,61 +5,87 @@ import "time"
 import "fmt"
 
 templ ExchangeDetails(exchangeRequest *models.ExchangeRequest) {
-	<div class="max-w-screen-lg mx-auto p-4">
-		<div class="flex flex-col items-center mx-10 md:mx-40 pb-4">
-			<div class="breadcrumbs text-lg">
-				<ul>
-					<li><a href="/exchange">My Requests</a></li>
-					<li>{ exchangeRequest.DesiredBook.Title }</li>
-				</ul>
+	<div class="flex justify-center items-center">
+		<div class="max-w-screen-lg mx-60 p-4">
+			<div class="justify-center w-full mb-10">
+				<div class="flex w-full relative justify-center">
+					<div class="breadcrumbs text-lg">
+						<ul>
+							<li><a href="/exchange">My Requests</a></li>
+							<li>{ exchangeRequest.DesiredBook.Title }</li>
+						</ul>
+					</div>
+				</div>
+				<div class="justify-center w-full mb-10">
+					@DetailsDiv(exchangeRequest)
+				</div>
+				<div class="flex flex-col items-center mx-10 md:mx-40 pb-4">
+					<div class="breadcrumbs text-lg">
+						<ul>
+							<li>Matches Found</li>
+						</ul>
+					</div>
+				</div>
+				<div
+					id="request-matches"
+					hx-get={ fmt.Sprintf("/exchange/%d/matches", exchangeRequest.ID) }
+					hx-trigger="load"
+					hx-swap="innerHTML"
+				></div>
 			</div>
 		</div>
-		<div class="justify-center w-full mb-10">
-			@DetailsDiv(exchangeRequest)
-		</div>
-		<div class="flex flex-col items-center mx-10 md:mx-40 pb-4">
-			<div class="breadcrumbs text-lg">
-				<ul>
-					<li>Matches Found</li>
-				</ul>
-			</div>
-		</div>
-		<div
-			id="request-matches"
-			hx-get={ fmt.Sprintf("/exchange/%d/matches", exchangeRequest.ID) }
-			hx-trigger="load"
-			hx-swap="innerHTML"
-		></div>
 	</div>
 }
 
 templ DetailsDiv(er *models.ExchangeRequest) {
-	<div class="grid grid-cols-1 w-full items-center justify-between py-5 gap-4">
-        <!-- Desired book -->
-		<div class="card w-full bg-base-100 ">
-			<div class="card-body flex-grow">
-				<h2 class="card-title">Your desired book</h2>
+	<div class="grid grid-cols-2 w-full items-start justify-between py-5 gap-6">
+		<div class="flex-grow justify-between items-center">
+			<!-- Desired book -->
+			<div class="card w-full bg-base-100 ">
+				<div class="card-body flex-grow">
+					<h2 class="card-title">Your desired book</h2>
+				</div>
+				<figure>
+					<div class="flex items-center gap-3">
+						<div class="avatar">
+							<div class="mask h-40 w-28 rounded-xl">
+								<img
+									src={ er.DesiredBook.ImageLink }
+									alt="Desired Book Image"
+								/>
+							</div>
+						</div>
+					</div>
+					<img/>
+				</figure>
+				<div class="card-body">
+					<div class="font-bold">{ er.DesiredBook.Title }</div>
+					<div class="text-sm opacity-50">by { er.DesiredBook.Authors }</div>
+				</div>
 			</div>
-			<figure>
-				<div class="flex items-center gap-3">
-					<div class="avatar">
-						<div class="mask h-60 w-40 rounded-xl">
-							<img
-								src={ er.DesiredBook.ImageLink }
-								alt="Desired Book Image"
-							/>
+			<!-- Request info -->
+			<div class="card bg-base-100 mt-6">
+				<div class="card-body">
+					<div class="grid grid-cols-2">
+						<div class="grid grid-rows-2">
+							<h2 class="card-title mb-2">Created</h2>
+							<div>
+								<div>
+									{ er.CreatedAt.Format(time.DateOnly) }
+									at { er.CreatedAt.Format(time.TimeOnly) }
+								</div>
+							</div>
+						</div>
+						<div class="grid grid-rows-2">
+							<h2 class="card-title mb-2">Status</h2>
+							<div class="badge badge-neutral">{ er.Status.String() }</div>
 						</div>
 					</div>
 				</div>
-				<img/>
-			</figure>
-			<div class="card-body">
-				<div class="font-bold">{ er.DesiredBook.Title }</div>
-				<div class="text-sm opacity-50">by { er.DesiredBook.Authors }</div>
 			</div>
 		</div>
 		<!-- Books offered -->
-		<div class="card bg-base-100 w-full h-full ">
+		<div class="card bg-base-100 w-full h-grow">
 			<div class="card-body grid-cols-3 flex-grow">
 				<h2 class="card-title">Books you offer</h2>
 				<table class="bg-base-100 table table-lg">
@@ -69,7 +95,7 @@ templ DetailsDiv(er *models.ExchangeRequest) {
 								<td>
 									<div class="flex items-center gap-3">
 										<div class="avatar">
-											<div class="mask h-20 w-12 rounded-sm  ">
+											<div class="mask h-16 w-11 rounded-sm  ">
 												<img
 													src={ offeredBook.Book.ImageLink }
 													alt="Desired Book Image"
@@ -90,26 +116,5 @@ templ DetailsDiv(er *models.ExchangeRequest) {
 			</div>
 		</div>
 	</div>
-	<div class="grid grid-cols-2 items-start justify-center gap-4">
-        <!-- Request info -->
-		<div class="card bg-base-100 ">
-			<div class="card-body">
-				<div class="grid grid-cols-2">
-					<div class="grid grid-rows-2">
-						<h2 class="card-title mb-2">Created</h2>
-						<div>
-							<div>
-								{ er.CreatedAt.Format(time.DateOnly) }
-								at { er.CreatedAt.Format(time.TimeOnly) }
-							</div>
-						</div>
-					</div>
-					<div class="grid grid-rows-2">
-						<h2 class="card-title mb-2">Status</h2>
-						<div class="badge badge-neutral">{ er.Status.String() }</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
+	<div class="grid grid-cols-2 items-start justify-center gap-4"></div>
 }

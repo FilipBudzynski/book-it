@@ -1,6 +1,7 @@
 package web_exchange
 
 import "github.com/FilipBudzynski/book_it/internal/models"
+import "fmt"
 
 templ ExchangeModal() {
 	<form method="dialog">
@@ -63,7 +64,7 @@ templ OfferedBooks(userBooks []*models.UserBook) {
 }
 
 templ SelectFromMyBooks(userBooks []*models.UserBook, idx int) {
-	<select name="offered-book[]" class="select select-bordered w-full mt-2" form="exchange-form">
+	<select name={ fmt.Sprintf("offered-book-%d", idx) } class="select select-bordered w-full mt-2" form="exchange-form">
 		<option disabled selected>Choose book</option>
 		for _, userBook := range userBooks {
 			<option value={ userBook.BookID }>{ userBook.Book.Title }</option>
