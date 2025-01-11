@@ -43,3 +43,21 @@ func (r *userBookRepository) Delete(id string) error {
 func (r *userBookRepository) DeleteWhereBookId(bookId string) error {
 	return r.db.Where("book_id = ?", bookId).Delete(&models.UserBook{}).Error
 }
+
+func (r *userBookRepository) Search(query string) ([]*models.UserBook, error) {
+	var userBooks []*models.UserBook
+
+	err := r.db.Preload("Book").
+		Preload("ReadingProgress").
+		Joins("JOIN books ON books.id = user_books.book_id").
+		Where("books.title LIKE ?", "%"+query+"%").
+		Where("user_books.deleted_at IS NULL").
+		Order("user_books.created_at DESC").
+		Find(&userBooks).
+		Error
+	if err != nil {
+		return nil, err
+	}
+
+	return userBooks, nil
+}

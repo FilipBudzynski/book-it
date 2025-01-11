@@ -34,15 +34,16 @@ templ ExchangeDetails(exchangeRequest *models.ExchangeRequest) {
 }
 
 templ DetailsDiv(er *models.ExchangeRequest) {
-	<div class="grid grid-cols-2 w-full items-center justify-center py-5 gap-4">
-		<div class="card w-full bg-base-100 shadow-xl">
+	<div class="grid grid-cols-1 w-full items-center justify-between py-5 gap-4">
+        <!-- Desired book -->
+		<div class="card w-full bg-base-100 ">
 			<div class="card-body flex-grow">
 				<h2 class="card-title">Your desired book</h2>
 			</div>
 			<figure>
 				<div class="flex items-center gap-3">
 					<div class="avatar">
-						<div class="mask h-60 w-40 rounded-xl  shadow-xl">
+						<div class="mask h-60 w-40 rounded-xl">
 							<img
 								src={ er.DesiredBook.ImageLink }
 								alt="Desired Book Image"
@@ -58,7 +59,7 @@ templ DetailsDiv(er *models.ExchangeRequest) {
 			</div>
 		</div>
 		<!-- Books offered -->
-		<div class="card bg-base-100 w-full h-full shadow-xl">
+		<div class="card bg-base-100 w-full h-full ">
 			<div class="card-body grid-cols-3 flex-grow">
 				<h2 class="card-title">Books you offer</h2>
 				<table class="bg-base-100 table table-lg">
@@ -68,7 +69,7 @@ templ DetailsDiv(er *models.ExchangeRequest) {
 								<td>
 									<div class="flex items-center gap-3">
 										<div class="avatar">
-											<div class="mask h-20 w-12 rounded-sm  shadow-md">
+											<div class="mask h-20 w-12 rounded-sm  ">
 												<img
 													src={ offeredBook.Book.ImageLink }
 													alt="Desired Book Image"
@@ -90,7 +91,8 @@ templ DetailsDiv(er *models.ExchangeRequest) {
 		</div>
 	</div>
 	<div class="grid grid-cols-2 items-start justify-center gap-4">
-		<div class="card bg-base-100 shadow-xl">
+        <!-- Request info -->
+		<div class="card bg-base-100 ">
 			<div class="card-body">
 				<div class="grid grid-cols-2">
 					<div class="grid grid-rows-2">

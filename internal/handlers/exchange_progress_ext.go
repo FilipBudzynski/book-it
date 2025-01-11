@@ -27,7 +27,7 @@ func (e *exchangeFormBinding) bind(c echo.Context) error {
 	}
 	e.UserBookIDs = []string{}
 	for i := 0; i <= 4; i++ {
-		fieldName := fmt.Sprintf("user-book-%d", i)
+		fieldName := fmt.Sprintf("offered-book-%d", i)
 		if value := c.FormValue(fieldName); value != "" {
 			e.UserBookIDs = append(e.UserBookIDs, value)
 		}

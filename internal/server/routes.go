@@ -23,7 +23,7 @@ func (s *Server) WithMiddleware(e *echo.Echo) *Server {
 	e.Use(utils.CustomRecoverMiddleware)
 	e.Use(utils.RefreshSessionMiddleware)
 	e.Use(toast.ToastMiddleware)
-	e.Use(utils.ErrorPagesMiddleware)
+	// e.Use(utils.ErrorPagesMiddleware)
 	return s
 }
 
@@ -39,8 +39,7 @@ func (s *Server) WithRegisterRoutes(e *echo.Echo) *Server {
 	userBookService := services.NewUserBookService(userBookRepo)
 	progressService := services.NewProgressService(progressRepo)
 	bookService := services.NewBookService(db).
-		WithProvider(providers.NewGoogleProvider().
-			WithLimit(15))
+		WithProvider(providers.NewGoogleProvider())
 	exchangeService := services.NewExchangeService(exchangeRequestRepo)
 
 	routeRegistrars := []RouteRegistrar{

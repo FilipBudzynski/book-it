@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	GoogleBooksAPI    = "https://www.googleapis.com/books/v1/volumes"
-	DefaultMaxResults = 5
+	GoogleBooksAPI          = "https://www.googleapis.com/books/v1/volumes"
+	GoogleBooksAPIMaxResult = 40
 )
 
 // NewGoogleBookService creates new BookService for external api communication
@@ -25,7 +25,7 @@ const (
 func NewGoogleProvider() handlers.BookProvider {
 	return &googleProvider{
 		apiUrl:     GoogleBooksAPI,
-		maxResults: DefaultMaxResults,
+		maxResults: GoogleBooksAPIMaxResult,
 	}
 }
 
@@ -39,10 +39,18 @@ func (p *googleProvider) WithLimit(limit int) handlers.BookProvider {
 	return p
 }
 
+func (p *googleProvider) GetLimit() int {
+	return p.maxResults
+}
+
 // Google Respnse structs
 type BookResponse struct {
 	ID         string     `json:"id"`
 	VolumeInfo VolumeInfo `json:"volumeInfo"`
+}
+
+type TotalItemsResponse struct {
+	TotalItems int `json:"totalItems"`
 }
 
 type BookItemsResponse struct {
@@ -98,8 +106,26 @@ func (p *googleProvider) GetBook(bookID string) (*models.Book, error) {
 	return p.convert(bookResponse), nil
 }
 
-func (p *googleProvider) GetBooksByQuery(query string, limit int) ([]*models.Book, error) {
-	url := fmt.Sprintf(p.apiUrl+"?q=%s&maxResults=%d", query, limit)
+func (p *googleProvider) GetTotalForQuery(query string) int {
+	url := fmt.Sprintf(p.apiUrl+"?q=%s&maxResults=%d", query, p.maxResults)
+	response, err := p.getResponse(url)
+	if err != nil {
+		return -1
+	}
+	defer response.Body.Close()
+
+	var totalItems TotalItemsResponse
+	if err := json.NewDecoder(response.Body).Decode(&totalItems); err != nil {
+		return -1
+	}
+
+	return totalItems.TotalItems
+}
+
+func (p *googleProvider) GetBooksByQuery(query string, limit, page int) ([]*models.Book, error) {
+	startIndex := (page - 1) * limit
+	url := fmt.Sprintf(p.apiUrl+"?q=%s&maxResults=%d&startIndex=%d", query, limit, startIndex)
+	fmt.Printf("URL: %s\n", url)
 
 	response, err := p.getResponse(url)
 	if err != nil {

@@ -13,8 +13,31 @@ templ List(books []*models.UserBook) {
 				<li>My Books</li>
 			</ul>
 		</div>
+		<label class="input input-bordered flex items-center gap-2">
+			<input
+				name="query"
+				hx-get="/user-books/search"
+				hx-trigger="keyup changed delay:300ms"
+				hx-target="#books-container"
+				type="text"
+				class="grow"
+				placeholder="Search"
+			/>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				viewBox="0 0 16 16"
+				fill="currentColor"
+				class="h-4 w-4 opacity-70"
+			>
+				<path
+					fill-rule="evenodd"
+					d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
+					clip-rule="evenodd"
+				></path>
+			</svg>
+		</label>
 	</div>
-	<div class="flex-grow justify-center relative mb-10 overflow-auto">
+	<div class="flex-grow justify-center relative mb-10 overflow-auto ">
 		<div class="flex w-full relative justify-center">
 			<dialog id="my_modal_1" class="modal">
 				<div class="modal-box" id="htmx_modal"></div>
@@ -42,57 +65,7 @@ templ UserBooksTable(books []*models.UserBook) {
 			<tbody
 				id="books-container"
 			>
-				for _, book := range books {
-					<tr>
-						<td class="w-1/12 px-3 py-2">
-							<div class="flex items-center gap-3">
-								<div class="avatar">
-									<div class="mask mask-squircle h-12 w-12">
-										<img src={ book.Book.ImageLink } alt="img"/>
-									</div>
-								</div>
-							</div>
-						</td>
-						<td class="w-max px-3 py-2">
-							<div class="flex flex-col">
-								<span class="text-base">
-									<a href="" class="transition ease-out opacity delay-150 hover:text-black">{ book.Book.Title } </a>
-								</span>
-								<span class="text-sm text-gray-300">
-									by 
-									{ book.Book.Authors }
-								</span>
-							</div>
-						</td>
-						<td>
-							<div id={ fmt.Sprintf(web_progress.HtmxTrackingButtonId, book.ID) }>
-								if book.ReadingProgress != nil {
-									@web_progress.TrackingButton(book.ID, book.ReadingProgress.Completed)
-								} else {
-									<button
-										hx-get={ fmt.Sprintf("user-books/create_modal/%d", book.ID) }
-										hx-target="#htmx_modal"
-										hx-swap="innerHTML"
-										hx-trigger="click"
-										onclick="my_modal_1.showModal()"
-										class="btn"
-									>Start tracking</button>
-								}
-							</div>
-						</td>
-						<td class="w-1/5 px-3 py-2">
-							<div class="w-full pr-4">
-								<button
-									hx-delete={ fmt.Sprintf("/user-books/%d", book.ID) }
-									hx-confirm="Are you sure?"
-									hx-target="closest tr"
-									hx-swap="outerHTML swap:1s"
-									class="btn btn-sm w-full btn-outline btn-error"
-								>Remove</button>
-							</div>
-						</td>
-					</tr>
-				}
+				@BooksTableRows(books)
 			</tbody>
 			<tfoot></tfoot>
 		</table>
@@ -103,6 +76,60 @@ templ UserBooksTable(books []*models.UserBook) {
   transition: opacity 1s ease-out;
 }
             </style>
+}
+
+templ BooksTableRows(books []*models.UserBook) {
+	for _, book := range books {
+		<tr>
+			<td class="w-1/12 px-3 py-2">
+				<div class="flex items-center gap-3">
+					<div class="avatar">
+						<div class="mask mask-squircle h-12 w-12">
+							<img src={ book.Book.ImageLink } alt="img"/>
+						</div>
+					</div>
+				</div>
+			</td>
+			<td class="w-max px-3 py-2">
+				<div class="flex flex-col">
+					<span class="text-base">
+						<a href="" class="transition ease-out opacity delay-150 hover:text-black">{ book.Book.Title } </a>
+					</span>
+					<span class="text-sm text-gray-300">
+						by 
+						{ book.Book.Authors }
+					</span>
+				</div>
+			</td>
+			<td>
+				<div id={ fmt.Sprintf(web_progress.HtmxTrackingButtonId, book.ID) }>
+					if book.ReadingProgress != nil {
+						@web_progress.TrackingButton(book.ID, book.ReadingProgress.Completed)
+					} else {
+						<button
+							hx-get={ fmt.Sprintf("user-books/create_modal/%d", book.ID) }
+							hx-target="#htmx_modal"
+							hx-swap="innerHTML"
+							hx-trigger="click"
+							onclick="my_modal_1.showModal()"
+							class="btn"
+						>Start tracking</button>
+					}
+				</div>
+			</td>
+			<td class="w-1/5 px-3 py-2">
+				<div class="w-full pr-4">
+					<button
+						hx-delete={ fmt.Sprintf("/user-books/%d", book.ID) }
+						hx-confirm="Are you sure?"
+						hx-target="closest tr"
+						hx-swap="outerHTML swap:1s"
+						class="btn btn-sm w-full btn-outline btn-error"
+					>Remove</button>
+				</div>
+			</td>
+		</tr>
+	}
 }
 
 templ Bookshelfs() {
