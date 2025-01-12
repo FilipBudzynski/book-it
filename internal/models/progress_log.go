@@ -16,6 +16,7 @@ type DailyProgressLog struct {
 	TotalPages        int `form:"total-pages"` // Denormalized
 	TargetPages       int
 	Completed         bool // Whether the day's target was met
+    Comment           string
 }
 
 var (

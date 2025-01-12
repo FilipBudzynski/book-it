@@ -5,7 +5,10 @@ import (
 
 	"github.com/FilipBudzynski/book_it/internal/toast"
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
+
+var ErrNotFound error = gorm.ErrRecordNotFound
 
 var (
 	HttpErrorBadRequest = func(err error) *echo.HTTPError {
@@ -29,6 +32,12 @@ var (
 	HttpErrorInternalServerError = func(err error) *echo.HTTPError {
 		toast := toast.Danger(err.Error())
 		return echo.NewHTTPError(http.StatusInternalServerError, toast).
+			SetInternal(toast)
+	}
+
+	HttpErrorNotFound = func(err error) *echo.HTTPError {
+		toast := toast.Warning(err.Error())
+		return echo.NewHTTPError(http.StatusNotFound, toast).
 			SetInternal(toast)
 	}
 )

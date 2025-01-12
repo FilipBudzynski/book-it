@@ -17,6 +17,10 @@ func NewBookService(db *gorm.DB) handlers.BookService {
 	}
 }
 
+func (s *bookService) Provider() handlers.BookProvider {
+	return s.provider
+}
+
 func (s *bookService) WithProvider(provider handlers.BookProvider) handlers.BookService {
 	s.provider = provider
 	return s
@@ -70,8 +74,9 @@ func (s *bookService) GetByID(bookId string) (*models.Book, error) {
 
 // GetByQuery returns maxResults number of books by title from external api (provider)
 // if no book is found in database, it saves it to the database
-func (s *bookService) GetByQuery(query string, limit int) ([]*models.Book, error) {
-	books, err := s.provider.GetBooksByQuery(query, limit)
+func (s *bookService) GetByQuery(query string, page int) ([]*models.Book, error) {
+	limit := s.provider.GetLimit()
+	books, err := s.provider.GetBooksByQuery(query, limit, page)
 	if err != nil {
 		return nil, err
 	}

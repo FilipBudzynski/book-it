@@ -1,9 +1,7 @@
 package web_exchange
 
-import (
-	"fmt"
-	"github.com/FilipBudzynski/book_it/internal/models"
-)
+import "github.com/FilipBudzynski/book_it/internal/models"
+import "fmt"
 
 templ ExchangeModal() {
 	<form method="dialog">
@@ -36,14 +34,11 @@ templ ExchangeModal() {
 				</div>
 				<div>
 					<label class="block text-sm font-medium text-gray-700">Offered Books</label>
-					<div class="grid gird-rows-1 gap-4">
-						<div
-							id="offered-books-containter"
-							hx-get="user-books/exchange/books"
-							hx-trigger="load"
-							hx-swap="innerHTML"
-						></div>
-					</div>
+					<div
+						hx-get="/user-books/exchange/books"
+						hx-trigger="load"
+						id="offered-books-containter"
+					></div>
 				</div>
 			</div>
 			<!-- if there is a button in form, it will close the modal -->
@@ -51,6 +46,8 @@ templ ExchangeModal() {
 				<button
 					class="btn"
 					hx-post="/exchange"
+					hx-target="#exchanges-table-body"
+					hx-swap="beforeend"
 					onclick="exchange_modal.close()"
 				>Submit</button>
 			</div>
@@ -59,51 +56,18 @@ templ ExchangeModal() {
 }
 
 templ OfferedBooks(userBooks []*models.UserBook) {
-	<div class="flex items-center mt-2 offered_book">
-		@SelectFromMyBooks(userBooks, 0)
-		@AddMoreBooksButton()
-	</div>
-	for i := 1; i < 5; i++ {
-		<div class="flex hidden items-center mt-2 offered_book">
+	for i := 0; i < 5; i++ {
+		<div class="flex items-center mt-2 offered_book">
 			@SelectFromMyBooks(userBooks, i)
-			@RemoveBookButton()
 		</div>
 	}
 }
 
-templ SelectFromMyBooks(userBooks []*models.UserBook, index int) {
-	<select name={ fmt.Sprintf("user-book-%d", index) } class="select select-bordered w-full mt-2" value="" form="exchange-form">
-		<option disabled selected>Choose one of your books</option>
+templ SelectFromMyBooks(userBooks []*models.UserBook, idx int) {
+	<select name={ fmt.Sprintf("offered-book-%d", idx) } class="select select-bordered w-full mt-2" form="exchange-form">
+		<option disabled selected>Choose book</option>
 		for _, userBook := range userBooks {
-			<option value={ fmt.Sprintf("%d", userBook.ID) }>{ userBook.Book.Title }</option>
+			<option value={ userBook.BookID }>{ userBook.Book.Title }</option>
 		}
 	</select>
-}
-
-templ RemoveBookButton() {
-	<button
-		class="btn btn-error ml-2"
-		_="on click 
-			event.preventDefault()
-			add .hidden to the closest <div/> to the parentElement of me
-			if (#offered-books-containter.querySelectorAll('.offered_book:not(.hidden)').length < 5) 
-				set {disabled: false} on #add-book-btn "
-	>
-		-
-	</button>
-}
-
-templ AddMoreBooksButton() {
-	<button
-		id="add-book-btn"
-		class="btn ml-2"
-		_="on click
-			event.preventDefault()
-			if (#offered-books-containter.querySelectorAll('.offered_book:not(.hidden)').length < 5) 
-                remove .hidden from next .hidden
-			if (#offered-books-containter.querySelectorAll('.offered_book:not(.hidden)').length == 5) then
-				set {disabled: true} on #add-book-btn"
-	>
-		+
-	</button>
 }

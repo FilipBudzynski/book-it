@@ -3,6 +3,7 @@ package web_tracking
 import (
 	"fmt"
 
+	"time"
 	"github.com/FilipBudzynski/book_it/internal/models"
 )
 
@@ -16,27 +17,28 @@ type progressStep struct {
 
 func NewProgressStep() *progressStep {
 	return &progressStep{
-		class: "step",
+		class: "step cursor-pointer",
 	}
 }
 
 templ ProgressStep(log models.DailyProgressLog) {
 	{{ stepAtributes := NewProgressStep() }}
-	switch log.PagesRead {
-		case 0:
-			{{ break }}
-		case log.TargetPages:
-			{{ stepAtributes.dataContent = "✓" }}
-			{{ stepAtributes.class += " step-primary" }}
-			{{ stepAtributes.message = fmt.Sprintf("read: %d", log.PagesRead) + "" }}
-		default:
-			{{ stepAtributes.dataContent = "✓" }}
-			{{ stepAtributes.class += " step-primary" }}
-			{{ stepAtributes.message = fmt.Sprintf("read: %d", log.PagesRead) + "" }}
+	if log.Date.Equal(time.Now().Truncate(24 * time.Hour)) {
+		{{ stepAtributes.message = "^" }}
+	}
+	if log.PagesRead > 0 {
+		{{ stepAtributes.dataContent = "✓" }}
+		{{ stepAtributes.class += " step-neutral" }}
+		{{ stepAtributes.message = fmt.Sprintf("%d", log.PagesRead) + "" }}
+	}
+	if log.PagesRead >= log.TargetPages {
+		{{ stepAtributes.dataContent = "★" }}
+		{{ stepAtributes.class += " step-accent" }}
+		{{ stepAtributes.message = fmt.Sprintf("%d", log.PagesRead) + "" }}
 	}
 	<div
 		id={ fmt.Sprintf(progressLogStepId, log.ID) }
-		hx-get={ fmt.Sprintf("/progress/log/modal/%d", log.ID) }
+		hx-get={ fmt.Sprintf("/progress/log/details/modal/%d", log.ID) }
 		hx-target="#htmx_modal"
 		hx-swap="innerHTML"
 		hx-trigger="click"

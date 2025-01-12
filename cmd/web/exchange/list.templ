@@ -1,0 +1,77 @@
+package web_exchange
+
+import (
+	"fmt"
+	"github.com/FilipBudzynski/book_it/internal/models"
+)
+
+templ List(exchanges []*models.ExchangeRequest) {
+	<div class="w-[80rem] overflow-x-auto mt-10">
+		<table class="bg-base-100 table table-lg">
+			<!-- head -->
+			<thead>
+				<tr>
+					<th>Desired Book</th>
+					<th></th>
+					<th>Offered Books</th>
+					<th>Status</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody id="exchanges-table-body">
+				for _, exchangeRequest := range exchanges {
+					@ExchangeTableRow(*exchangeRequest)
+				}
+			</tbody>
+		</table>
+	</div>
+}
+
+templ ExchangeTableRow(er models.ExchangeRequest) {
+	<tr>
+		<td>
+			<div class="flex items-center gap-3">
+				<div class="avatar">
+					<div class="mask mask-squircle h-30 w-20">
+						<img
+							src={ er.DesiredBook.ImageLink }
+							alt="Desired Book Image"
+						/>
+					</div>
+				</div>
+				<div>
+					<div class="font-bold">{ er.DesiredBook.Title }</div>
+					<div class="text-sm opacity-50">by { er.DesiredBook.Authors }</div>
+				</div>
+			</div>
+		</td>
+		<td>
+			<img src="../assets/exchange-symbol.svg" alt="Exchange Symbol" class="w-5 h-5"/>
+		</td>
+		<td>
+			for _, book := range er.OfferedBooks {
+				- { book.Book.Title }
+				<br/>
+			}
+		</td>
+		<td>{ er.Status.String() }</td>
+		<th>
+			<div class="join">
+				<button
+					class="btn btn-xs join-item"
+					hx-get={ fmt.Sprintf("/exchange/details/%d", er.ID) }
+					hx-target="#content-container"
+					hx-push-url="true"
+				>details</button>
+				<button
+					class="btn btn-error btn-xs join-item"
+					hx-delete={ fmt.Sprintf("/exchange/%d", er.ID) }
+					hx-confirm="Are you sure?"
+					_="on htmx:afterRequest if event.detail.xhr.status is 204 
+                    then 
+                        remove closest <tr/>"
+				>remove</button>
+			</div>
+		</th>
+	</tr>
+}

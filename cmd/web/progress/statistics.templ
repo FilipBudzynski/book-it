@@ -90,19 +90,19 @@ templ ProgressStatistics(readingProgress *models.ReadingProgress) {
 							hx-swap="innerHTML"
 							class="btn btn-sm btn-error"
 						>Stop Tracking</button>
-						<button class="btn btn-sm btn-info">Edit</button>
+						<!-- <button class="btn btn-sm btn-info">Edit</button> -->
 					</div>
 				</div>
 			</div>
 		</div>
 	</div>
-	<div id="progress_steps">
+	<div id="progress_steps h-30">
 		@DailyProgressLogs(readingProgress.DailyProgress)
 	</div>
 }
 
 templ DailyProgressLogs(dailyLogs []models.DailyProgressLog) {
-	<div class="flex-grow mb-10 overflow-auto flex items-center justify-center">
+	<div class="mb-10 flow-auto flex items-center justify-center h-30">
 		<div class="w-[70rem] overflow-x-auto flex items-center justify-center">
 			<ul class="steps">
 				for _, dailyLog := range dailyLogs {
@@ -110,5 +110,12 @@ templ DailyProgressLogs(dailyLogs []models.DailyProgressLog) {
 				}
 			</ul>
 		</div>
+	</div>
+}
+
+templ StatisticsAndButtonUpdate(readingProgress *models.ReadingProgress) {
+	@ProgressStatistics(readingProgress)
+	<div id={ fmt.Sprintf(HtmxTrackingButtonId, readingProgress.UserBookID) } hx-swap-oob="true">
+		@TrackingButton(readingProgress.UserBookID, readingProgress.Completed)
 	</div>
 }

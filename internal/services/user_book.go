@@ -11,6 +11,7 @@ type UserBookRepository interface {
 	Update(userBook *models.UserBook) error
 	Delete(id string) error
 	DeleteWhereBookId(bookId string) error
+	Search(search string) ([]*models.UserBook, error)
 }
 
 type userBookService struct {
@@ -50,4 +51,8 @@ func (s *userBookService) Delete(id string) error {
 
 func (s *userBookService) DeleteByBookId(bookId string) error {
 	return s.repo.DeleteWhereBookId(bookId)
+}
+
+func (s *userBookService) GetSearch(query string) ([]*models.UserBook, error) {
+	return s.repo.Search(query)
 }

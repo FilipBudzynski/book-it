@@ -85,7 +85,7 @@ func (r *ReadingProgress) IsCompleted() bool {
 
 func (r *ReadingProgress) UpdateLogTargetPagesFromDate(logDate time.Time) {
 	for i := range r.DailyProgress {
-		if r.DailyProgress[i].Date.Before(logDate) {
+		if r.DailyProgress[i].Date.Before(logDate) || r.DailyProgress[i].Date.Equal(logDate) {
 			continue
 		}
 		r.DailyProgress[i].TargetPages = r.DailyTargetPages

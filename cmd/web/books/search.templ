@@ -1,52 +1,58 @@
 package web_books
 
 import (
+	"fmt"
 	"github.com/FilipBudzynski/book_it/internal/models"
 	"github.com/FilipBudzynski/book_it/utils"
 	"github.com/FilipBudzynski/book_it/cmd/web"
 )
 
 templ BooksSearch() {
-	<div class="flex flex-col items-center mx-10 md:mx-20">
-		<form
-			hx-post="/books"
-			method="POST"
-			hx-target="#books-container"
-			hx-indicator="#loading-spinner"
-			class="w-3/5 mx-12 mb-4"
-		>
-			<label class="input input-sm flex items-center">
-				<input
-					type="search"
-					id="book-title"
-					name="book-title"
-					class="grow"
-					placeholder="Search for new reads"
-				/>
-				<button
-					type="submit"
-				>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						viewBox="0 0 16 16"
-						fill="currentColor"
-						class="h-4 w-4 opacity-70"
+	<div class="max-w-screen-lg mx-auto p-4 items-center">
+		<div class="flex flex-col items-center mx-10 pb-4">
+			<form
+				hx-post="/books"
+				method="POST"
+				hx-target="#books-container"
+				hx-indicator="#loading-spinner"
+				class="w-3/5 mx-12 mb-4"
+			>
+				<label class="input input flex items-center">
+					<input
+						type="search"
+						id="book-title"
+						name="book-title"
+						class="grow"
+						placeholder="Search for new reads"
+					/>
+					<button
+						type="submit"
 					>
-						<path
-							fill-rule="evenodd"
-							d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-							clip-rule="evenodd"
-						></path>
-					</svg>
-				</button>
-			</label>
-		</form>
-		@web.Loading()
-		@BooksTable()
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 16 16"
+							fill="currentColor"
+							class="h-4 w-4 opacity-70"
+						>
+							<path
+								fill-rule="evenodd"
+								d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
+								clip-rule="evenodd"
+							></path>
+						</svg>
+					</button>
+				</label>
+			</form>
+			<div class="flex justify-center w-[80rem] mb-10">
+				@BooksTable()
+			</div>
+			@web.Loading()
+			<div id="search-pagination"></div>
+		</div>
 	</div>
 }
 
-templ BooksPost(books []*models.Book, userBooks []*models.UserBook) {
+templ BooksPost(books []*models.Book, userBooks []*models.UserBook, page int, query string) {
 	for _, book := range books {
 		<tr>
 			<td class="w-1/12 px-3 py-2">
@@ -74,10 +80,18 @@ templ BooksPost(books []*models.Book, userBooks []*models.UserBook) {
 			</td>
 		</tr>
 	}
+	<div
+		class="infinite-scroll-trigger text-center my-4"
+		hx-get={ fmt.Sprintf("/books/partial?page=%d&query=%s", page, query) }
+		hx-trigger="revealed"
+		hx-target="#books-container"
+		hx-swap="beforeend"
+		hx-indicator="#loading-spinner"
+	></div>
 }
 
 templ BooksTable() {
-	<table class="bg-base-100 mx-10 table table-lg">
+	<table class="w-full bg-base-100 table table-lg shadow-lg">
 		<thead></thead>
 		<tbody id="books-container"></tbody>
 		<tfoot></tfoot>

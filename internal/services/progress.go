@@ -93,17 +93,14 @@ func (s *progressService) GetProgressAssosiatedWithLogId(logId string) (*models.
 	return s.Get(strconv.Itoa(int(log.ReadingProgressID)))
 }
 
-func (s *progressService) UpdateLogPagesRead(id string, pagesRead int) (*models.DailyProgressLog, error) {
+func (s *progressService) UpdateLog(id string, pagesRead int, comment string) (*models.DailyProgressLog, error) {
 	log, err := s.repo.GetLogById(id)
 	if err != nil {
 		return nil, err
 	}
 
-	if log.PagesRead == pagesRead {
-		return log, nil
-	}
-
 	log.PagesRead = pagesRead
+	log.Comment = comment
 
 	if err := log.Validate(); err != nil {
 		return nil, err
@@ -113,10 +110,10 @@ func (s *progressService) UpdateLogPagesRead(id string, pagesRead int) (*models.
 		return nil, err
 	}
 
-	return log, s.UpdateTargetPages(log.ReadingProgressID, log.Date)
+	return log, nil
 }
 
-func (s *progressService) UpdateTargetPages(progressId uint, logDate time.Time) error {
+func (s *progressService) UpdateTargetPages(progressId uint) error {
 	progress, err := s.repo.GetById(strconv.FormatUint(uint64(progressId), 10))
 	if err != nil {
 		return err

@@ -21,6 +21,7 @@ type UserBookService interface {
 	GetAll(userId string) ([]*models.UserBook, error)
 	Delete(id string) error
 	DeleteByBookId(bookId string) error
+	GetSearch(query string) ([]*models.UserBook, error)
 }
 
 type UserBookHandler struct {
@@ -41,7 +42,9 @@ func (h *UserBookHandler) RegisterRoutes(app *echo.Echo) {
 	group.DELETE("/search/:book_id", h.DeleteAndReplaceButton)
 	group.GET("", h.List)
 	group.GET("/create_modal/:user_book_id", h.GetCreateProgressModal)
-	group.GET("/exchange/books", h.GetAdditionalOfferedBookInput)
+	// group.GET("/exchange/additional", h.GetAdditionalOfferedBookInput)
+	group.GET("/exchange/books", h.GetOfferedBooks)
+	group.GET("/search", h.Search)
 }
 
 func (h *UserBookHandler) Create(c echo.Context) error {
@@ -116,16 +119,27 @@ func (h *UserBookHandler) GetCreateProgressModal(c echo.Context) error {
 	return utils.RenderView(c, webProgress.ProgressCreateModal(userBook))
 }
 
-func (h *UserBookHandler) GetAdditionalOfferedBookInput(c echo.Context) error {
-	userID, err := utils.GetUserIDFromSession(c.Request())
+func (h *UserBookHandler) GetOfferedBooks(c echo.Context) error {
+	userId, err := utils.GetUserIDFromSession(c.Request())
 	if err != nil {
 		return errs.HttpErrorUnauthorized(err)
 	}
 
-	userBooks, err := h.userBookService.GetAll(userID)
+	userBooks, err := h.userBookService.GetAll(userId)
 	if err != nil {
 		return errs.HttpErrorInternalServerError(err)
 	}
 
 	return utils.RenderView(c, webExchange.OfferedBooks(userBooks))
+}
+
+func (h *UserBookHandler) Search(c echo.Context) error {
+	search := c.QueryParam("query")
+	var results []*models.UserBook
+
+	results, err := h.userBookService.GetSearch(search)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+	return utils.RenderView(c, webUserBooks.BooksTableRows(results))
 }
