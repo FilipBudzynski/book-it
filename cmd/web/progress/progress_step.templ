@@ -23,8 +23,8 @@ func NewProgressStep() *progressStep {
 
 templ ProgressStep(log models.DailyProgressLog) {
 	{{ stepAtributes := NewProgressStep() }}
-	if log.Date.Equal(time.Now().Truncate(24 * time.Hour)) { 
-        {{ stepAtributes.message = "^" }}
+	if log.Date.Equal(time.Now().Truncate(24 * time.Hour)) {
+		{{ stepAtributes.message = "^" }}
 	}
 	if log.PagesRead > 0 {
 		{{ stepAtributes.dataContent = "✓" }}
@@ -36,18 +36,6 @@ templ ProgressStep(log models.DailyProgressLog) {
 		{{ stepAtributes.class += " step-accent" }}
 		{{ stepAtributes.message = fmt.Sprintf("%d", log.PagesRead) + "" }}
 	}
-	<!-- switch log.PagesRead { -->
-	<!-- 	case 0: -->
-	<!-- 		{{ break }} -->
-	<!-- 	case log.TargetPages: -->
-	<!-- 		{{ stepAtributes.dataContent = "✓" }} -->
-	<!-- 		{{ stepAtributes.class += " step-primary" }} -->
-	<!-- 		{{ stepAtributes.message = fmt.Sprintf("read: %d", log.PagesRead) + "" }} -->
-	<!-- 	default: -->
-	<!-- 		{{ stepAtributes.dataContent = "✓" }} -->
-	<!-- 		{{ stepAtributes.class += " step-primary" }} -->
-	<!-- 		{{ stepAtributes.message = fmt.Sprintf("read: %d", log.PagesRead) + "" }} -->
-	<!-- } -->
 	<div
 		id={ fmt.Sprintf(progressLogStepId, log.ID) }
 		hx-get={ fmt.Sprintf("/progress/log/details/modal/%d", log.ID) }
