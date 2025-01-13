@@ -11,6 +11,7 @@ require (
 	github.com/markbates/goth v1.80.0
 	github.com/mattn/go-sqlite3 v1.14.24
 	github.com/rdbell/echo-pretty-logger v1.0.0
+	github.com/rs/cors v1.11.0
 	github.com/stretchr/testify v1.9.0
 	gorm.io/driver/sqlite v1.5.6
 	gorm.io/gorm v1.25.12

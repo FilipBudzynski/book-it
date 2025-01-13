@@ -20,10 +20,17 @@ func NewAuthHandler(us UserService) *AuthHandler {
 	}
 }
 
+func (h *AuthHandler) RegisterRoutes(app *echo.Echo) {
+	group := app.Group("/auth")
+	group.GET("/callback", h.GetAuthCallbackFunc)
+	group.GET("", h.GetAuthFunc)
+	group.GET("/logout", h.Logout)
+}
+
 // setProvider is a helper function that sets Request context to contain value "provider", from url path ":provider"
 // returns responseWriter and altered request
 func setProvider(c echo.Context) (http.ResponseWriter, *http.Request) {
-	ctx := context.WithValue(c.Request().Context(), gothic.ProviderParamKey, c.Param("provider"))
+	ctx := context.WithValue(c.Request().Context(), gothic.ProviderParamKey, c.QueryParam("provider"))
 	return c.Response().Writer, c.Request().WithContext(ctx)
 }
 
@@ -95,11 +102,4 @@ func (a *AuthHandler) Logout(c echo.Context) error {
 	}
 
 	return c.Redirect(http.StatusFound, "/")
-}
-
-func (h *AuthHandler) RegisterRoutes(app *echo.Echo) {
-	group := app.Group("/auth")
-	group.GET("/callback", h.GetAuthCallbackFunc)
-	group.GET("/", h.GetAuthFunc)
-	group.GET("/logout", h.Logout)
 }

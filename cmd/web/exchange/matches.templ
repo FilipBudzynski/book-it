@@ -4,9 +4,9 @@ import (
 	"github.com/FilipBudzynski/book_it/internal/models"
 )
 
-templ Matches(matches []*models.ExchangeRequest) {
+templ Matches(request *models.ExchangeRequest) {
 	<div class="justify-center w-full mb-10">
-		if len(matches) == 0 {
+		if len(request.Matches) == 0 {
 			<h1 class="text-3xl">No matches found</h1>
 		} else {
 			<table class="bg-base-100 table table-md z-1 ">
@@ -19,13 +19,13 @@ templ Matches(matches []*models.ExchangeRequest) {
 				<tbody
 					id="matched-exchanges"
 				>
-					for _, match := range matches {
+					for _, match := range request.Matches {
 						<tr>
 							<td class="w-1/12 px-3 py-2">
 								<div class="flex items-center gap-3">
 									<div class="avatar">
 										<div class="mask mask-squircle h-12 w-12">
-											<img src={ match.DesiredBook.ImageLink } alt="img"/>
+											<img src={ match.MatchRequest.DesiredBook.ImageLink } alt="img"/>
 										</div>
 									</div>
 								</div>
@@ -33,18 +33,18 @@ templ Matches(matches []*models.ExchangeRequest) {
 							<td class="w-max px-3 py-2">
 								<div class="flex flex-col">
 									<span class="text-base">
-										<a href="" class="transition ease-out opacity delay-150 hover:text-black">{ match.DesiredBook.Title } </a>
+										<a href="" class="transition ease-out opacity delay-150 hover:text-black">{ match.MatchRequest.DesiredBook.Title } </a>
 									</span>
 									<span class="text-sm text-gray-300">
 										by 
-										{ match.DesiredBook.Authors }
+										{ match.MatchRequest.DesiredBook.Authors }
 									</span>
 								</div>
 							</td>
 							<td>
 								<div
 									class="btn"
-									href={ match.User.Email }
+									href={ match.MatchRequest.User.Email }
 								>
 									Get Connected
 								</div>
@@ -64,5 +64,8 @@ templ Matches(matches []*models.ExchangeRequest) {
 				<tfoot></tfoot>
 			</table>
 		}
+	</div>
+	<div id="exchange-details-status" hx-swap-oob="true">
+		@StatusDiv(request)
 	</div>
 }

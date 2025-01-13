@@ -11,7 +11,9 @@ type ExchangeRequestRepository interface {
 	Get(id, userId string) (*models.ExchangeRequest, error)
 	GetAll(userId string) ([]*models.ExchangeRequest, error)
 	Delete(id string) error
-	FindMatchingRequests(userId, requestId, desiredBookId string, offeredBooks []string) ([]*models.ExchangeRequest, error)
+	DeleteMatchesForRequest(requestId string) error
+	Update(exchange *models.ExchangeRequest) error
+	FindMatchingRequests(userId, requestId, desiredBookId string, offeredBooks []string, existingMatches []models.ExchangeMatch) ([]models.ExchangeMatch, error)
 }
 
 type exchangeService struct {
@@ -56,11 +58,14 @@ func (s *exchangeService) Get(id, userId string) (*models.ExchangeRequest, error
 }
 
 func (s *exchangeService) Delete(id string) error {
-	return s.repo.Delete(id)
+	if err := s.repo.Delete(id); err != nil {
+		return err
+	}
+	return s.repo.DeleteMatchesForRequest(id)
 }
 
-func (s *exchangeService) FindMatchingRequests(requestId, userId string) ([]*models.ExchangeRequest, error) {
-	request, err := s.Get(requestId, userId)
+func (s *exchangeService) FindMatchingRequests(requestId, userId string) (*models.ExchangeRequest, error) {
+	r, err := s.Get(requestId, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -68,13 +73,24 @@ func (s *exchangeService) FindMatchingRequests(requestId, userId string) ([]*mod
 	matches, err := s.repo.FindMatchingRequests(
 		requestId,
 		userId,
-		request.DesiredBookID,
-		getOfferedBookIDs(request.OfferedBooks))
+		r.DesiredBookID,
+		getOfferedBookIDs(r.OfferedBooks),
+		r.Matches,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	return matches, nil
+	r.Matches = append(r.Matches, matches...)
+    if len(r.Matches) == 0 {
+        r.Status = models.ExchangeRequestStatusPending
+    }
+
+	if err := s.repo.Update(r); err != nil {
+		return nil, err
+	}
+
+	return r, nil
 }
 
 // Helper function to extract BookIDs from OfferedBooks

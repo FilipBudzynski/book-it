@@ -33,7 +33,7 @@ templ Base() {
 			// tailwind flowbite 
 			<main class="base max-w-screen gap-2 px-6 pt-5">
 				<div id="navbar-container" hx-get="/navbar" hx-trigger="load" hx-swap="outerHTML"></div>
-				<div id="content-container" >
+				<div hx-boost="true" id="content-container" hx-history-elt="true">
 					{ children... }
 					@Loading()
 				</div>

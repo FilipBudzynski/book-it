@@ -16,7 +16,7 @@ type ExchangeService interface {
 	Get(id, userId string) (*models.ExchangeRequest, error)
 	GetAll(userId string) ([]*models.ExchangeRequest, error)
 	Delete(id string) error
-	FindMatchingRequests(requestId, userId string) ([]*models.ExchangeRequest, error)
+	FindMatchingRequests(requestId, userId string) (*models.ExchangeRequest, error)
 }
 
 type exchangeHandler struct {
@@ -114,11 +114,17 @@ func (h *exchangeHandler) Matches(c echo.Context) error {
 		return errs.HttpErrorUnauthorized(err)
 	}
 
-	matches, err := h.exchangeService.FindMatchingRequests(id, userId)
+	_, err = h.exchangeService.FindMatchingRequests(id, userId)
 	if err != nil {
 		return errs.HttpErrorNotFound(err)
 	}
-	return utils.RenderView(c, webExchange.Matches(matches))
+
+	request, err := h.exchangeService.Get(id, userId)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+
+	return utils.RenderView(c, webExchange.Matches(request))
 }
 
 func (h *exchangeHandler) Delete(c echo.Context) error {
