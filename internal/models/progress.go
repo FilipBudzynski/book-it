@@ -7,6 +7,8 @@ import (
 	"gorm.io/gorm"
 )
 
+const MaxDailyLogs = 365
+
 type ReadingProgress struct {
 	gorm.Model
 	UserBookID       uint   `gorm:"not null" form:"user-book-id"`
@@ -28,6 +30,7 @@ var (
 	ErrProgressInvalidEndDate              = errors.New("end date must be after start date")
 	ErrProgressLastDayNotFinished          = errors.New("this is the last day - finish reading today or change the end date to add more days")
 	ErrProgressPagesLeftNegative           = errors.New("pages left cannot be negative")
+	ErrProgressMaxLogsExceeded             = errors.New("max 365 logs per book")
 )
 
 func (r *ReadingProgress) Validate() error {
@@ -83,15 +86,6 @@ func (r *ReadingProgress) IsCompleted() bool {
 	return r.CurrentPage == r.TotalPages
 }
 
-func (r *ReadingProgress) UpdateLogTargetPagesFromDate(logDate time.Time) {
-	for i := range r.DailyProgress {
-		if r.DailyProgress[i].Date.Before(logDate) || r.DailyProgress[i].Date.Equal(logDate) {
-			continue
-		}
-		r.DailyProgress[i].TargetPages = r.DailyTargetPages
-	}
-}
-
 func (r *ReadingProgress) IsFinishedOnLastLog(logDate time.Time) bool {
 	return r.DaysLeft(logDate) != 0 || r.PagesLeft() < 0
 }
@@ -103,4 +97,25 @@ func (r *ReadingProgress) GetLatestPositiveLog() *DailyProgressLog {
 		}
 	}
 	return nil
+}
+
+func (r *ReadingProgress) Equal(other ReadingProgress) bool {
+	if other.DailyTargetPages != r.DailyTargetPages {
+		return false
+	}
+
+	if len(other.DailyProgress) != len(r.DailyProgress) {
+		return false
+	}
+
+	for i := range other.DailyProgress {
+		otherLog := other.DailyProgress[i]
+		log := r.DailyProgress[i]
+
+		if otherLog.TargetPages != log.TargetPages {
+			return false
+		}
+	}
+
+	return true
 }

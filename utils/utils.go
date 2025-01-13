@@ -2,6 +2,7 @@ package utils
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/FilipBudzynski/book_it/cmd/web"
 	webError "github.com/FilipBudzynski/book_it/cmd/web/error_pages"
@@ -49,4 +50,11 @@ func ErrorPagesMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 		return err
 	}
+}
+
+func TodaysDate() time.Time {
+	now := time.Now()
+	year, month, day := now.Date()
+	today := time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
+	return today
 }

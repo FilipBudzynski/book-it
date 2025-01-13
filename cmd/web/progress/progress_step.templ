@@ -13,11 +13,13 @@ type progressStep struct {
 	class       string
 	dataContent string
 	message     string
+	onclick     bool
 }
 
 func NewProgressStep() *progressStep {
 	return &progressStep{
-		class: "step cursor-pointer",
+		class:   "step cursor-pointer",
+		onclick: true,
 	}
 }
 
@@ -25,6 +27,10 @@ templ ProgressStep(log models.DailyProgressLog) {
 	{{ stepAtributes := NewProgressStep() }}
 	if log.Date.Equal(time.Now().Truncate(24 * time.Hour)) {
 		{{ stepAtributes.message = "^" }}
+	}
+	if log.Date.After(time.Now().Truncate(24 * time.Hour)) {
+		{{ stepAtributes.class += "hx-disable opacity-50" }}
+		{{ stepAtributes.onclick = false }}
 	}
 	if log.PagesRead > 0 {
 		{{ stepAtributes.dataContent = "✓" }}
@@ -42,7 +48,12 @@ templ ProgressStep(log models.DailyProgressLog) {
 		hx-target="#htmx_modal"
 		hx-swap="innerHTML"
 		hx-trigger="click"
-		onclick="my_modal_1.showModal()"
+		if stepAtributes.onclick {
+			onclick="my_modal_1.showModal()"
+		}
+		if !stepAtributes.onclick {
+			hx-disable="true"
+		}
 		class={ stepAtributes.class }
 		if stepAtributes.dataContent != "" {
 			data-content={ stepAtributes.dataContent }

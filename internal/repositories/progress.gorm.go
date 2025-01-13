@@ -26,8 +26,7 @@ func (r *progressRepository) GetById(id string) (*models.ReadingProgress, error)
 
 func (r *progressRepository) GetByUserBookId(userBookId string) (*models.ReadingProgress, error) {
 	progress := &models.ReadingProgress{}
-	err := r.db.Preload("DailyProgress").First(progress, "user_book_id = ?", userBookId).Error
-	return progress, err
+	return progress, r.db.Preload("DailyProgress").First(progress, "user_book_id = ?", userBookId).Error
 }
 
 func (r *progressRepository) GetLogById(id string) (*models.DailyProgressLog, error) {

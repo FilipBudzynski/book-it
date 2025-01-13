@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/FilipBudzynski/book_it/internal/models"
+	"github.com/FilipBudzynski/book_it/utils"
 )
 
 type ProgressRepository interface {
@@ -43,14 +44,19 @@ func (s *progressService) Create(bookId uint, totalPages int, bookTitle, startDa
 	if days <= 0 {
 		return models.ReadingProgress{}, models.ErrProgressInvalidEndDate
 	}
+	if days > models.MaxDailyLogs {
+		return models.ReadingProgress{}, models.ErrProgressMaxLogsExceeded
+	}
 
 	targetPages := int((totalPages + days - 1) / days)
 
 	progressLogs := []models.DailyProgressLog{}
 	for i := range days {
+		logDate := startDateParsed.AddDate(0, 0, i)
+		logTargetPages := CalculateTargetPages(totalPages, days-i)
 		progressLog := &models.DailyProgressLog{
-			Date:        startDateParsed.AddDate(0, 0, i),
-			TargetPages: targetPages,
+			Date:        logDate,
+			TargetPages: logTargetPages,
 			UserBookID:  bookId,
 			TotalPages:  totalPages,
 			Completed:   false,
@@ -113,25 +119,51 @@ func (s *progressService) UpdateLog(id string, pagesRead int, comment string) (*
 	return log, nil
 }
 
-func (s *progressService) UpdateTargetPages(progressId uint) error {
+func (s *progressService) RefreshTargetPagesForNewDay(progressId uint, date time.Time) error {
+	return s.updateTargetPages(progressId, date, false)
+}
+
+func (s *progressService) UpdateTargetPages(progressId uint, updatedLogDate time.Time) error {
+	return s.updateTargetPages(progressId, updatedLogDate, true)
+}
+
+func (s *progressService) updateTargetPages(progressId uint, referenceDate time.Time, includeEqualDate bool) error {
 	progress, err := s.repo.GetById(strconv.FormatUint(uint64(progressId), 10))
 	if err != nil {
 		return err
 	}
 
-	latestLog := progress.GetLatestPositiveLog()
+	original := *progress
 
+	pagesLeft := progress.PagesLeft()
 	progress.DailyTargetPages = CalculateTargetPages(
-		progress.PagesLeft(),
-		progress.DaysLeft(latestLog.Date))
+		pagesLeft,
+		progress.DaysLeft(utils.TodaysDate())+1)
 
 	if err := progress.Validate(); err != nil {
 		return err
 	}
 
-	progress.UpdateLogTargetPagesFromDate(latestLog.Date)
+	for i := range progress.DailyProgress {
+		log := &progress.DailyProgress[i]
+		if log.Date.Before(referenceDate) || (includeEqualDate && log.Date.Equal(referenceDate)) {
+			continue
+		}
 
-	return s.repo.Update(progress)
+		if log.Date.After(utils.TodaysDate()) {
+			break
+		}
+
+		log.TargetPages = CalculateTargetPages(pagesLeft, log.DaysLeft(progress.EndDate))
+		if err := log.Validate(); err != nil {
+			return err
+		}
+	}
+
+	if !progress.Equal(original) {
+		return s.repo.Update(progress)
+	}
+	return nil
 }
 
 func CalculateTargetPages(pagesLeft, daysLeft int) int {
