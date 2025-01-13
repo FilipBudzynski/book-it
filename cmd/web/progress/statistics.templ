@@ -6,8 +6,17 @@ import (
 	"github.com/FilipBudzynski/book_it/internal/models"
 )
 
+func Today() time.Time {
+	now := time.Now()
+	return time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+}
+
+css progressBar(percent int) {
+	--value: { fmt.Sprintf("%d", percent) };
+}
+
 templ ProgressStatistics(readingProgress *models.ReadingProgress) {
-	<div class="flex-grow place-items-center relative mb-10 overflow-auto">
+	<div class="flex-grow place-items-center relative mb-10">
 		<div class="flex flex-col items-center mx-10 md:mx-20">
 			<div class="breadcrumbs text-lg">
 				<ul>
@@ -39,6 +48,7 @@ templ ProgressStatistics(readingProgress *models.ReadingProgress) {
 					<div class="stat-value text-primary">{ fmt.Sprintf("%d",  max(0, readingProgress.DaysLeft(time.Now()) + 1)) }</div>
 					<div class="stat-desc">{ "Started at: " + readingProgress.StartDate.Format("2006-01-02") }</div>
 				</div>
+				<!-- todays goal -->
 				<div class="stat">
 					<div class="stat-figure text-secondary">
 						<svg
@@ -60,45 +70,30 @@ templ ProgressStatistics(readingProgress *models.ReadingProgress) {
 					<div class="stat-desc">Already At: { fmt.Sprintf("%d", readingProgress.CurrentPage) } Page</div>
 				</div>
 				<div class="stat">
-					<div class="stat-figure text-secondary">
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							fill="none"
-							viewBox="0 0 24 24"
-							class="inline-block h-8 w-8 stroke-current"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
-							></path>
-						</svg>
+					<div class="stat-figure text-secondary"></div>
+					<div class="stat-value">
+						{{ progress := fmt.Sprintf("%d", int(100*(float64(readingProgress.CurrentPage)/float64(readingProgress.TotalPages)))) }}
+						{ progress }%
 					</div>
-					<div class="stat-value">{ fmt.Sprintf("%d%%", int(100 * (float64(readingProgress.CurrentPage) / float64(readingProgress.TotalPages)))) }</div>
 					<div class="stat-title">Pages Left</div>
 					<div class="stat-desc text-secondary">{ fmt.Sprintf("%d", readingProgress.TotalPages - readingProgress.CurrentPage) }</div>
 				</div>
-				<div class="stat">
-					<div class="stat-title">Options</div>
-					<div class="stat-value"></div>
-					<div class="stat-actions">
-						<button
-							hx-delete={ fmt.Sprintf("/progress/%d", readingProgress.ID) }
-							hx-target="#progress-statistics"
-							hx-confirm="Are you sure?"
-							hx-swap="innerHTML"
-							class="btn btn-sm btn-error"
-						>Stop Tracking</button>
-						<!-- <button class="btn btn-sm btn-info">Edit</button> -->
-					</div>
-				</div>
 			</div>
+		</div>
+		<div class="flex w-full justify-evenly px-20">
+			<button
+				hx-delete={ fmt.Sprintf("/progress/%d", readingProgress.ID) }
+				hx-target="#progress-statistics"
+				hx-confirm="Are you sure?"
+				hx-swap="innerHTML"
+				class="btn btn-sm btn-error"
+			>Remove Tracking</button>
 		</div>
 	</div>
 	<div id="progress_steps h-30">
 		@DailyProgressLogs(readingProgress.DailyProgress)
 	</div>
+	@DailyProgressLogsTable(readingProgress.DailyProgress)
 }
 
 templ DailyProgressLogs(dailyLogs []models.DailyProgressLog) {
@@ -111,6 +106,38 @@ templ DailyProgressLogs(dailyLogs []models.DailyProgressLog) {
 			</ul>
 		</div>
 	</div>
+}
+
+templ DailyProgressLogsTable(dailyLogs []models.DailyProgressLog) {
+	<div class="mb-10 flow-auto flex items-center justify-center">
+		<div class="w-[40rem] flex items-center justify-center">
+			<table class="bg-base-100 table table-xs z-1 ">
+				<thead>
+					<th>Date</th>
+					<th>Pages Read</th>
+					<th>Target Pages</th>
+					<th>Remaining Pages</th>
+				</thead>
+				<tbody
+					id="logs-container"
+				>
+					for _, dailyLog := range dailyLogs {
+						@LogsTableRow(dailyLog)
+					}
+				</tbody>
+				<tfoot></tfoot>
+			</table>
+		</div>
+	</div>
+}
+
+templ LogsTableRow(dailyLog models.DailyProgressLog) {
+	<tr>
+		<td>{ dailyLog.Date.Format("2006-01-02") }</td>
+		<td>{ fmt.Sprintf("%d", dailyLog.PagesRead) }</td>
+		<td>{ fmt.Sprintf("%d", dailyLog.TargetPages) }</td>
+		<td>{ fmt.Sprintf("%d", dailyLog.TotalPages - dailyLog.PagesRead) }</td>
+	</tr>
 }
 
 templ StatisticsAndButtonUpdate(readingProgress *models.ReadingProgress) {

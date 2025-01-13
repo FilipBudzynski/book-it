@@ -119,3 +119,12 @@ func (r *ReadingProgress) Equal(other ReadingProgress) bool {
 
 	return true
 }
+
+func (r *ReadingProgress) GetLogForDate(date time.Time) *DailyProgressLog {
+	for _, log := range r.DailyProgress {
+		if log.Date.Equal(date) {
+			return &log
+		}
+	}
+	return nil
+}

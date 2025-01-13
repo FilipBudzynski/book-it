@@ -51,9 +51,16 @@ func (s *progressService) Create(bookId uint, totalPages int, bookTitle, startDa
 	targetPages := int((totalPages + days - 1) / days)
 
 	progressLogs := []models.DailyProgressLog{}
+
+	today := utils.TodaysDate()
+	logTargetPages := CalculateTargetPages(totalPages, days)
 	for i := range days {
+
 		logDate := startDateParsed.AddDate(0, 0, i)
-		logTargetPages := CalculateTargetPages(totalPages, days-i)
+		if logDate.Before(today) {
+			logTargetPages = CalculateTargetPages(totalPages, days-i)
+		}
+
 		progressLog := &models.DailyProgressLog{
 			Date:        logDate,
 			TargetPages: logTargetPages,
@@ -154,10 +161,11 @@ func (s *progressService) updateTargetPages(progressId uint, referenceDate time.
 		}
 
 		if log.Date.After(utils.TodaysDate()) {
-			break
+			log.TargetPages = progress.DailyTargetPages
+		} else {
+			log.TargetPages = CalculateTargetPages(pagesLeft, log.DaysLeft(progress.EndDate))
 		}
 
-		log.TargetPages = CalculateTargetPages(pagesLeft, log.DaysLeft(progress.EndDate))
 		if err := log.Validate(); err != nil {
 			return err
 		}
