@@ -17,3 +17,12 @@ type UserBook struct {
 	Book            Book
 	ReadingProgress *ReadingProgress `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }
+
+func BookInUserBooks(bookID string, userBooks []*UserBook) bool {
+	for _, userBook := range userBooks {
+		if userBook.BookID == bookID {
+			return true
+		}
+	}
+	return false
+}

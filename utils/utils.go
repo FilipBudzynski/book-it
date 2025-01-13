@@ -6,7 +6,6 @@ import (
 
 	"github.com/FilipBudzynski/book_it/cmd/web"
 	webError "github.com/FilipBudzynski/book_it/cmd/web/error_pages"
-	"github.com/FilipBudzynski/book_it/internal/models"
 	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
 )
@@ -21,15 +20,6 @@ func RenderView(c echo.Context, cmp templ.Component) error {
 		ctx := templ.WithChildren(requestContext, cmp)
 		return web.Base().Render(ctx, responseWriter)
 	}
-}
-
-func BookInUserBooks(bookID string, userBooks []*models.UserBook) bool {
-	for _, userBook := range userBooks {
-		if userBook.BookID == bookID {
-			return true
-		}
-	}
-	return false
 }
 
 func ErrorPagesMiddleware(next echo.HandlerFunc) echo.HandlerFunc {

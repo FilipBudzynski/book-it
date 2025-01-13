@@ -71,3 +71,10 @@ func (d *DailyProgressLog) AfterSave(db *gorm.DB) error {
 func (d *DailyProgressLog) DaysLeft(endDate time.Time) int {
 	return int(endDate.Sub(d.Date).Hours()/24) + 1 // +1 because endDate is exclusive
 }
+
+func (d *DailyProgressLog) IsEmptyOrOverdue(date time.Time) bool {
+	if d.PagesRead == 0 || d.Date.Before(date) {
+		return true
+	}
+	return false
+}

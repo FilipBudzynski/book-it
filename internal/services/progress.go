@@ -132,13 +132,16 @@ func (s *progressService) updateTargetPages(progressId uint, referenceDate time.
 	if err != nil {
 		return err
 	}
-
 	original := *progress
 
 	pagesLeft := progress.PagesLeft()
-	progress.DailyTargetPages = CalculateTargetPages(
-		pagesLeft,
-		progress.DaysLeft(utils.TodaysDate())+1)
+	daysLeft := progress.DaysLeft(utils.TodaysDate()) + 1
+
+	latestPositiveLog := progress.GetLatestPositiveLog()
+	if latestPositiveLog != nil && !latestPositiveLog.IsEmptyOrOverdue(utils.TodaysDate()) {
+		daysLeft = progress.DaysLeft(latestPositiveLog.Date)
+	}
+	progress.DailyTargetPages = CalculateTargetPages(pagesLeft, daysLeft)
 
 	if err := progress.Validate(); err != nil {
 		return err
