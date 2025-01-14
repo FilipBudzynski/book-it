@@ -140,6 +140,7 @@ templ Navbar(user *models.User) {
 			if user != nil {
 				<a
 					hx-boost="false"
+                    hx-history-elt="false"
 					href="/auth/logout?provider=google"
 					class="btn"
 				>

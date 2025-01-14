@@ -42,8 +42,9 @@ func (s ExchangeRequestStatus) Badge() string {
 
 type ExchangeRequest struct {
 	gorm.Model
-	UserGoogleId  string        `form:"user_id"`
-	User          User          `gorm:"foreignKey:UserGoogleId"`
+	UserEmail     string
+	UserGoogleId  string        `gorm:"not null,foreignKey:UserGoogleId,form:user_id"`
+	User          User          `gorm:"foreignKey:UserGoogleId;references:GoogleId"`
 	DesiredBookID string        `gorm:"not null,foreignKey:BookID" form:"book_id"`
 	DesiredBook   Book          `gorm:"foreignKey:DesiredBookID;constraint:OnDelete:SET NULL"`
 	OfferedBooks  []OfferedBook `gorm:"constraint:OnDelete:SET NULL"`
@@ -52,12 +53,12 @@ type ExchangeRequest struct {
 }
 
 func (r *ExchangeRequest) GetMatchStatus(otherRequestId uint) ExchangeRequestStatus {
-    for _, match := range r.Matches {
-        if match.MatchRequestID == otherRequestId {
-            return match.Status
-        }
-    }
-    return ""
+	for _, match := range r.Matches {
+		if match.MatchRequestID == otherRequestId {
+			return match.Status
+		}
+	}
+	return ""
 }
 
 type ExchangeMatch struct {
@@ -66,7 +67,7 @@ type ExchangeMatch struct {
 	Request           ExchangeRequest `gorm:"foreignKey:ExchangeRequestID"`
 	MatchRequestID    uint
 	MatchRequest      ExchangeRequest `gorm:"foreignKey:MatchRequestID"`
-    Status            ExchangeRequestStatus
+	Status            ExchangeRequestStatus
 }
 
 type OfferedBook struct {

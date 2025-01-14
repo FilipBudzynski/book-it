@@ -5,6 +5,10 @@ import (
 	"github.com/FilipBudzynski/book_it/internal/models"
 )
 
+var EmailMessage = func(email, bookTitle string) string {
+	return fmt.Sprintf("https://mail.google.com/mail/?view=cm&fs=1&to=%s&su=SUBJECT&body=BODY", email)
+}
+
 templ Matches(matches []*models.ExchangeRequest, request *models.ExchangeRequest) {
 	<div class="justify-center w-full mb-10">
 		if len(matches) == 0 {
@@ -49,9 +53,10 @@ templ Matches(matches []*models.ExchangeRequest, request *models.ExchangeRequest
 							<td>
 								<div
 									class="btn"
-									href={ match.User.Email }
+									href={ EmailMessage(match.UserEmail, match.DesiredBook.Title) }
 								>
-									Get Connected
+									<img class="w-6 h-6" src="https://www.svgrepo.com/show/475656/google-color.svg" loading="lazy" alt="google logo"/>
+									{ match.UserEmail }
 								</div>
 							</td>
 							<td class="w-1/5 px-3 py-2">

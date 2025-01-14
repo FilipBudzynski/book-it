@@ -12,7 +12,7 @@ import (
 )
 
 type ExchangeService interface {
-	Create(userId, desiredBookID string, userBookIDs []string) (*models.ExchangeRequest, error)
+	Create(userId, userEmail, desiredBookID string, userBookIDs []string) (*models.ExchangeRequest, error)
 	Get(id, userId string) (*models.ExchangeRequest, error)
 	GetAll(userId string) ([]*models.ExchangeRequest, error)
 	Delete(id string) error
@@ -52,13 +52,14 @@ func (h *exchangeHandler) CreateExchange(c echo.Context) error {
 		return errs.HttpErrorInternalServerError(err)
 	}
 
-	userId, err := utils.GetUserIDFromSession(c.Request())
+	userSession, err := utils.GetUserSessionFromStore(c.Request())
 	if err != nil {
 		return errs.HttpErrorUnauthorized(err)
 	}
 
 	exchange_request, err := h.exchangeService.Create(
-		userId,
+		userSession.UserID,
+		userSession.UserEmail,
 		exchangeBind.DesiredBookID,
 		exchangeBind.UserBookIDs,
 	)

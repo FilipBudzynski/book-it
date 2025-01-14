@@ -30,7 +30,7 @@ func NewExchangeService(r ExchangeRequestRepository) *exchangeService {
 	}
 }
 
-func (s *exchangeService) Create(userId, desiredBookID string, userBookIDs []string) (*models.ExchangeRequest, error) {
+func (s *exchangeService) Create(userId, userEmail, desiredBookID string, userBookIDs []string) (*models.ExchangeRequest, error) {
 	offeredBooks := make([]models.OfferedBook, len(userBookIDs))
 	for i, id := range userBookIDs {
 		offeredBooks[i] = models.OfferedBook{BookId: id}
@@ -38,6 +38,7 @@ func (s *exchangeService) Create(userId, desiredBookID string, userBookIDs []str
 
 	exchange := &models.ExchangeRequest{
 		UserGoogleId:  userId,
+		UserEmail:     userEmail,
 		DesiredBookID: desiredBookID,
 		OfferedBooks:  offeredBooks,
 		Status:        models.ExchangeRequestStatusPending,

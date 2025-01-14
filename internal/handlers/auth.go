@@ -76,6 +76,7 @@ func (a *AuthHandler) GetAuthCallbackFunc(c echo.Context) error {
 	// set user cookie session
 	err = utils.SetUserSession(responseWriter, request, utils.UserSession{
 		UserID:       gothUser.UserID,
+		UserEmail:    gothUser.Email,
 		AccessToken:  gothUser.AccessToken,
 		RefreshToken: gothUser.RefreshToken,
 	})
