@@ -13,7 +13,11 @@ type ExchangeRequestRepository interface {
 	Delete(id string) error
 	DeleteMatchesForRequest(requestId string) error
 	Update(exchange *models.ExchangeRequest) error
-	FindMatchingRequests(userId, requestId, desiredBookId string, offeredBooks []string, existingMatches []models.ExchangeMatch) ([]models.ExchangeMatch, error)
+	FindMatchingRequests(userId, requestId, desiredBookId string, offeredBooks []string) ([]*models.ExchangeRequest, error)
+	// match
+	CreateMatch(requestId, otherRequestId uint, status models.ExchangeRequestStatus) (*models.ExchangeMatch, error)
+	GetMatch(requestId, otherRequestId uint) (*models.ExchangeMatch, error)
+	UpdateMatch(match *models.ExchangeMatch) error
 }
 
 type exchangeService struct {
@@ -64,33 +68,34 @@ func (s *exchangeService) Delete(id string) error {
 	return s.repo.DeleteMatchesForRequest(id)
 }
 
-func (s *exchangeService) FindMatchingRequests(requestId, userId string) (*models.ExchangeRequest, error) {
+func (s *exchangeService) FindMatchingRequests(requestId, userId string) ([]*models.ExchangeRequest, error) {
 	r, err := s.Get(requestId, userId)
 	if err != nil {
 		return nil, err
 	}
 
-	matches, err := s.repo.FindMatchingRequests(
+	potentialMatches, err := s.repo.FindMatchingRequests(
 		requestId,
 		userId,
 		r.DesiredBookID,
 		getOfferedBookIDs(r.OfferedBooks),
-		r.Matches,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	r.Matches = append(r.Matches, matches...)
-    if len(r.Matches) == 0 {
-        r.Status = models.ExchangeRequestStatusPending
-    }
+	if len(potentialMatches) == 0 {
+		r.Status = models.ExchangeRequestStatusPending
+	}
+	if len(potentialMatches) > 0 {
+		r.Status = models.ExchangeRequestStatusFoundMatch
+	}
 
 	if err := s.repo.Update(r); err != nil {
 		return nil, err
 	}
 
-	return r, nil
+	return potentialMatches, nil
 }
 
 // Helper function to extract BookIDs from OfferedBooks
@@ -100,4 +105,19 @@ func getOfferedBookIDs(offeredBooks []models.OfferedBook) []string {
 		ids[i] = book.BookId
 	}
 	return ids
+}
+
+func (s *exchangeService) CreateMatch(requestId, matchId uint, status models.ExchangeRequestStatus) (*models.ExchangeMatch, error) {
+	return s.repo.CreateMatch(requestId, matchId, status)
+}
+
+func (s *exchangeService) CheckMatch(userReqId, otherReqId uint) bool {
+	_, err := s.repo.GetMatch(otherReqId, userReqId)
+	if err != nil {
+		return false
+	}
+	match, _ := s.repo.GetMatch(userReqId, otherReqId)
+	match.Status = models.ExchangeRequestStatusAccepted
+	s.repo.UpdateMatch(match)
+	return true
 }

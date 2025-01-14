@@ -8,6 +8,7 @@ import (
 	"github.com/FilipBudzynski/book_it/utils"
 	"github.com/labstack/echo/v4"
 	"github.com/markbates/goth/gothic"
+	"gorm.io/gorm"
 )
 
 type AuthHandler struct {
@@ -54,18 +55,20 @@ func (a *AuthHandler) GetAuthCallbackFunc(c echo.Context) error {
 	// try to get user from db
 	// TODO: get by id
 	var user *models.User
-	user, err = a.userService.GetByEmail(gothUser.Email)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
-	}
 
-	if user == nil {
-		user = &models.User{
-			Username: gothUser.Name,
-			Email:    gothUser.Email,
-			GoogleId: gothUser.UserID,
-		}
-		if err = a.userService.Create(user); err != nil {
+	user, err = a.userService.GetByEmail(gothUser.Email)
+	// TODO: error should be wrapped
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			user = &models.User{
+				Username: gothUser.Name,
+				Email:    gothUser.Email,
+				GoogleId: gothUser.UserID,
+			}
+			if err = a.userService.Create(user); err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, err)
+			}
+		} else {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	}

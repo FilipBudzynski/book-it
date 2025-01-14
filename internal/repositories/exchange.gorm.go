@@ -1,9 +1,6 @@
 package repositories
 
 import (
-	"fmt"
-	"strconv"
-
 	"github.com/FilipBudzynski/book_it/internal/models"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -56,59 +53,37 @@ func (r *ExchangeRequestRepository) Update(exchange *models.ExchangeRequest) err
 	return r.db.Session(&gorm.Session{FullSaveAssociations: true}).Updates(exchange).Error
 }
 
-func (r *ExchangeRequestRepository) FindMatchingRequests(
-	requestId,
-	userId,
-	desiredBookId string,
-	offeredBooks []string,
-	existingMatches []models.ExchangeMatch,
-) ([]models.ExchangeMatch, error) {
-	var existingMatchIDs []uint
-	for _, match := range existingMatches {
-		existingMatchIDs = append(existingMatchIDs, match.MatchRequestID)
-	}
-
-	query := r.db.Model(&models.ExchangeRequest{}).
+func (r *ExchangeRequestRepository) FindMatchingRequests(requestId, userId, desiredBookId string, offeredBooks []string) ([]*models.ExchangeRequest, error) {
+	matches := []*models.ExchangeRequest{}
+	err := r.db.Preload("DesiredBook").
+		Preload("OfferedBooks.Book").
 		Not("id = ?", requestId).                                                                        // Exclude user's own request
 		Not("user_google_id = ?", userId).                                                               // Exclude user's own requests
 		Where("desired_book_id IN ?", offeredBooks).                                                     // Their desired book is in your offered books
 		Where("id IN (SELECT exchange_request_id FROM offered_books WHERE book_id = ?)", desiredBookId). // Your desired book is in their offered books
-		Where("status = ?", models.ExchangeRequestStatusPending)                                         // Only match pending requests
-
-	if len(existingMatchIDs) > 0 {
-		query = query.Not("id IN ?", existingMatchIDs)
-	}
-
-	var matchIDs []uint
-	err := query.Pluck("id", &matchIDs).Error
+		Not("status = ?", models.ExchangeRequestStatusAccepted).
+		Find(&matches).Error
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Printf("MATCHES LEN REPO: %d\n", len(matchIDs))
-
-	requestIdInt, _ := strconv.Atoi(requestId)
-	requestIdUint := uint(requestIdInt)
-	matchesFound := make([]models.ExchangeMatch, len(matchIDs))
-	for i, id := range matchIDs {
-		match := models.ExchangeMatch{
-			ExchangeRequestID: requestIdUint,
-			MatchRequestID:    id,
-		}
-		matchesFound[i] = match
-	}
-	return matchesFound, nil
+	return matches, nil
 }
 
-// var matches []*models.ExchangeRequest
-// err := r.db.Preload("DesiredBook").
-// 	Preload("OfferedBooks.Book").
-// 	Not("id = ?", requestId).                                                                        // Exclude user's own request
-// 	Not("user_google_id = ?", userId).                                                               // Exclude user's own requests
-// 	Where("desired_book_id IN ?", offeredBooks).                                                     // Their desired book is in your offered books
-// 	Where("id IN (SELECT exchange_request_id FROM offered_books WHERE book_id = ?)", desiredBookId). // Your desired book is in their offered books
-// 	Where("status = ?", models.ExchangeRequestStatusPending).                                        // Only match pending requests
-// 	Find(&matches).Error
-// if err != nil {
-// 	return nil, err
-// }
+func (r *ExchangeRequestRepository) CreateMatch(requestId, matchId uint, status models.ExchangeRequestStatus) (*models.ExchangeMatch, error) {
+	exchangeMatch := &models.ExchangeMatch{
+		ExchangeRequestID: requestId,
+		MatchRequestID:    matchId,
+		Status:            status,
+	}
+	return exchangeMatch, r.db.Create(exchangeMatch).Error
+}
+
+func (r *ExchangeRequestRepository) GetMatch(userReqId, otherReqId uint) (*models.ExchangeMatch, error) {
+	exchangeMatch := &models.ExchangeMatch{}
+	return exchangeMatch, r.db.First(&exchangeMatch, "exchange_request_id = ? AND match_request_id = ?", userReqId, otherReqId).Error
+}
+
+func (r *ExchangeRequestRepository) UpdateMatch(match *models.ExchangeMatch) error {
+	return r.db.Session(&gorm.Session{FullSaveAssociations: true}).Updates(match).Error
+}

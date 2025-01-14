@@ -5,6 +5,6 @@ import (
 	"github.com/FilipBudzynski/book_it/internal/models"
 )
 
-templ StatusDiv(er *models.ExchangeRequest) {
-	<div class={ fmt.Sprintf("badge badge-soft badge-%s", er.Status.Badge()) }>{ er.Status.String() }</div>
+templ StatusDiv(status models.ExchangeRequestStatus) {
+	<div class={ fmt.Sprintf("badge badge-soft badge-%s", status.Badge()) }>{ status.String() }</div>
 }

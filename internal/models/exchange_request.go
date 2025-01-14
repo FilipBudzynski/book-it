@@ -15,10 +15,11 @@ var (
 type ExchangeRequestStatus string
 
 const (
-	ExchangeRequestStatusPending  ExchangeRequestStatus = "pending"
-	ExchangeRequestStatusMatched  ExchangeRequestStatus = "matched"
-	ExchangeRequestStatusAccepted ExchangeRequestStatus = "accepted"
-	ExchangeRequestStatusRejected ExchangeRequestStatus = "recjected"
+	ExchangeRequestStatusPending    ExchangeRequestStatus = "pending"
+	ExchangeRequestStatusMatched    ExchangeRequestStatus = "matched"
+	ExchangeRequestStatusAccepted   ExchangeRequestStatus = "accepted"
+	ExchangeRequestStatusRejected   ExchangeRequestStatus = "recjected"
+	ExchangeRequestStatusFoundMatch ExchangeRequestStatus = "found match"
 )
 
 func (s ExchangeRequestStatus) String() string {
@@ -29,7 +30,7 @@ func (s ExchangeRequestStatus) Badge() string {
 	switch s {
 	case ExchangeRequestStatusPending:
 		return "neutral"
-	case ExchangeRequestStatusMatched:
+	case ExchangeRequestStatusMatched, ExchangeRequestStatusFoundMatch:
 		return "info"
 	case ExchangeRequestStatusAccepted:
 		return "success"
@@ -50,65 +51,22 @@ type ExchangeRequest struct {
 	Matches       []ExchangeMatch `gorm:"constraint:OnDelete:CASCADE,OnUpdate:CASCADE"`
 }
 
+func (r *ExchangeRequest) GetMatchStatus(otherRequestId uint) ExchangeRequestStatus {
+    for _, match := range r.Matches {
+        if match.MatchRequestID == otherRequestId {
+            return match.Status
+        }
+    }
+    return ""
+}
+
 type ExchangeMatch struct {
 	gorm.Model
 	ExchangeRequestID uint
 	Request           ExchangeRequest `gorm:"foreignKey:ExchangeRequestID"`
 	MatchRequestID    uint
 	MatchRequest      ExchangeRequest `gorm:"foreignKey:MatchRequestID"`
-}
-
-func (m *ExchangeMatch) AfterSave(db *gorm.DB) error {
-	var matchCount int64
-	err := db.Model(&ExchangeMatch{}).
-		Where("exchange_request_id = ?", m.ExchangeRequestID).
-		Count(&matchCount).Error
-	if err != nil {
-		return err
-	}
-
-	if matchCount == 0 {
-		err = db.Model(&ExchangeRequest{}).
-			Where("id = ?", m.ExchangeRequestID).
-			Update("Status", ExchangeRequestStatusPending).Error
-		if err != nil {
-			return err
-		}
-	} else {
-
-		err := db.Model(&ExchangeRequest{}).
-			Where("id = ?", m.ExchangeRequestID).
-			Update("Status", ExchangeRequestStatusMatched).Error
-		if err != nil {
-			return err
-		}
-
-		err = db.Model(&ExchangeRequest{}).
-			Where("id = ?", m.MatchRequestID).
-			Update("Status", ExchangeRequestStatusMatched).Error
-		if err != nil {
-			return err
-		}
-	}
-
-	// Check for the reciprocal match and update if necessary
-	var reciprocalMatch ExchangeMatch
-	err = db.Where("exchange_request_id = ? AND match_request_id = ?", m.MatchRequestID, m.ExchangeRequestID).
-		First(&reciprocalMatch).Error
-
-	// Create the reciprocal match if it doesn't exist
-	if err != nil && err == gorm.ErrRecordNotFound {
-		reciprocalMatch = ExchangeMatch{
-			ExchangeRequestID: m.MatchRequestID,
-			MatchRequestID:    m.ExchangeRequestID,
-		}
-		err = db.Create(&reciprocalMatch).Error
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+    Status            ExchangeRequestStatus
 }
 
 type OfferedBook struct {
