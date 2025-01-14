@@ -21,7 +21,7 @@ type UserBookService interface {
 	GetAll(userId string) ([]*models.UserBook, error)
 	Delete(id string) error
 	DeleteByBookId(bookId string) error
-	GetSearch(query string) ([]*models.UserBook, error)
+	Search(userId , query string) ([]*models.UserBook, error)
 }
 
 type UserBookHandler struct {
@@ -134,10 +134,13 @@ func (h *UserBookHandler) GetOfferedBooks(c echo.Context) error {
 }
 
 func (h *UserBookHandler) Search(c echo.Context) error {
+	userId, err := utils.GetUserIDFromSession(c.Request())
+	if err != nil {
+		return errs.HttpErrorUnauthorized(err)
+	}
 	search := c.QueryParam("query")
-	var results []*models.UserBook
 
-	results, err := h.userBookService.GetSearch(search)
+    results, err := h.userBookService.Search(userId, search)
 	if err != nil {
 		return errs.HttpErrorInternalServerError(err)
 	}

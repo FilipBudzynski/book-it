@@ -2,6 +2,7 @@ package utils
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/FilipBudzynski/book_it/cmd/web"
@@ -47,4 +48,12 @@ func TodaysDate() time.Time {
 	year, month, day := now.Date()
 	today := time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
 	return today
+}
+
+func ParseStringToUint(s string) (uint, error) {
+	i, err := strconv.Atoi(s)
+    if err != nil {
+        return 0, err
+    }
+	return uint(i), nil
 }

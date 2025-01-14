@@ -12,9 +12,10 @@ templ List(exchanges []*models.ExchangeRequest) {
 			<thead>
 				<tr>
 					<th>Desired Book</th>
-					<th></th>
-					<th>Offered Books</th>
+					<!-- <th></th> -->
+					<!-- <th>Offered Books</th> -->
 					<th>Status</th>
+					<th></th>
 					<th></th>
 				</tr>
 			</thead>
@@ -45,33 +46,39 @@ templ ExchangeTableRow(er models.ExchangeRequest) {
 				</div>
 			</div>
 		</td>
+		<!-- <td> -->
+		<!-- 	<img src="../assets/exchange-symbol.svg" alt="Exchange Symbol" class="w-5 h-5"/> -->
+		<!-- </td> -->
+		<!-- <td> -->
+		<!-- 	<ul class="list"> -->
+		<!-- 		for _, book := range er.OfferedBooks { -->
+		<!-- 			<li class="list-row"> -->
+		<!-- 				<div><img class="size-10 rounded-box" src={ book.Book.ImageLink } alt="img"/> </div> -->
+		<!-- 				<div>{ book.Book.Title } </div> -->
+		<!-- 			</li> -->
+		<!-- 		} -->
+		<!-- 	</ul> -->
+		<!-- </td> -->
 		<td>
-			<img src="../assets/exchange-symbol.svg" alt="Exchange Symbol" class="w-5 h-5"/>
+			@StatusDiv(er.Status)
 		</td>
-		<td>
-			for _, book := range er.OfferedBooks {
-				- { book.Book.Title }
-				<br/>
-			}
-		</td>
-		<td>{ er.Status.String() }</td>
 		<th>
-			<div class="join">
-				<button
-					class="btn btn-xs join-item"
-					hx-get={ fmt.Sprintf("/exchange/details/%d", er.ID) }
-					hx-target="#content-container"
-					hx-push-url="true"
-				>details</button>
-				<button
-					class="btn btn-error btn-xs join-item"
-					hx-delete={ fmt.Sprintf("/exchange/%d", er.ID) }
-					hx-confirm="Are you sure?"
-					_="on htmx:afterRequest if event.detail.xhr.status is 204 
+			<button
+				class="btn btn"
+				hx-get={ fmt.Sprintf("/exchange/details/%d", er.ID) }
+				hx-target="#content-container"
+				hx-push-url="true"
+			>details</button>
+		</th>
+		<th>
+			<button
+				class="btn btn-error btn"
+				hx-delete={ fmt.Sprintf("/exchange/%d", er.ID) }
+				hx-confirm="Are you sure?"
+				_="on htmx:afterRequest if event.detail.xhr.status is 204 
                     then 
                         remove closest <tr/>"
-				>remove</button>
-			</div>
+			>remove</button>
 		</th>
 	</tr>
 }

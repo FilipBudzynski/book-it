@@ -3,7 +3,7 @@ package web
 import "github.com/FilipBudzynski/book_it/internal/models"
 
 templ Navbar(user *models.User) {
-	<div class="navbar bg-base-100 mb-6 shadow-md rounded-box sticky top-0 z-50">
+	<div class="navbar glass mb-6 shadow-md rounded-box sticky top-0 z-50">
 		<div class="navbar-start">
 			<div class="dropdown">
 				<div tabindex="0" role="button" class="btn btn-ghost lg:hidden">
@@ -139,6 +139,8 @@ templ Navbar(user *models.User) {
 			</label>
 			if user != nil {
 				<a
+					hx-boost="false"
+                    hx-history-elt="false"
 					href="/auth/logout?provider=google"
 					class="btn"
 				>
@@ -146,7 +148,7 @@ templ Navbar(user *models.User) {
 				</a>
 			} else {
 				<a
-					href="/auth/?provider=google"
+					href="/auth?provider=google"
 					class="btn"
 				>
 					<img class="w-6 h-6" src="https://www.svgrepo.com/show/475656/google-color.svg" loading="lazy" alt="google logo"/>

@@ -15,24 +15,59 @@ var (
 type ExchangeRequestStatus string
 
 const (
-	ExchangeRequestStatusPending  ExchangeRequestStatus = "pending"
-	ExchangeRequestStatusMatched  ExchangeRequestStatus = "matched"
-	ExchangeRequestStatusAccepted ExchangeRequestStatus = "accepted"
-	ExchangeRequestStatusFinished ExchangeRequestStatus = "finished"
+	ExchangeRequestStatusPending    ExchangeRequestStatus = "pending"
+	ExchangeRequestStatusMatched    ExchangeRequestStatus = "matched"
+	ExchangeRequestStatusAccepted   ExchangeRequestStatus = "accepted"
+	ExchangeRequestStatusRejected   ExchangeRequestStatus = "recjected"
+	ExchangeRequestStatusFoundMatch ExchangeRequestStatus = "found match"
 )
 
 func (s ExchangeRequestStatus) String() string {
 	return string(s)
 }
 
+func (s ExchangeRequestStatus) Badge() string {
+	switch s {
+	case ExchangeRequestStatusPending:
+		return "neutral"
+	case ExchangeRequestStatusMatched, ExchangeRequestStatusFoundMatch:
+		return "info"
+	case ExchangeRequestStatusAccepted:
+		return "success"
+	case ExchangeRequestStatusRejected:
+		return "error"
+	}
+	return "secondary"
+}
+
 type ExchangeRequest struct {
 	gorm.Model
-	UserGoogleId  string        `form:"user_id"`
-	User          User          `gorm:"foreignKey:UserGoogleId"`
+	UserEmail     string
+	UserGoogleId  string        `gorm:"not null,foreignKey:UserGoogleId,form:user_id"`
+	User          User          `gorm:"foreignKey:UserGoogleId;references:GoogleId"`
 	DesiredBookID string        `gorm:"not null,foreignKey:BookID" form:"book_id"`
 	DesiredBook   Book          `gorm:"foreignKey:DesiredBookID;constraint:OnDelete:SET NULL"`
-	OfferedBooks  []OfferedBook `gorm:"OnDelete:SET NULL"`
+	OfferedBooks  []OfferedBook `gorm:"constraint:OnDelete:SET NULL"`
 	Status        ExchangeRequestStatus
+	Matches       []ExchangeMatch `gorm:"constraint:OnDelete:CASCADE,OnUpdate:CASCADE"`
+}
+
+func (r *ExchangeRequest) GetMatchStatus(otherRequestId uint) ExchangeRequestStatus {
+	for _, match := range r.Matches {
+		if match.MatchRequestID == otherRequestId {
+			return match.Status
+		}
+	}
+	return ""
+}
+
+type ExchangeMatch struct {
+	gorm.Model
+	ExchangeRequestID uint
+	Request           ExchangeRequest `gorm:"foreignKey:ExchangeRequestID"`
+	MatchRequestID    uint
+	MatchRequest      ExchangeRequest `gorm:"foreignKey:MatchRequestID"`
+	Status            ExchangeRequestStatus
 }
 
 type OfferedBook struct {

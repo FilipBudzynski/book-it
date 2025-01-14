@@ -10,7 +10,7 @@ templ ReducedList(books []*models.Book) {
 		<thead></thead>
 		<tbody id="books-container">
 			for _, book := range books {
-				<tr _={ fmt.Sprintf("on click set #book-id-input[@value] to `%s` then set #book-title's value to `%s` then hide #book-results", book.ID, book.Title) }>
+				<tr _={ fmt.Sprintf("on click set #book-id-input[@value] to `%s` then set #book-title's value to `%s` then hide #book-results set { disabled: true} on #book-title", book.ID, book.Title) }>
 					<td class="w-1/12 px-3 py-2">
 						<div class="flex items-center gap-3">
 							<div class="avatar">

@@ -8,6 +8,7 @@ import (
 	"github.com/FilipBudzynski/book_it/utils"
 	"github.com/labstack/echo/v4"
 	"github.com/markbates/goth/gothic"
+	"gorm.io/gorm"
 )
 
 type AuthHandler struct {
@@ -20,10 +21,17 @@ func NewAuthHandler(us UserService) *AuthHandler {
 	}
 }
 
+func (h *AuthHandler) RegisterRoutes(app *echo.Echo) {
+	group := app.Group("/auth")
+	group.GET("/callback", h.GetAuthCallbackFunc)
+	group.GET("", h.GetAuthFunc)
+	group.GET("/logout", h.Logout)
+}
+
 // setProvider is a helper function that sets Request context to contain value "provider", from url path ":provider"
 // returns responseWriter and altered request
 func setProvider(c echo.Context) (http.ResponseWriter, *http.Request) {
-	ctx := context.WithValue(c.Request().Context(), gothic.ProviderParamKey, c.Param("provider"))
+	ctx := context.WithValue(c.Request().Context(), gothic.ProviderParamKey, c.QueryParam("provider"))
 	return c.Response().Writer, c.Request().WithContext(ctx)
 }
 
@@ -47,18 +55,20 @@ func (a *AuthHandler) GetAuthCallbackFunc(c echo.Context) error {
 	// try to get user from db
 	// TODO: get by id
 	var user *models.User
-	user, err = a.userService.GetByEmail(gothUser.Email)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
-	}
 
-	if user == nil {
-		user = &models.User{
-			Username: gothUser.Name,
-			Email:    gothUser.Email,
-			GoogleId: gothUser.UserID,
-		}
-		if err = a.userService.Create(user); err != nil {
+	user, err = a.userService.GetByEmail(gothUser.Email)
+	// TODO: error should be wrapped
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			user = &models.User{
+				Username: gothUser.Name,
+				Email:    gothUser.Email,
+				GoogleId: gothUser.UserID,
+			}
+			if err = a.userService.Create(user); err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, err)
+			}
+		} else {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	}
@@ -66,6 +76,7 @@ func (a *AuthHandler) GetAuthCallbackFunc(c echo.Context) error {
 	// set user cookie session
 	err = utils.SetUserSession(responseWriter, request, utils.UserSession{
 		UserID:       gothUser.UserID,
+		UserEmail:    gothUser.Email,
 		AccessToken:  gothUser.AccessToken,
 		RefreshToken: gothUser.RefreshToken,
 	})
@@ -95,11 +106,4 @@ func (a *AuthHandler) Logout(c echo.Context) error {
 	}
 
 	return c.Redirect(http.StatusFound, "/")
-}
-
-func (h *AuthHandler) RegisterRoutes(app *echo.Echo) {
-	group := app.Group("/auth")
-	group.GET("/callback", h.GetAuthCallbackFunc)
-	group.GET("/", h.GetAuthFunc)
-	group.GET("/logout", h.Logout)
 }

@@ -44,17 +44,17 @@ func (r *userBookRepository) DeleteWhereBookId(bookId string) error {
 	return r.db.Where("book_id = ?", bookId).Delete(&models.UserBook{}).Error
 }
 
-func (r *userBookRepository) Search(query string) ([]*models.UserBook, error) {
+func (r *userBookRepository) Search(userId, query string) ([]*models.UserBook, error) {
 	var userBooks []*models.UserBook
 
 	err := r.db.Preload("Book").
 		Preload("ReadingProgress").
-		Joins("JOIN books ON books.id = user_books.book_id").
-		Where("books.title LIKE ?", "%"+query+"%").
+		Joins("JOIN books ON books.id = user_books.book_id"). // Join the books table
+		Where("user_books.user_google_id = ?", userId).       // Filter by current user
+		Where("books.title LIKE ?", "%"+query+"%").           // Use the books table for the title
 		Where("user_books.deleted_at IS NULL").
 		Order("user_books.created_at DESC").
-		Find(&userBooks).
-		Error
+		Find(&userBooks).Error
 	if err != nil {
 		return nil, err
 	}

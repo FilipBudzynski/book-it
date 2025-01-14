@@ -15,25 +15,37 @@ templ ExchangeModal() {
 			<div class="mb-4 grid grid-cols-2 gap-8">
 				<input name="desired-book-id" id="book-id-input" class="input hidden input-bordered w-full mt-2"/>
 				<div>
-					<label class="block text-sm font-medium text-gray-700">Desired Book</label>
-					<input
-						id="book-title"
-						name="book-title"
-						type="text"
-						class="input input-bordered w-full mt-2"
-						placeholder="Start typing to search for books..."
-						hx-get="/books/reduced/search"
-						hx-trigger="keyup changed delay:300ms"
-						hx-target="#book-results"
-						hx-swap="innerHTML"
-					/>
+					<label class="block text-md font-medium text-gray-700">Desired Book</label>
+					<div class="flex justify-normal mt-2">
+						<input
+							id="book-title"
+							name="book-title"
+							type="text"
+							class="input w-full grow mr-2"
+							placeholder="Start typing to search for books..."
+							hx-get="/books/reduced/search"
+							hx-trigger="keyup changed delay:100ms"
+							hx-target="#book-results"
+							hx-swap="innerHTML"
+							_="on click 
+                            set innerHTML of #book-results to '' 
+                            then show #book-results"
+						/>
+						<div
+							class="btn btn-error"
+							_="on click
+                            set #book-id-input[@value] to '' then 
+                            set #book-title's value to '' then 
+                            set {disabled: false} on #book-title"
+						>x</div>
+					</div>
 					<div
 						id="book-results"
 						class="absolute z-9 mt-2 w-1/2 max-h-60 overflow-y-auto shadow-lg"
 					></div>
 				</div>
 				<div>
-					<label class="block text-sm font-medium text-gray-700">Offered Books</label>
+					<label class="block text-md font-medium text-gray-700">Offered Books</label>
 					<div
 						hx-get="/user-books/exchange/books"
 						hx-trigger="load"

@@ -12,11 +12,15 @@ import (
 )
 
 type ExchangeService interface {
-	Create(userId, desiredBookID string, userBookIDs []string) (*models.ExchangeRequest, error)
+	Create(userId, userEmail, desiredBookID string, userBookIDs []string) (*models.ExchangeRequest, error)
 	Get(id, userId string) (*models.ExchangeRequest, error)
 	GetAll(userId string) ([]*models.ExchangeRequest, error)
 	Delete(id string) error
 	FindMatchingRequests(requestId, userId string) ([]*models.ExchangeRequest, error)
+
+	// match
+	CreateMatch(requestId, matchId uint, status models.ExchangeRequestStatus) (*models.ExchangeMatch, error)
+	CheckMatch(requestId, matchId uint) bool
 }
 
 type exchangeHandler struct {
@@ -39,6 +43,7 @@ func (h *exchangeHandler) RegisterRoutes(app *echo.Echo) {
 	group.GET("/details/:id", h.Details)
 	group.GET("/:id/matches", h.Matches)
 	group.DELETE("/:id", h.Delete)
+	group.POST("/accept/:reqId/:otherReqId", h.AcceptMatch)
 }
 
 func (h *exchangeHandler) CreateExchange(c echo.Context) error {
@@ -47,13 +52,14 @@ func (h *exchangeHandler) CreateExchange(c echo.Context) error {
 		return errs.HttpErrorInternalServerError(err)
 	}
 
-	userId, err := utils.GetUserIDFromSession(c.Request())
+	userSession, err := utils.GetUserSessionFromStore(c.Request())
 	if err != nil {
 		return errs.HttpErrorUnauthorized(err)
 	}
 
 	exchange_request, err := h.exchangeService.Create(
-		userId,
+		userSession.UserID,
+		userSession.UserEmail,
 		exchangeBind.DesiredBookID,
 		exchangeBind.UserBookIDs,
 	)
@@ -114,11 +120,49 @@ func (h *exchangeHandler) Matches(c echo.Context) error {
 		return errs.HttpErrorUnauthorized(err)
 	}
 
-	matches, err := h.exchangeService.FindMatchingRequests(id, userId)
+	matchingRequests, err := h.exchangeService.FindMatchingRequests(id, userId)
 	if err != nil {
 		return errs.HttpErrorNotFound(err)
 	}
-	return utils.RenderView(c, webExchange.Matches(matches))
+
+	parsedRequestId, _ := utils.ParseStringToUint(id)
+	for _, req := range matchingRequests {
+		h.exchangeService.CheckMatch(parsedRequestId, req.ID)
+	}
+
+	usersRequest, err := h.exchangeService.Get(id, userId)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+
+	return utils.RenderView(c, webExchange.Matches(matchingRequests, usersRequest))
+}
+
+func (h *exchangeHandler) AcceptMatch(c echo.Context) error {
+	userReqId := c.Param("reqId")
+	otherReqId := c.Param("otherReqId")
+
+	parsedRequestId, err := utils.ParseStringToUint(userReqId)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+	parsedOtherRequestId, err := utils.ParseStringToUint(otherReqId)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+
+	_, err = h.exchangeService.CreateMatch(parsedRequestId, parsedOtherRequestId, models.ExchangeRequestStatusPending)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+
+	if h.exchangeService.CheckMatch(parsedRequestId, parsedOtherRequestId) {
+		_ = toast.Success(c, "You both agreed on the exchange!")
+	} else {
+		_ = toast.Info("Waiting for the other user to agree...").SetHXTriggerHeader(c)
+	}
+
+	return c.NoContent(http.StatusNoContent)
 }
 
 func (h *exchangeHandler) Delete(c echo.Context) error {

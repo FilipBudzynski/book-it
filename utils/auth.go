@@ -17,6 +17,7 @@ const (
 
 type UserSession struct {
 	UserID       string
+	UserEmail    string
 	AccessToken  string
 	RefreshToken string
 }

@@ -1,0 +1,10 @@
+package web_exchange
+
+import (
+	"fmt"
+	"github.com/FilipBudzynski/book_it/internal/models"
+)
+
+templ StatusDiv(status models.ExchangeRequestStatus) {
+	<div class={ fmt.Sprintf("badge badge-soft badge-%s", status.Badge()) }>{ status.String() }</div>
+}

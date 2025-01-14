@@ -41,7 +41,7 @@ templ DetailsDiv(er *models.ExchangeRequest) {
 	<div class="grid grid-cols-2 w-full items-start justify-between py-5 gap-6">
 		<div class="flex-grow justify-between items-center">
 			<!-- Desired book -->
-			<div class="card w-full bg-base-100 ">
+			<div class="card w-full bg-base-100 shadow-md">
 				<div class="card-body flex-grow">
 					<h2 class="card-title">Your desired book</h2>
 				</div>
@@ -64,7 +64,7 @@ templ DetailsDiv(er *models.ExchangeRequest) {
 				</div>
 			</div>
 			<!-- Request info -->
-			<div class="card bg-base-100 mt-6">
+			<div class="card bg-base-100 mt-6 shadow-md">
 				<div class="card-body">
 					<div class="grid grid-cols-2">
 						<div class="grid grid-rows-2">
@@ -77,15 +77,19 @@ templ DetailsDiv(er *models.ExchangeRequest) {
 							</div>
 						</div>
 						<div class="grid grid-rows-2">
-							<h2 class="card-title mb-2">Status</h2>
-							<div class="badge badge-neutral">{ er.Status.String() }</div>
+							<h2
+								class="card-title mb-2"
+							>Status</h2>
+							<div id="exchange-details-status" >
+								@StatusDiv(er.Status)
+							</div>
 						</div>
 					</div>
 				</div>
 			</div>
 		</div>
 		<!-- Books offered -->
-		<div class="card bg-base-100 w-full h-grow">
+		<div class="card bg-base-100 w-full h-grow shadow-md">
 			<div class="card-body grid-cols-3 flex-grow">
 				<h2 class="card-title">Books you offer</h2>
 				<table class="bg-base-100 table table-lg">
@@ -116,5 +120,4 @@ templ DetailsDiv(er *models.ExchangeRequest) {
 			</div>
 		</div>
 	</div>
-	<div class="grid grid-cols-2 items-start justify-center gap-4"></div>
 }
