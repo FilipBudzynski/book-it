@@ -19,8 +19,11 @@ type ExchangeService interface {
 	FindMatchingRequests(requestId, userId string) ([]*models.ExchangeRequest, error)
 
 	// match
-	CreateMatch(requestId, matchId uint, status models.ExchangeRequestStatus) (*models.ExchangeMatch, error)
-	CheckMatch(requestId, matchId uint) bool
+	CreateMatch(requestId, matchedRequestId uint) (*models.ExchangeMatch, error)
+	CheckMatch(requestId, matchId uint) (bool, error)
+	GetMatches(requestId string) ([]*models.ExchangeMatch, error)
+	AcceptMatch(requestId, matchedRequestId uint) (*models.ExchangeMatch, error)
+	DeclineMatch(requestId, matchedRequestId uint) (*models.ExchangeMatch, error)
 }
 
 type exchangeHandler struct {
@@ -43,7 +46,8 @@ func (h *exchangeHandler) RegisterRoutes(app *echo.Echo) {
 	group.GET("/details/:id", h.Details)
 	group.GET("/:id/matches", h.Matches)
 	group.DELETE("/:id", h.Delete)
-	group.POST("/accept/:reqId/:otherReqId", h.AcceptMatch)
+	group.POST("/accept/:id/:requestID", h.AcceptMatch)
+	group.POST("/decline/:id/:requestID", h.DeclineMatch)
 }
 
 func (h *exchangeHandler) CreateExchange(c echo.Context) error {
@@ -113,56 +117,97 @@ func (h *exchangeHandler) GetNewExchangeModal(c echo.Context) error {
 }
 
 func (h *exchangeHandler) Matches(c echo.Context) error {
-	id := c.Param("id")
+	requestId := c.Param("id")
 
 	userId, err := utils.GetUserIDFromSession(c.Request())
 	if err != nil {
 		return errs.HttpErrorUnauthorized(err)
 	}
 
-	matchingRequests, err := h.exchangeService.FindMatchingRequests(id, userId)
+	_, err = h.exchangeService.FindMatchingRequests(requestId, userId)
 	if err != nil {
 		return errs.HttpErrorNotFound(err)
 	}
 
-	parsedRequestId, _ := utils.ParseStringToUint(id)
-	for _, req := range matchingRequests {
-		h.exchangeService.CheckMatch(parsedRequestId, req.ID)
-	}
-
-	usersRequest, err := h.exchangeService.Get(id, userId)
+	matches, err := h.exchangeService.GetMatches(requestId)
 	if err != nil {
 		return errs.HttpErrorInternalServerError(err)
 	}
 
-	return utils.RenderView(c, webExchange.Matches(matchingRequests, usersRequest))
+	usersRequest, err := h.exchangeService.Get(requestId, userId)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+
+	return utils.RenderView(c, webExchange.Matches(matches, usersRequest))
 }
 
 func (h *exchangeHandler) AcceptMatch(c echo.Context) error {
-	userReqId := c.Param("reqId")
-	otherReqId := c.Param("otherReqId")
+	matchID := c.Param("id")
+	requestID := c.Param("requestID")
 
-	parsedRequestId, err := utils.ParseStringToUint(userReqId)
+	parsedMatchID, err := utils.ParseStringToUint(matchID)
 	if err != nil {
 		return errs.HttpErrorInternalServerError(err)
 	}
-	parsedOtherRequestId, err := utils.ParseStringToUint(otherReqId)
-	if err != nil {
-		return errs.HttpErrorInternalServerError(err)
-	}
-
-	_, err = h.exchangeService.CreateMatch(parsedRequestId, parsedOtherRequestId, models.ExchangeRequestStatusPending)
+	parsedRequestID, err := utils.ParseStringToUint(requestID)
 	if err != nil {
 		return errs.HttpErrorInternalServerError(err)
 	}
 
-	if h.exchangeService.CheckMatch(parsedRequestId, parsedOtherRequestId) {
+	match, err := h.exchangeService.AcceptMatch(parsedMatchID, parsedRequestID)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+	switch match.Status {
+	case models.MatchStatusAccepted:
 		_ = toast.Success(c, "You both agreed on the exchange!")
-	} else {
+	case models.MatchStatusPending:
 		_ = toast.Info("Waiting for the other user to agree...").SetHXTriggerHeader(c)
 	}
 
-	return c.NoContent(http.StatusNoContent)
+	userId, err := utils.GetUserIDFromSession(c.Request())
+	if err != nil {
+		return errs.HttpErrorUnauthorized(err)
+	}
+	request, err := h.exchangeService.Get(requestID, userId)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+
+	return utils.RenderView(c, webExchange.MatchTableRow(match, request))
+}
+
+func (h *exchangeHandler) DeclineMatch(c echo.Context) error {
+	matchID := c.Param("id")
+	requestID := c.Param("requestID")
+
+	parsedMatchID, err := utils.ParseStringToUint(matchID)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+	parsedRequestID, err := utils.ParseStringToUint(requestID)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+
+    match, err := h.exchangeService.DeclineMatch(parsedMatchID, parsedRequestID)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+
+	_ = toast.Info("You have declined the exchange").SetHXTriggerHeader(c)
+
+	userId, err := utils.GetUserIDFromSession(c.Request())
+	if err != nil {
+		return errs.HttpErrorUnauthorized(err)
+	}
+	request, err := h.exchangeService.Get(requestID, userId)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+
+	return utils.RenderView(c, webExchange.MatchTableRow(match, request))
 }
 
 func (h *exchangeHandler) Delete(c echo.Context) error {

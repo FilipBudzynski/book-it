@@ -15,12 +15,14 @@ type UserBookRepository interface {
 }
 
 type userBookService struct {
-	repo UserBookRepository
+	repo         UserBookRepository
+	exchangeRepo ExchangeRequestRepository
 }
 
-func NewUserBookService(r UserBookRepository) *userBookService {
+func NewUserBookService(userBookRepo UserBookRepository, exchangeRepo ExchangeRequestRepository) *userBookService {
 	return &userBookService{
-		repo: r,
+		repo:         userBookRepo,
+		exchangeRepo: exchangeRepo,
 	}
 }
 
@@ -46,6 +48,19 @@ func (s *userBookService) GetAll(userId string) ([]*models.UserBook, error) {
 }
 
 func (s *userBookService) Delete(id string) error {
+	userBook, err := s.repo.Get(id)
+	if err != nil {
+		return err
+	}
+
+	activeRequests, err := s.exchangeRepo.GetActiveExchangeRequestsByBookID(userBook.BookID)
+	if err != nil {
+		return err
+	}
+
+	if len(activeRequests) > 0 {
+		return models.ErrUserBookInActiveExchangeRequest
+	}
 	return s.repo.Delete(id)
 }
 
@@ -53,6 +68,6 @@ func (s *userBookService) DeleteByBookId(bookId string) error {
 	return s.repo.DeleteWhereBookId(bookId)
 }
 
-func (s *userBookService) Search(userId , query string) ([]*models.UserBook, error) {
+func (s *userBookService) Search(userId, query string) ([]*models.UserBook, error) {
 	return s.repo.Search(userId, query)
 }

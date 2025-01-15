@@ -48,7 +48,7 @@ func (s *Server) WithRegisterRoutes(e *echo.Echo) *Server {
 	exchangeRequestRepo := repositories.NewExchangeRequestRepository(db)
 
 	userService := services.NewUserService(userRepo)
-	userBookService := services.NewUserBookService(userBookRepo)
+	userBookService := services.NewUserBookService(userBookRepo, exchangeRequestRepo)
 	progressService := services.NewProgressService(progressRepo)
 	bookService := services.NewBookService(db).
 		WithProvider(providers.NewGoogleProvider())

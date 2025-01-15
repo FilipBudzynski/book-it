@@ -21,7 +21,7 @@ type UserBookService interface {
 	GetAll(userId string) ([]*models.UserBook, error)
 	Delete(id string) error
 	DeleteByBookId(bookId string) error
-	Search(userId , query string) ([]*models.UserBook, error)
+	Search(userId, query string) ([]*models.UserBook, error)
 }
 
 type UserBookHandler struct {
@@ -66,12 +66,13 @@ func (h *UserBookHandler) Create(c echo.Context) error {
 }
 
 func (h *UserBookHandler) Delete(c echo.Context) error {
-	bookID := c.Param("book_id")
-	if bookID == "" {
+	userBookID := c.Param("book_id")
+	if userBookID == "" {
 		return errs.HttpErrorBadRequest(models.ErrUserBookQueryWithoutId)
 	}
 
-	if err := h.userBookService.Delete(bookID); err != nil {
+	if err := h.userBookService.Delete(userBookID); err != nil {
+		// return utils.RenderView(c, webAlerts.AlertUserBookInActiveExchange())
 		return errs.HttpErrorInternalServerError(err)
 	}
 
@@ -140,7 +141,7 @@ func (h *UserBookHandler) Search(c echo.Context) error {
 	}
 	search := c.QueryParam("query")
 
-    results, err := h.userBookService.Search(userId, search)
+	results, err := h.userBookService.Search(userId, search)
 	if err != nil {
 		return errs.HttpErrorInternalServerError(err)
 	}

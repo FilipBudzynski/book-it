@@ -6,7 +6,10 @@ import (
 	"gorm.io/gorm"
 )
 
-var ErrUserBookQueryWithoutId = errors.New("user book iD not provided in query parameters")
+var (
+	ErrUserBookQueryWithoutId    = errors.New("user book ID not provided in query parameters")
+	ErrUserBookInActiveExchangeRequest = errors.New("user book in active exchange request")
+)
 
 // UserBook model is an abstraction for link between user and a book
 // It bounds book to a user providing more information about user interactions with a book

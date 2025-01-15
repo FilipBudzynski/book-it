@@ -6,13 +6,14 @@ import (
 	"gorm.io/gorm"
 )
 
-var (
-	ErrExchangeRequestNoOfferedBooksProvided = errors.New("no offered books provided in the request")
-	ErrExchangeRequestNoDesiredBookProvided  = errors.New("no desired book provided in the request")
-	ErrExchangeRequestDuplicateOfferedBooks  = errors.New("duplicate offered books in the request")
-)
+type (
+	Status interface {
+		String() string
+		Badge() string
+	}
 
-type ExchangeRequestStatus string
+	ExchangeRequestStatus string
+)
 
 const (
 	ExchangeRequestStatusPending    ExchangeRequestStatus = "pending"
@@ -20,6 +21,7 @@ const (
 	ExchangeRequestStatusAccepted   ExchangeRequestStatus = "accepted"
 	ExchangeRequestStatusRejected   ExchangeRequestStatus = "recjected"
 	ExchangeRequestStatusFoundMatch ExchangeRequestStatus = "found match"
+	ExchangeRequestStatusActive     ExchangeRequestStatus = "active"
 )
 
 func (s ExchangeRequestStatus) String() string {
@@ -30,15 +32,24 @@ func (s ExchangeRequestStatus) Badge() string {
 	switch s {
 	case ExchangeRequestStatusPending:
 		return "neutral"
-	case ExchangeRequestStatusMatched, ExchangeRequestStatusFoundMatch:
+	case ExchangeRequestStatusMatched,
+		ExchangeRequestStatusFoundMatch:
 		return "info"
-	case ExchangeRequestStatusAccepted:
+	case ExchangeRequestStatusAccepted,
+		ExchangeRequestStatusActive:
 		return "success"
 	case ExchangeRequestStatusRejected:
 		return "error"
 	}
 	return "secondary"
 }
+
+var (
+	ErrExchangeRequestNoOfferedBooksProvided      = errors.New("no offered books provided in the request")
+	ErrExchangeRequestNoDesiredBookProvided       = errors.New("no desired book provided in the request")
+	ErrExchangeRequestDuplicateOfferedBooks       = errors.New("duplicate offered books in the request")
+	ErrExchangeRequestActiveRequestWithThisBookID = errors.New("exchange request with this book id is active")
+)
 
 type ExchangeRequest struct {
 	gorm.Model
@@ -52,29 +63,13 @@ type ExchangeRequest struct {
 	Matches       []ExchangeMatch `gorm:"constraint:OnDelete:CASCADE,OnUpdate:CASCADE"`
 }
 
-func (r *ExchangeRequest) GetMatchStatus(otherRequestId uint) ExchangeRequestStatus {
+func (r *ExchangeRequest) GetMatchStatus(otherRequestId uint) MatchStatus {
 	for _, match := range r.Matches {
-		if match.MatchRequestID == otherRequestId {
+		if match.MatchedExchangeRequestID == otherRequestId || match.ExchangeRequestID == otherRequestId {
 			return match.Status
 		}
 	}
-	return ""
-}
-
-type ExchangeMatch struct {
-	gorm.Model
-	ExchangeRequestID uint
-	Request           ExchangeRequest `gorm:"foreignKey:ExchangeRequestID"`
-	MatchRequestID    uint
-	MatchRequest      ExchangeRequest `gorm:"foreignKey:MatchRequestID"`
-	Status            ExchangeRequestStatus
-}
-
-type OfferedBook struct {
-	gorm.Model
-	ExchangeRequestID uint
-	BookId            string `gorm:"not null,foreignKey:BookID" form:"book_id"`
-	Book              Book   `gorm:"foreignKey:BookId;constraint:OnDelete:SET NULL"`
+	return MatchStatusPending
 }
 
 func (e *ExchangeRequest) Validate() error {
@@ -102,4 +97,11 @@ func (e *ExchangeRequest) checkDuplicates() error {
 		seenBooks[book.BookId] = true
 	}
 	return nil
+}
+
+type OfferedBook struct {
+	gorm.Model
+	ExchangeRequestID uint
+	BookId            string `gorm:"not null,foreignKey:BookID" form:"book_id"`
+	Book              Book   `gorm:"foreignKey:BookId;constraint:OnDelete:SET NULL"`
 }

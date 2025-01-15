@@ -8,8 +8,11 @@ import (
 var EmailMessage = func(email, bookTitle string) string {
 	return fmt.Sprintf("https://mail.google.com/mail/?view=cm&fs=1&to=%s&su=SUBJECT&body=BODY", email)
 }
+var MatchExchangeID = func(matchID uint) string {
+	return fmt.Sprintf("match-exchange-%d", matchID)
+}
 
-templ Matches(matches []*models.ExchangeRequest, request *models.ExchangeRequest) {
+templ Matches(matches []*models.ExchangeMatch, request *models.ExchangeRequest) {
 	<div class="justify-center w-full mb-10">
 		if len(matches) == 0 {
 			<h1 class="text-3xl">No matches found</h1>
@@ -26,53 +29,7 @@ templ Matches(matches []*models.ExchangeRequest, request *models.ExchangeRequest
 					id="matched-exchanges"
 				>
 					for _, match := range matches {
-						<tr>
-							<td class="w-1/12 px-3 py-2">
-								<div class="flex items-center gap-3">
-									<div class="avatar">
-										<div class="mask mask-squircle h-12 w-12">
-											<img src={ match.DesiredBook.ImageLink } alt="img"/>
-										</div>
-									</div>
-								</div>
-							</td>
-							<td class="w-max px-3 py-2">
-								<div class="flex flex-col">
-									<span class="text-base">
-										<a href="" class="transition ease-out opacity delay-150 hover:text-black">{ match.DesiredBook.Title } </a>
-									</span>
-									<span class="text-sm text-gray-300">
-										by 
-										{ match.DesiredBook.Authors }
-									</span>
-								</div>
-							</td>
-							<td>
-								@StatusDiv(request.GetMatchStatus(match.ID))
-							</td>
-							<td>
-								<div
-									class="btn"
-									href={ EmailMessage(match.UserEmail, match.DesiredBook.Title) }
-								>
-									<img class="w-6 h-6" src="https://www.svgrepo.com/show/475656/google-color.svg" loading="lazy" alt="google logo"/>
-									{ match.UserEmail }
-								</div>
-							</td>
-							<td class="w-1/5 px-3 py-2">
-								<div class="dropdown">
-									<div tabindex="0" role="button" class="btn m-1">action</div>
-									<ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
-										<li>
-											<a hx-post={ fmt.Sprintf("/exchange/accept/%d/%d", request.ID, match.ID) }>
-												Accept
-											</a>
-										</li>
-										<li><a>Reject</a></li>
-									</ul>
-								</div>
-							</td>
-						</tr>
+						@MatchTableRow(match, request)
 					}
 				</tbody>
 				<tfoot></tfoot>
@@ -82,4 +39,65 @@ templ Matches(matches []*models.ExchangeRequest, request *models.ExchangeRequest
 	<div id="exchange-details-status" hx-swap-oob="true">
 		@StatusDiv(request.Status)
 	</div>
+}
+
+templ MatchTableRow(match *models.ExchangeMatch, request *models.ExchangeRequest) {
+	{{ matchedReq := match.MatchedRequest(request.ID) }}
+	<tr id={ MatchExchangeID(match.ID) }>
+		<td class="w-1/12 px-3 py-2">
+			<div class="flex items-center gap-3">
+				<div class="avatar">
+					<div class="mask mask-squircle h-12 w-12">
+						<img src={ matchedReq.DesiredBook.ImageLink } alt="img"/>
+					</div>
+				</div>
+			</div>
+		</td>
+		<td class="w-max px-3 py-2">
+			<div class="flex flex-col">
+				<span class="text-base">
+					<a href="" class="transition ease-out opacity delay-150 hover:text-black">{ matchedReq.DesiredBook.Title } </a>
+				</span>
+				<span class="text-sm text-gray-300">
+					by 
+					{ matchedReq.DesiredBook.Authors }
+				</span>
+			</div>
+		</td>
+		<td>
+			@StatusDiv(match.Status)
+		</td>
+		<td>
+			<div
+				class="btn"
+				href={ EmailMessage(matchedReq.UserEmail, matchedReq.DesiredBook.Title) }
+			>
+				<img class="w-6 h-6" src="https://www.svgrepo.com/show/475656/google-color.svg" loading="lazy" alt="google logo"/>
+				{ matchedReq.UserEmail }
+			</div>
+		</td>
+		<td class="w-1/5 px-3 py-2">
+			<div class="dropdown">
+				<div tabindex="0" role="button" class="btn m-1">action</div>
+				<ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+					<li>
+						<a
+							hx-target={ "#" + MatchExchangeID(match.ID) }
+                            hx-swap="outerHTML"
+							hx-post={ fmt.Sprintf("/exchange/accept/%d/%d", match.ID, request.ID) }
+						>
+							Accept
+						</a>
+					</li>
+					<li>
+						<a
+							hx-target={ "#" + MatchExchangeID(match.ID) }
+                            hx-swap="outerHTML"
+							hx-post={ fmt.Sprintf("/exchange/decline/%d/%d", match.ID, request.ID) }
+						>Decline</a>
+					</li>
+				</ul>
+			</div>
+		</td>
+	</tr>
 }

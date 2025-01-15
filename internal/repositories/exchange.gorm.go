@@ -22,20 +22,46 @@ func (r *ExchangeRequestRepository) Create(exchange *models.ExchangeRequest) err
 
 func (r *ExchangeRequestRepository) Get(id, userId string) (*models.ExchangeRequest, error) {
 	exchange := &models.ExchangeRequest{}
-	return exchange, r.db.Preload("DesiredBook").
+	err := r.db.Preload("DesiredBook").
 		Preload("OfferedBooks.Book").
-		Preload("Matches.MatchRequest.DesiredBook").
 		Where("user_google_id = ?", userId).
 		First(&exchange, id).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// Load Matches where this request is either the origin or the target
+	var matches []models.ExchangeMatch
+	err = r.db.Where("exchange_request_id = ? OR matched_exchange_request_id = ?", exchange.ID, exchange.ID).
+		Preload("Request.DesiredBook").
+		Preload("MatchedExchangeRequest.DesiredBook").
+		Find(&matches).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// Assign matches to the Matches field
+	exchange.Matches = matches
+	return exchange, nil
 }
 
 func (r *ExchangeRequestRepository) GetAll(userId string) ([]*models.ExchangeRequest, error) {
 	exchanges := []*models.ExchangeRequest{}
 	return exchanges, r.db.Preload("DesiredBook").
 		Preload("OfferedBooks.Book").
-		Preload("Matches.MatchRequest.DesiredBook").
+		Preload("Matches.MatchedExchangeRequest.DesiredBook").
 		Where("user_google_id = ?", userId).
 		Find(&exchanges).Error
+}
+
+func (r *ExchangeRequestRepository) GetAllMatches(requestId string) ([]*models.ExchangeMatch, error) {
+	matches := []*models.ExchangeMatch{}
+	return matches, r.db.Preload("Request").
+		Preload("MatchedExchangeRequest").
+		Preload("MatchedExchangeRequest.DesiredBook").
+		Preload("Request.DesiredBook").
+		Where("exchange_request_id = ? OR matched_exchange_request_id = ?", requestId, requestId).
+		Find(&matches).Error
 }
 
 func (r *ExchangeRequestRepository) Delete(id string) error {
@@ -43,7 +69,7 @@ func (r *ExchangeRequestRepository) Delete(id string) error {
 }
 
 func (r *ExchangeRequestRepository) DeleteMatchesForRequest(requestId string) error {
-	if err := r.db.Where("exchange_request_id = ? OR match_request_id = ?", requestId, requestId).Delete(&models.ExchangeMatch{}).Error; err != nil {
+	if err := r.db.Where("exchange_request_id = ? OR matched_exchange_request_id = ?", requestId, requestId).Delete(&models.ExchangeMatch{}).Error; err != nil {
 		return err
 	}
 	return nil
@@ -70,20 +96,39 @@ func (r *ExchangeRequestRepository) FindMatchingRequests(requestId, userId, desi
 	return matches, nil
 }
 
-func (r *ExchangeRequestRepository) CreateMatch(requestId, matchId uint, status models.ExchangeRequestStatus) (*models.ExchangeMatch, error) {
-	exchangeMatch := &models.ExchangeMatch{
-		ExchangeRequestID: requestId,
-		MatchRequestID:    matchId,
-		Status:            status,
+func (r *ExchangeRequestRepository) CreateMatch(match *models.ExchangeMatch) error {
+	if match.ExchangeRequestID > match.MatchedExchangeRequestID {
+		match.ExchangeRequestID, match.MatchedExchangeRequestID = match.MatchedExchangeRequestID, match.ExchangeRequestID
 	}
-	return exchangeMatch, r.db.Create(exchangeMatch).Error
+	return r.db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "exchange_request_id"}, {Name: "matched_exchange_request_id"}},
+		DoNothing: true,
+	}).Create(match).Error
 }
 
-func (r *ExchangeRequestRepository) GetMatch(userReqId, otherReqId uint) (*models.ExchangeMatch, error) {
+func (r *ExchangeRequestRepository) GetMatch(matchID, requestID uint) (*models.ExchangeMatch, error) {
 	exchangeMatch := &models.ExchangeMatch{}
-	return exchangeMatch, r.db.First(&exchangeMatch, "exchange_request_id = ? AND match_request_id = ?", userReqId, otherReqId).Error
+	return exchangeMatch, r.db.Preload("Request").
+		Preload("Request.DesiredBook").
+		Preload("MatchedExchangeRequest").
+		Preload("MatchedExchangeRequest.DesiredBook").
+		Where("exchange_request_id = ? OR matched_exchange_request_id = ?", requestID, requestID).
+		Where("id = ?", matchID).First(exchangeMatch).Error
+}
+
+func (r *ExchangeRequestRepository) GetMatchByID(id string) (*models.ExchangeMatch, error) {
+	exchangeMatch := &models.ExchangeMatch{}
+	return exchangeMatch, r.db.Where("id = ?", id).First(exchangeMatch).Error
 }
 
 func (r *ExchangeRequestRepository) UpdateMatch(match *models.ExchangeMatch) error {
 	return r.db.Session(&gorm.Session{FullSaveAssociations: true}).Updates(match).Error
+	// return r.db.Model(match).Updates(map[string]interface{}{"request1_accept": match.Request1Accept, "request2_accept": match.Request2Accept}).Error
+}
+
+func (r *ExchangeRequestRepository) GetActiveExchangeRequestsByBookID(id string) ([]*models.ExchangeRequest, error) {
+	exchanges := []*models.ExchangeRequest{}
+	// TODO: Add here a filter by status
+	// e.g. Where("status = ?", models.ExchangeRequestStatusActive)
+	return exchanges, r.db.Preload("OfferedBooks", "book_id = ?", id).Find(&exchanges).Error
 }
