@@ -20,10 +20,10 @@ type ExchangeService interface {
 
 	// match
 	CreateMatch(requestId, matchedRequestId uint) (*models.ExchangeMatch, error)
-	CheckMatch(requestId, matchId uint) (bool, error)
+	//CheckMatch(requestId, matchId uint) (bool, error)
 	GetMatches(requestId string) ([]*models.ExchangeMatch, error)
-	AcceptMatch(requestId, matchedRequestId uint) (*models.ExchangeMatch, error)
-	DeclineMatch(requestId, matchedRequestId uint) (*models.ExchangeMatch, error)
+	AcceptMatch(requestId, matchedRequestId string) (*models.ExchangeMatch, error)
+	DeclineMatch(requestId, matchedRequestId string) (*models.ExchangeMatch, error)
 }
 
 type exchangeHandler struct {
@@ -146,16 +146,7 @@ func (h *exchangeHandler) AcceptMatch(c echo.Context) error {
 	matchID := c.Param("id")
 	requestID := c.Param("requestID")
 
-	parsedMatchID, err := utils.ParseStringToUint(matchID)
-	if err != nil {
-		return errs.HttpErrorInternalServerError(err)
-	}
-	parsedRequestID, err := utils.ParseStringToUint(requestID)
-	if err != nil {
-		return errs.HttpErrorInternalServerError(err)
-	}
-
-	match, err := h.exchangeService.AcceptMatch(parsedMatchID, parsedRequestID)
+	match, err := h.exchangeService.AcceptMatch(matchID, requestID)
 	if err != nil {
 		return errs.HttpErrorInternalServerError(err)
 	}
@@ -182,16 +173,7 @@ func (h *exchangeHandler) DeclineMatch(c echo.Context) error {
 	matchID := c.Param("id")
 	requestID := c.Param("requestID")
 
-	parsedMatchID, err := utils.ParseStringToUint(matchID)
-	if err != nil {
-		return errs.HttpErrorInternalServerError(err)
-	}
-	parsedRequestID, err := utils.ParseStringToUint(requestID)
-	if err != nil {
-		return errs.HttpErrorInternalServerError(err)
-	}
-
-    match, err := h.exchangeService.DeclineMatch(parsedMatchID, parsedRequestID)
+	match, err := h.exchangeService.DeclineMatch(matchID, requestID)
 	if err != nil {
 		return errs.HttpErrorInternalServerError(err)
 	}

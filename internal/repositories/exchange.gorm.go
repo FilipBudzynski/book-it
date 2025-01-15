@@ -54,16 +54,6 @@ func (r *ExchangeRequestRepository) GetAll(userId string) ([]*models.ExchangeReq
 		Find(&exchanges).Error
 }
 
-func (r *ExchangeRequestRepository) GetAllMatches(requestId string) ([]*models.ExchangeMatch, error) {
-	matches := []*models.ExchangeMatch{}
-	return matches, r.db.Preload("Request").
-		Preload("MatchedExchangeRequest").
-		Preload("MatchedExchangeRequest.DesiredBook").
-		Preload("Request.DesiredBook").
-		Where("exchange_request_id = ? OR matched_exchange_request_id = ?", requestId, requestId).
-		Find(&matches).Error
-}
-
 func (r *ExchangeRequestRepository) Delete(id string) error {
 	return r.db.Select(clause.Associations).Delete(&models.ExchangeRequest{}, id).Error
 }
@@ -106,14 +96,28 @@ func (r *ExchangeRequestRepository) CreateMatch(match *models.ExchangeMatch) err
 	}).Create(match).Error
 }
 
-func (r *ExchangeRequestRepository) GetMatch(matchID, requestID uint) (*models.ExchangeMatch, error) {
-	exchangeMatch := &models.ExchangeMatch{}
-	return exchangeMatch, r.db.Preload("Request").
+func (r *ExchangeRequestRepository) GetMatch(matchID, requestID string) (*models.ExchangeMatch, error) {
+    matches, err := r.getMatches(requestID, matchID)
+    return matches[0], err
+}
+
+func (r *ExchangeRequestRepository) GetAllMatches(requestId string) ([]*models.ExchangeMatch, error) {
+    return r.getMatches(requestId, "")
+}
+
+func (r *ExchangeRequestRepository) getMatches(requestId string, matchID string) ([]*models.ExchangeMatch, error) {
+	matches := []*models.ExchangeMatch{}
+	query := r.db.Preload("Request").
 		Preload("Request.DesiredBook").
 		Preload("MatchedExchangeRequest").
 		Preload("MatchedExchangeRequest.DesiredBook").
-		Where("exchange_request_id = ? OR matched_exchange_request_id = ?", requestID, requestID).
-		Where("id = ?", matchID).First(exchangeMatch).Error
+		Where("exchange_request_id = ? OR matched_exchange_request_id = ?", requestId, requestId)
+
+	if matchID != "" {
+		return matches, query.Where("id = ?", matchID).Find(&matches).Error
+	}
+
+	return matches, query.Find(&matches).Error
 }
 
 func (r *ExchangeRequestRepository) GetMatchByID(id string) (*models.ExchangeMatch, error) {
