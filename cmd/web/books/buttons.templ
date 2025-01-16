@@ -10,7 +10,7 @@ templ WantToReadButton(bookID string, isBookInUserBooks bool) {
 				hx-swap="outerHTML transition:true"
 				hx-target="closest .outer-div"
 				role="button"
-				class="btn btn-sm w-full btn-outline btn-error"
+				class="btn btn-md w-full btn-outline btn-error"
 			>Remove from Bookshelfs</div>
 		</div>
 	} else {
@@ -18,7 +18,7 @@ templ WantToReadButton(bookID string, isBookInUserBooks bool) {
 			<div
 				tabindex="0"
 				role="button"
-				class="btn btn-sm w-full btn-accent"
+				class="btn btn-md w-full btn-accent"
 			>Add to Bookshelf</div>
 			<ul
 				tabindex="0"

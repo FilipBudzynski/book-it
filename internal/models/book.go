@@ -13,6 +13,5 @@ type Book struct {
 	Genre         string
 	Link          string
 	PublishedDate string
-	InBookShelff  bool
 	Pages         int
 }

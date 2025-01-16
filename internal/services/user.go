@@ -14,6 +14,10 @@ type UserRepository interface {
 	GetAll() ([]models.User, error)
 	Update(user *models.User) error
 	Delete(user models.User) error
+	FirstGenre(genreID string) (*models.Genre, error)
+	GetAllGenres() ([]*models.Genre, error)
+	AddGenre(user *models.User, genre *models.Genre) error
+	RemoveGenre(user *models.User, genre *models.Genre) error
 }
 
 type userService struct {
@@ -38,6 +42,42 @@ func (s *userService) GetById(id string) (*models.User, error) {
 	return s.repo.GetById(id)
 }
 
+func (s *userService) AddGenre(userID, genreID string) (*models.Genre, error) {
+	user, err := s.GetByGoogleID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	genre, err := s.repo.FirstGenre(genreID)
+	if err != nil {
+		return nil, err
+	}
+
+	if user.ContainsGenre(genre.Name) {
+		return genre, nil
+	}
+
+	err = s.repo.AddGenre(user, genre)
+	if err != nil {
+		return nil, err
+	}
+	return genre, nil
+}
+
+func (s *userService) RemoveGenre(userID, genreID string) (*models.Genre, error) {
+	user, err := s.GetById(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	genre, err := s.repo.FirstGenre(genreID)
+	if err != nil {
+		return nil, err
+	}
+
+	return genre, s.repo.RemoveGenre(user, genre)
+}
+
 func (s *userService) GetByGoogleID(googleID string) (*models.User, error) {
 	return s.repo.GetByGoogleID(googleID)
 }
@@ -56,4 +96,8 @@ func (s *userService) Update(user *models.User) error {
 
 func (s *userService) Delete(user models.User) error {
 	return s.repo.Delete(user)
+}
+
+func (s *userService) GetAllGenres() ([]*models.Genre, error) {
+	return s.repo.GetAllGenres()
 }

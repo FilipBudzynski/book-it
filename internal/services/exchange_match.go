@@ -10,6 +10,8 @@ func (s *exchangeService) CreateMatch(requestId, otherRequestId uint) (*models.E
 		ExchangeRequestID:        requestId,
 		MatchedExchangeRequestID: otherRequestId,
 		Status:                   models.MatchStatusPending,
+		Request1Decision:         models.MatchDecisionPending,
+		Request2Decision:         models.MatchDecisionPending,
 	}
 	return match, s.repo.CreateMatch(match)
 }

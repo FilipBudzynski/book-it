@@ -3,7 +3,7 @@ package web
 import "github.com/FilipBudzynski/book_it/internal/models"
 
 templ Navbar(user *models.User) {
-	<div class="navbar glass mb-6 shadow-md rounded-box sticky top-0 z-50">
+	<div class="navbar glass mb-4 shadow-md rounded-box sticky top-0 z-50">
 		<div class="navbar-start">
 			<div class="dropdown">
 				<div tabindex="0" role="button" class="btn btn-ghost lg:hidden">
@@ -53,7 +53,7 @@ templ Navbar(user *models.User) {
 						href="#"
 						hx-get="/"
 						hx-target="#content-container"
-						hx-swap="innerHTML"
+						hx-swap="innerHTML transition:true"
 						hx-push-url="true"
 						hx-indicator="#loading-spinner"
 					>Home</a>
@@ -63,7 +63,7 @@ templ Navbar(user *models.User) {
 						href="#"
 						hx-get="/books"
 						hx-target="#content-container"
-						hx-swap="innerHTML"
+						hx-swap="innerHTML transition:true"
 						hx-push-url="true"
 						hx-indicator="#loading-spinner"
 					>Search</a>
@@ -73,7 +73,7 @@ templ Navbar(user *models.User) {
 						href="#"
 						hx-get="/user-books"
 						hx-target="#content-container"
-						hx-swap="innerHTML"
+						hx-swap="innerHTML transition:true"
 						hx-push-url="true"
 						hx-indicator="#loading-spinner"
 					>My Books</a>
@@ -92,10 +92,20 @@ templ Navbar(user *models.User) {
 						href="#"
 						hx-get="/exchange"
 						hx-target="#content-container"
-						hx-swap="innerHTML"
+						hx-swap="innerHTML transition:true"
 						hx-push-url="true"
 						hx-indicator="#loading-spinner"
 					>Exchange</a>
+				</li>
+				<li>
+					<a
+						href="#"
+						hx-get="/users/profile"
+						hx-target="#content-container"
+						hx-swap="innerHTML transition:true"
+						hx-push-url="true"
+						hx-indicator="#loading-spinner"
+					>Profile</a>
 				</li>
 			</ul>
 		</div>

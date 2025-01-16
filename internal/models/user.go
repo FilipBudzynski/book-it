@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"slices"
 	"strings"
 
 	"gorm.io/gorm"
@@ -14,6 +15,7 @@ type User struct {
 	GoogleId         string            `gorm:"primaryKey" json:"google_id"`
 	Books            []UserBook        `gorm:"onDelete:CASCADE"`
 	ExchangeRequests []ExchangeRequest `gorm:"foreignKey:UserGoogleId;onDelete:CASCADE"`
+	Genres           []Genre           `gorm:"many2many:user_genres;"`
 }
 
 var (
@@ -36,4 +38,12 @@ func (u *User) Validate() error {
 	}
 
 	return nil
+}
+
+func (u *User) ContainsGenre(genre string) bool {
+	genreNames := make([]string, len(u.Genres))
+	for i, genre := range u.Genres {
+		genreNames[i] = genre.Name
+	}
+	return slices.Contains(genreNames, genre)
 }

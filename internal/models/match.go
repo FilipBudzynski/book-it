@@ -58,3 +58,19 @@ func (e *ExchangeMatch) MatchedRequest(requestId uint) *ExchangeRequest {
 	}
 	return &e.Request
 }
+
+func (e *ExchangeMatch) IsAccepted(requestId uint) bool{
+    if e.ExchangeRequestID == requestId {
+        return e.Request1Decision.Accepted()
+    } else {
+        return e.Request2Decision.Accepted()
+    }
+}
+
+func (e *ExchangeMatch) GetDecision(requestId uint) MatchDecision {
+    if e.ExchangeRequestID == requestId {
+        return e.Request1Decision
+    }
+    return e.Request2Decision
+}
+

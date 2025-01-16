@@ -21,12 +21,12 @@ func (r *userRepository) Create(user *models.User) error {
 
 func (r *userRepository) GetById(id string) (*models.User, error) {
 	user := &models.User{}
-	return user, r.db.First(user, id).Error
+	return user, r.db.Preload("Genres").First(user, id).Error
 }
 
 func (r *userRepository) GetByGoogleID(googleID string) (*models.User, error) {
 	user := &models.User{}
-	return user, r.db.First(user, "google_id = ?", googleID).Error
+	return user, r.db.Preload("Genres").First(user, "google_id = ?", googleID).Error
 }
 
 func (r *userRepository) GetByEmail(email string) (*models.User, error) {
@@ -40,9 +40,32 @@ func (r *userRepository) GetAll() ([]models.User, error) {
 }
 
 func (r *userRepository) Update(user *models.User) error {
-	return r.db.Save(user).Error
+	return r.db.Session(&gorm.Session{FullSaveAssociations: true}).Save(user).Error
 }
 
 func (r *userRepository) Delete(user models.User) error {
 	return r.db.Delete(&user).Error
+}
+
+func (r *userRepository) AddGenre(user *models.User, genre *models.Genre) error {
+	return r.db.Model(user).Association("Genres").Append(genre)
+}
+
+func (r *userRepository) RemoveGenre(user *models.User, genre *models.Genre) error {
+	return r.db.Model(user).Association("Genres").Delete(genre)
+}
+
+func (r *userRepository) FindOrCreateGenre(genreName string) (*models.Genre, error) {
+	genre := &models.Genre{}
+	return genre, r.db.FirstOrCreate(genre, models.Genre{Name: genreName}).Error
+}
+
+func (r *userRepository) FirstGenre(genreID string) (*models.Genre, error) {
+	genre := &models.Genre{}
+	return genre, r.db.First(genre, "id = ?", genreID).Error
+}
+
+func (r *userRepository) GetAllGenres() ([]*models.Genre, error) {
+	var genres []*models.Genre
+	return genres, r.db.Find(&genres).Error
 }

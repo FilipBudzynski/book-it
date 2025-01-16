@@ -3,12 +3,16 @@ package providers
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+	"net/url"
+	"os"
 	"strconv"
 	"strings"
 
 	"github.com/FilipBudzynski/book_it/internal/handlers"
 	"github.com/FilipBudzynski/book_it/internal/models"
+	"github.com/joho/godotenv"
 )
 
 const (
@@ -16,12 +20,16 @@ const (
 	GoogleBooksAPIMaxResult = 40
 )
 
-// NewGoogleBookService creates new BookService for external api communication
-//
-// apiUrl: expectes the url schema that will be used for getting the results
-// example:  "https://www.googleapis.com/books/v1/volumes?q=%s&maxResults=%d"
-//
-// maxResults: a number to specify max returned results for a query
+var GoogleAPIKEY string
+
+func init() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("error loading .env file")
+	}
+	GoogleAPIKEY = os.Getenv("GOOGLE_API_KET")
+}
+
 func NewGoogleProvider() handlers.BookProvider {
 	return &googleProvider{
 		apiUrl:     GoogleBooksAPI,
@@ -83,7 +91,8 @@ func (p *googleProvider) getResponse(url string) (*http.Response, error) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, err
+		resp.Body.Close()
+		return nil, fmt.Errorf("status code error: %d %s", resp.StatusCode, resp.Status)
 	}
 
 	return resp, nil
@@ -122,10 +131,41 @@ func (p *googleProvider) GetTotalForQuery(query string) int {
 	return totalItems.TotalItems
 }
 
-func (p *googleProvider) GetBooksByQuery(query string, limit, page int) ([]*models.Book, error) {
+func (p *googleProvider) GetBooksByQuery(query string, queryType handlers.QueryType, limit, page int) ([]*models.Book, error) {
 	startIndex := (page - 1) * limit
-	url := fmt.Sprintf(p.apiUrl+"?q=%s&maxResults=%d&startIndex=%d", query, limit, startIndex)
-	fmt.Printf("URL: %s\n", url)
+	params := url.Values{}
+	urlRequest := fmt.Sprintf("%s\"%s\"", queryType, query)
+
+	params.Add("q", urlRequest)
+	params.Add("maxResults", fmt.Sprintf("%d", limit))
+	params.Add("startIndex", fmt.Sprintf("%d", startIndex))
+	encodedUrl := p.apiUrl + "?" + params.Encode()
+
+	response, err := p.getResponse(encodedUrl)
+	if err != nil {
+		return nil, err
+	}
+	if response != nil {
+		defer response.Body.Close()
+	}
+
+	var bookItemsResponse BookItemsResponse
+	if err := json.NewDecoder(response.Body).Decode(&bookItemsResponse); err != nil {
+		return nil, err
+	}
+
+	var books []*models.Book
+	for _, bookResp := range bookItemsResponse.Items {
+		books = append(books, p.convert(bookResp))
+	}
+
+	return books, nil
+}
+
+func (p *googleProvider) GetBooksByGenre(genre string, maxResults int) ([]*models.Book, error) {
+	query := url.QueryEscape(genre)
+	url := fmt.Sprintf(p.apiUrl+"?q=subject:%s&maxResults=%d&key=%s", query, maxResults, GoogleAPIKEY)
+	fmt.Printf("google genres url: %s\n", url)
 
 	response, err := p.getResponse(url)
 	if err != nil {

@@ -1,6 +1,9 @@
 package services
 
 import (
+	"math/rand"
+	"time"
+
 	"github.com/FilipBudzynski/book_it/internal/handlers"
 	"github.com/FilipBudzynski/book_it/internal/models"
 	"gorm.io/gorm"
@@ -74,9 +77,9 @@ func (s *bookService) GetByID(bookId string) (*models.Book, error) {
 
 // GetByQuery returns maxResults number of books by title from external api (provider)
 // if no book is found in database, it saves it to the database
-func (s *bookService) GetByQuery(query string, page int) ([]*models.Book, error) {
+func (s *bookService) GetByQuery(query string, queryType handlers.QueryType, page int) ([]*models.Book, error) {
 	limit := s.provider.GetLimit()
-	books, err := s.provider.GetBooksByQuery(query, limit, page)
+	books, err := s.provider.GetBooksByQuery(query, queryType, limit, page)
 	if err != nil {
 		return nil, err
 	}
@@ -90,5 +93,30 @@ func (s *bookService) GetByQuery(query string, page int) ([]*models.Book, error)
 			return nil, err
 		}
 	}
+	return books, nil
+}
+
+func (s *bookService) FetchReccomendations(genres []models.Genre) ([]*models.Book, error) {
+	maxResults := 30
+
+	booksPerGenre := maxResults / len(genres)
+	if booksPerGenre == 0 {
+		booksPerGenre = 1
+	}
+
+	books := []*models.Book{}
+	for _, genre := range genres {
+		genreBooks, err := s.provider.GetBooksByGenre(genre.Name, booksPerGenre)
+		if err != nil {
+			return nil, err
+		}
+		books = append(books, genreBooks...)
+	}
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(books), func(i, j int) {
+		books[i], books[j] = books[j], books[i]
+	})
+
+	// Return the shuffled books slice
 	return books, nil
 }

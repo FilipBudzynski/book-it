@@ -57,7 +57,7 @@ func (s *Server) WithRegisterRoutes(e *echo.Echo) *Server {
 	routeRegistrars := []RouteRegistrar{
 		handlers.NewAuthHandler(userService),
 		handlers.NewUserHandler(userService),
-		handlers.NewBookHandler(bookService, userBookService),
+		handlers.NewBookHandler(bookService, userBookService, userService),
 		handlers.NewUserBookHandler(userBookService),
 		handlers.NewProgressHandler(progressService),
 		handlers.NewExchangeHandler(exchangeService),

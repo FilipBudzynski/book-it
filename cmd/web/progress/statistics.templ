@@ -71,16 +71,20 @@ templ ProgressStatistics(readingProgress *models.ReadingProgress) {
 				</div>
 				<div class="stat">
 					<div class="stat-figure text-secondary"></div>
-					<div class="stat-value">
-						{{ progress := fmt.Sprintf("%d", int(100*(float64(readingProgress.CurrentPage)/float64(readingProgress.TotalPages)))) }}
-						{ progress }%
-					</div>
+					{{ progress := fmt.Sprintf("%d", int(100*(float64(readingProgress.CurrentPage)/float64(readingProgress.TotalPages)))) }}
+					<div
+						class="radial-progress text-success"
+						{ templ.Attributes{"style": fmt.Sprintf("--value:%s;", progress) }... }
+						aria-valuenow="80"
+						role="progressbar"
+					>{ progress }% </div>
 					<div class="stat-title">Pages Left</div>
 					<div class="stat-desc text-secondary">{ fmt.Sprintf("%d", readingProgress.TotalPages - readingProgress.CurrentPage) }</div>
 				</div>
 			</div>
 		</div>
 		<div class="flex w-full justify-evenly px-20">
+			<!-- <progress class="progress progress-success w-80" value={ fmt.Sprintf("%d", int(100*(float64(readingProgress.CurrentPage)/float64(readingProgress.TotalPages)))) } max="100"></progress> -->
 			<button
 				hx-delete={ fmt.Sprintf("/progress/%d", readingProgress.ID) }
 				hx-target="#progress-statistics"

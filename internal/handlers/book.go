@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	web_books "github.com/FilipBudzynski/book_it/cmd/web/books"
+	webUser "github.com/FilipBudzynski/book_it/cmd/web/user"
 	"github.com/FilipBudzynski/book_it/internal/errs"
 	"github.com/FilipBudzynski/book_it/internal/models"
 	"github.com/FilipBudzynski/book_it/utils"
@@ -18,9 +19,10 @@ type BookService interface {
 	Create(book *models.Book) error
 	Delete(userID, bookID string) error
 	// GetByQuery returns maxResults number of books by title from external api
-	GetByQuery(title string, page int) ([]*models.Book, error)
+	GetByQuery(query string, queryType QueryType, page int) ([]*models.Book, error)
 	// GetByID
 	GetByID(id string) (*models.Book, error)
+	FetchReccomendations(genres []models.Genre) ([]*models.Book, error)
 
 	WithProvider(provider BookProvider) BookService
 	Provider() BookProvider
@@ -30,22 +32,25 @@ type BookService interface {
 // in order to retreive response and parse it into models.Book struct
 type BookProvider interface {
 	GetBook(id string) (*models.Book, error)
-	GetBooksByQuery(query string, limit, page int) ([]*models.Book, error)
+	GetBooksByQuery(query string, queryType QueryType, limit, page int) ([]*models.Book, error)
 	// used to change the limit of query results
 	WithLimit(limit int) BookProvider
 	GetLimit() int
 	GetTotalForQuery(query string) int
+	GetBooksByGenre(genre string, maxResults int) ([]*models.Book, error)
 }
 
 type BookHandler struct {
 	bookService      BookService
+	userService      UserService
 	userBooksService UserBookService
 }
 
-func NewBookHandler(bookService BookService, userBookService UserBookService) *BookHandler {
+func NewBookHandler(bookService BookService, userBookService UserBookService, userService UserService) *BookHandler {
 	return &BookHandler{
 		bookService:      bookService,
 		userBooksService: userBookService,
+		userService:      userService,
 	}
 }
 
@@ -55,6 +60,7 @@ func (h *BookHandler) RegisterRoutes(app *echo.Echo) {
 	group.POST("", h.ListBooks)
 	group.GET("/reduced/search", h.ReducedSearch)
 	group.GET("/partial", h.BooksPartial)
+	group.GET("/recommendations", h.Recommend)
 }
 
 func (h *BookHandler) ListBooks(c echo.Context) error {
@@ -62,9 +68,10 @@ func (h *BookHandler) ListBooks(c echo.Context) error {
 		return utils.RenderView(c, web_books.BooksSearch())
 	}
 
-	query := c.FormValue("book-title")
+	query := c.FormValue("query")
+	queryType := c.FormValue("type")
 
-	books, userBooks, err := h.getBooksAndUserData(c, query, 1)
+	books, userBooks, err := h.getBooksAndUserData(c, query, queryType, 1)
 	if err != nil {
 		return err
 	}
@@ -78,7 +85,7 @@ func (h *BookHandler) BooksPartial(c echo.Context) error {
 		page = 1
 	}
 
-	books, userBooks, err := h.getBooksAndUserData(c, query, page)
+	books, userBooks, err := h.getBooksAndUserData(c, query, "title", page)
 	if err != nil {
 		return err
 	}
@@ -97,7 +104,7 @@ func (h *BookHandler) ReducedSearch(c echo.Context) error {
 	query := c.FormValue("book-title")
 	encodedQuery := url.QueryEscape(query)
 
-	books, err := h.bookService.GetByQuery(encodedQuery, 1)
+	books, err := h.bookService.GetByQuery(encodedQuery, QueryTypeTitle, 1)
 	if err != nil {
 		return errs.HttpErrorInternalServerError(err)
 	}
@@ -105,10 +112,33 @@ func (h *BookHandler) ReducedSearch(c echo.Context) error {
 	return utils.RenderView(c, web_books.ReducedList(books))
 }
 
-func (h *BookHandler) getBooksAndUserData(c echo.Context, query string, page int) ([]*models.Book, []*models.UserBook, error) {
-	encodedQuery := url.QueryEscape(query)
+func (g *BookHandler) Recommend(c echo.Context) error {
+	userID, err := utils.GetUserIDFromSession(c.Request())
+	if err != nil {
+		return errs.HttpErrorUnauthorized(err)
+	}
 
-	books, err := h.bookService.GetByQuery(encodedQuery, page)
+	user, err := g.userService.GetByGoogleID(userID)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+
+	if len(user.Genres) == 0 {
+		return utils.RenderView(c, webUser.Recommendations(nil))
+	}
+	recommendedBooks, err := g.bookService.FetchReccomendations(user.Genres)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+
+	return utils.RenderView(c, webUser.Recommendations(recommendedBooks))
+}
+
+func (h *BookHandler) getBooksAndUserData(c echo.Context, query, queryTypeString string, page int) ([]*models.Book, []*models.UserBook, error) {
+	//encodedQuery := url.QueryEscape(query)
+	queryType := stringToQueryType(queryTypeString)
+
+	books, err := h.bookService.GetByQuery(query, queryType, page)
 	if err != nil {
 		return nil, nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}

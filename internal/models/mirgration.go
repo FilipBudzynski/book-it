@@ -8,5 +8,6 @@ var MigrateModels = []any{
 	&DailyProgressLog{},
 	&ExchangeRequest{},
 	&OfferedBook{},
-    &ExchangeMatch{},
+	&ExchangeMatch{},
+	&Genre{},
 }

@@ -77,27 +77,53 @@ templ MatchTableRow(match *models.ExchangeMatch, request *models.ExchangeRequest
 			</div>
 		</td>
 		<td class="w-1/5 px-3 py-2">
-			<div class="dropdown">
-				<div tabindex="0" role="button" class="btn m-1">action</div>
-				<ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
-					<li>
-						<a
+			switch match.GetDecision(request.ID) {
+				case models.MatchDecisionAccepted:
+					<div class="scale-150 pl-10">✅</div>
+				case models.MatchDecisionDeclined:
+					<div class="scale-150 pl-10">❌</div>
+				default:
+					<div class="join">
+						<div
 							hx-target={ "#" + MatchExchangeID(match.ID) }
-                            hx-swap="outerHTML"
+							hx-swap="outerHTML"
+							hx-confirm="Do you wish to accept the exchange?"
 							hx-post={ fmt.Sprintf("/exchange/accept/%d/%d", match.ID, request.ID) }
+							class="btn btn-success join-item"
 						>
 							Accept
-						</a>
-					</li>
-					<li>
+						</div>
 						<a
 							hx-target={ "#" + MatchExchangeID(match.ID) }
-                            hx-swap="outerHTML"
+							hx-swap="outerHTML"
+							hx-confirm="Do you wish to decline the exchange?"
 							hx-post={ fmt.Sprintf("/exchange/decline/%d/%d", match.ID, request.ID) }
+							class="btn join-item"
 						>Decline</a>
-					</li>
-				</ul>
-			</div>
+					</div>
+			}
 		</td>
 	</tr>
 }
+
+// <div class="dropdown">
+// 	<div tabindex="0" role="button" class="btn m-1">action</div>
+// 	<ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+// 		<li>
+// 			<a
+// 				hx-target={ "#" + MatchExchangeID(match.ID) }
+//                          hx-swap="outerHTML"
+// 				hx-post={ fmt.Sprintf("/exchange/accept/%d/%d", match.ID, request.ID) }
+// 			>
+// 				Accept
+// 			</a>
+// 		</li>
+// 		<li>
+// 			<a
+// 				hx-target={ "#" + MatchExchangeID(match.ID) }
+//                          hx-swap="outerHTML"
+// 				hx-post={ fmt.Sprintf("/exchange/decline/%d/%d", match.ID, request.ID) }
+// 			>Decline</a>
+// 		</li>
+// 	</ul>
+// </div>

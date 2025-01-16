@@ -1,0 +1,149 @@
+package web_user
+
+import "fmt"
+import "github.com/FilipBudzynski/book_it/internal/models"
+
+import "github.com/FilipBudzynski/book_it/cmd/web"
+
+templ Profile(user *models.User, genres []*models.Genre) {
+	<div class="max-w-screen-lg mx-auto p-4 items-center">
+		<div class="flex flex-col items-center mx-10 md:mx-20">
+			<div class="breadcrumbs text-lg">
+				<ul>
+					<li>My Profile</li>
+				</ul>
+			</div>
+		</div>
+		<!-- genres picker -->
+		<article class="prose">
+			<h1>Subjects that interest you</h1>
+		</article>
+		<div class="justify-center w-full ">
+			<div class="flex flex-col items-center ">
+				<div class="grid grid-cols-2 w-full items-start justify-between py-5 gap-6 ">
+					<div class="felx justify-items-center">
+						<div class="flex flex-wrap gap-2 justify-start">
+							for _, genre := range genres {
+								@GenreButton(genre, user.ContainsGenre(genre.Name))
+							}
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<article class="prose mt-4">
+			<h1>What to read?</h1>
+			<span>Based on your preferences and reading history we recommend books that you might enjoy.</span>
+		</article>
+		<div
+			class="carousel carousel-center rounded-box h-100"
+			hx-get="/books/recommendations"
+			hx-swap="outerHTML"
+			hx-trigger="load"
+			hx-indicator="#loading-spinner"
+		></div>
+		@web.Loading()
+	</div>
+}
+
+templ GenreButton(genre *models.Genre, selected bool) {
+	<button
+		if selected {
+			class="btn btn-neutral"
+			hx-delete={ fmt.Sprintf("/users/profile/genres/%d", genre.ID) }
+		} else {
+			class="btn btn-outline btn-neutral"
+			hx-post={ fmt.Sprintf("/users/profile/genres/%d", genre.ID) }
+		}
+		hx-swap="outerHTML"
+	>
+		# { genre.Name }
+	</button>
+}
+
+templ UserGenres(genres []models.Genre) {
+	<div>
+		for _, genre := range genres {
+			<a>{ genre.Name }</a>
+		}
+	</div>
+}
+
+templ Recommendations(books []*models.Book) {
+	if len(books) == 0 {
+		<article class="prose mt-4">
+			<h2>Pick the subjects and get some recommendations!</h2>
+		</article>
+	} else {
+		<div id="recommendations-container" class="flex flex-col items-center mx-10 md:mx-20 mb-10">
+			<div class="carousel carousel-center rounded-box h-100">
+				for _, book := range books {
+					<div class="carousel-item">
+						<img src={ book.ImageLink } alt="Book cover"/>
+					</div>
+				}
+			</div>
+		</div>
+	}
+}
+
+// <button
+// 	class="btn btn-outline btn-neutral"
+// 	hx-post="/users/profile/genres/Science+Fiction"
+// 	hx-swap="outerHTML"
+// ># Sci-Fi</button>
+// <button
+// 	class="btn btn-outline btn-neutral"
+// 	hx-post="/users/profile/genres/Fiction"
+// 	hx-swap="outerHTML"
+// ># Fiction</button>
+// <button
+// 	class="btn btn-outline btn-neutral"
+// 	hx-post="/users/profile/genres/Russian-Literature"
+// 	hx-swap="outerHTML"
+// ># Russian Literature</button>
+// <button
+// 	class="btn btn-outline btn-neutral"
+// 	hx-post="/users/profile/genres/History"
+// 	hx-swap="outerHTML"
+// ># History</button>
+// <button
+// 	class="btn btn-outline btn-neutral"
+// 	hx-post="/users/profile/genres/Coding"
+// 	hx-swap="outerHTML"
+// ># Coding</button>
+// <button
+// 	class="btn btn-outline btn-neutral"
+// 	hx-post="/users/profile/genres/Psychology"
+// 	hx-swap="outerHTML"
+// ># Psychology</button>
+// <button
+// 	class="btn btn-outline btn-neutral"
+// 	hx-post="/users/profile/genres/Cooking"
+// 	hx-swap="outerHTML"
+// ># Cooking</button>
+// <button
+// 	class="btn btn-outline btn-neutral"
+// 	hx-post="/users/profile/genres/Sports"
+// 	hx-swap="outerHTML"
+// ># Sports</button>
+// <button
+// 	class="btn btn-outline btn-neutral"
+// 	hx-post="/users/profile/genres/Baking"
+// 	hx-swap="outerHTML"
+// ># Baking</button>
+// <button
+// 	class="btn btn-outline btn-neutral"
+// 	hx-post="/users/profile/genres/Novels"
+// 	hx-swap="outerHTML"
+// ># Novels</button>
+// <button
+// 	class="btn btn-outline btn-neutral"
+// 	hx-post="/users/profile/genres/Crime"
+// 	hx-swap="outerHTML"
+// ># Crime</button>
+// <button
+// 	class="btn btn-outline btn-neutral"
+// 	hx-post="/users/profile/genres/Drama"
+// 	hx-swap="outerHTML"
+// ># Drama</button>

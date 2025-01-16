@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/FilipBudzynski/book_it/cmd/web"
+	webUser "github.com/FilipBudzynski/book_it/cmd/web/user"
 	"github.com/FilipBudzynski/book_it/internal/errs"
 	"github.com/FilipBudzynski/book_it/internal/models"
 	"github.com/FilipBudzynski/book_it/internal/toast"
@@ -13,7 +15,6 @@ import (
 
 // UserService provides actions for managing Users.
 type UserService interface {
-	// db methods
 	Create(u *models.User) error
 	Update(u *models.User) error
 	GetById(id string) (*models.User, error)
@@ -21,6 +22,10 @@ type UserService interface {
 	GetByGoogleID(googleID string) (*models.User, error)
 	GetAll() ([]models.User, error)
 	Delete(u models.User) error
+
+	AddGenre(userID, genre string) (*models.Genre, error)
+	RemoveGenre(userID, genre string) (*models.Genre, error)
+	GetAllGenres() ([]*models.Genre, error)
 }
 
 type UserHandler struct {
@@ -39,6 +44,9 @@ func (h *UserHandler) RegisterRoutes(app *echo.Echo) {
 	group := app.Group("/users")
 	group.Use(utils.CheckLoggedInMiddleware)
 	group.GET("", h.ListUsers)
+	group.GET("/profile", h.Profile)
+	group.POST("/profile/genres/:genre_id", h.AddGenre)
+	group.DELETE("/profile/genres/:genre_id", h.RemoveGenre)
 }
 
 func (h *UserHandler) CreateUser(c echo.Context) error {
@@ -56,6 +64,28 @@ func (h *UserHandler) CreateUser(c echo.Context) error {
 	return c.NoContent(http.StatusCreated)
 }
 
+func (h *UserHandler) Profile(c echo.Context) error {
+	userID, err := utils.GetUserIDFromSession(c.Request())
+	if err != nil {
+		return errs.HttpErrorUnauthorized(err)
+	}
+
+	user, err := h.userService.GetByGoogleID(userID)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+
+	genres, err := h.userService.GetAllGenres()
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+	for _, genre := range user.Genres {
+		fmt.Printf("USER GENRE: %s\n", genre.Name)
+	}
+
+	return utils.RenderView(c, webUser.Profile(user, genres))
+}
+
 func (h *UserHandler) ListUsers(c echo.Context) error {
 	users, err := h.userService.GetAll()
 	if err != nil {
@@ -63,6 +93,39 @@ func (h *UserHandler) ListUsers(c echo.Context) error {
 	}
 
 	return utils.RenderView(c, web.UserForm(users))
+}
+
+func (h *UserHandler) AddGenre(c echo.Context) error {
+	genreID := c.Param("genre_id")
+
+	userID, err := utils.GetUserIDFromSession(c.Request())
+	if err != nil {
+		return errs.HttpErrorUnauthorized(err)
+	}
+	fmt.Println("USER ID: ", userID)
+
+	genre, err := h.userService.AddGenre(userID, genreID)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+
+	return utils.RenderView(c, webUser.GenreButton(genre, true))
+}
+
+func (h *UserHandler) RemoveGenre(c echo.Context) error {
+	genreID := c.Param("genre_id")
+
+	userID, err := utils.GetUserIDFromSession(c.Request())
+	if err != nil {
+		return errs.HttpErrorUnauthorized(err)
+	}
+
+	genre, err := h.userService.RemoveGenre(userID, genreID)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+
+	return utils.RenderView(c, webUser.GenreButton(genre, false))
 }
 
 // LandingPageHandler returns a landing page
