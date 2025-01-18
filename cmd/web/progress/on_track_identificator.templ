@@ -5,9 +5,10 @@ import "fmt"
 templ TrackingButton(bookid uint, completed bool) {
 	<div>
 		<button
-			hx-get={ fmt.Sprintf("/progress/%d", bookid) }
-			hx-target="#progress-statistics"
-			hx-swap="innerHTML show:bottom"
+			hx-get={ fmt.Sprintf("/progress/details/%d", bookid) }
+			hx-target="#content-container"
+			hx-swap="innerHTML transition:true"
+            hx-push-url="true"
 			class="btn"
 		>
 			if completed {

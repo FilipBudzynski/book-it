@@ -123,7 +123,7 @@ templ BooksTableRows(books []*models.UserBook) {
 						hx-delete={ fmt.Sprintf("/user-books/%d", book.ID) }
 						hx-confirm="Are you sure?"
 						hx-target="closest tr"
-						hx-swap="outerHTML swap:1s"
+						hx-swap="outerHTML 0.5s"
 						class="btn btn-sm w-full btn-outline btn-error"
 					>Remove</button>
 				</div>

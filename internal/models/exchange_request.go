@@ -49,6 +49,8 @@ var (
 	ErrExchangeRequestNoDesiredBookProvided       = errors.New("no desired book provided in the request")
 	ErrExchangeRequestDuplicateOfferedBooks       = errors.New("duplicate offered books in the request")
 	ErrExchangeRequestActiveRequestWithThisBookID = errors.New("exchange request with this book id is active")
+	ErrExchangeRequestLatitudeOutOfRange          = errors.New("latitude out of range")
+	ErrExchangeRequestLongitudeOutOfRange         = errors.New("longitude out of range")
 )
 
 type ExchangeRequest struct {
@@ -61,6 +63,8 @@ type ExchangeRequest struct {
 	OfferedBooks  []OfferedBook `gorm:"constraint:OnDelete:SET NULL"`
 	Status        ExchangeRequestStatus
 	Matches       []ExchangeMatch `gorm:"constraint:OnDelete:CASCADE,OnUpdate:CASCADE"`
+	Latitude      float64
+	Longitude     float64
 }
 
 func (r *ExchangeRequest) GetMatchStatus(otherRequestId uint) MatchStatus {
@@ -85,16 +89,23 @@ func (e *ExchangeRequest) Validate() error {
 		return err
 	}
 
+	if e.Latitude < -90 || e.Latitude > 90 {
+		return ErrExchangeRequestLatitudeOutOfRange
+	}
+	if e.Longitude < -180 || e.Longitude > 180 {
+		return ErrExchangeRequestLongitudeOutOfRange
+	}
+
 	return nil
 }
 
 func (e *ExchangeRequest) checkDuplicates() error {
 	seenBooks := make(map[string]bool)
 	for _, book := range e.OfferedBooks {
-		if seenBooks[book.BookId] {
+		if seenBooks[book.BookID] {
 			return ErrExchangeRequestDuplicateOfferedBooks
 		}
-		seenBooks[book.BookId] = true
+		seenBooks[book.BookID] = true
 	}
 	return nil
 }
@@ -102,6 +113,6 @@ func (e *ExchangeRequest) checkDuplicates() error {
 type OfferedBook struct {
 	gorm.Model
 	ExchangeRequestID uint
-	BookId            string `gorm:"not null,foreignKey:BookID" form:"book_id"`
-	Book              Book   `gorm:"foreignKey:BookId;constraint:OnDelete:SET NULL"`
+	BookID            string `gorm:"not null,foreignKey:BookID" form:"book_id"`
+	Book              Book   `gorm:"foreignKey:BookID;constraint:OnDelete:SET NULL"`
 }

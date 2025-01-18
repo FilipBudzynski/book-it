@@ -59,7 +59,7 @@ func (s *Server) WithRegisterRoutes(e *echo.Echo) *Server {
 		handlers.NewUserHandler(userService),
 		handlers.NewBookHandler(bookService, userBookService, userService),
 		handlers.NewUserBookHandler(userBookService),
-		handlers.NewProgressHandler(progressService),
+		handlers.NewProgressHandler(progressService, userBookService),
 		handlers.NewExchangeHandler(exchangeService),
 	}
 

@@ -73,7 +73,7 @@ templ ProgressStatistics(readingProgress *models.ReadingProgress) {
 					<div class="stat-figure text-secondary"></div>
 					{{ progress := fmt.Sprintf("%d", int(100*(float64(readingProgress.CurrentPage)/float64(readingProgress.TotalPages)))) }}
 					<div
-						class="radial-progress text-success"
+						class="radial-progress"
 						{ templ.Attributes{"style": fmt.Sprintf("--value:%s;", progress) }... }
 						aria-valuenow="80"
 						role="progressbar"
@@ -101,7 +101,7 @@ templ ProgressStatistics(readingProgress *models.ReadingProgress) {
 }
 
 templ DailyProgressLogs(dailyLogs []models.DailyProgressLog) {
-	<div class="mb-10 flow-auto flex items-center justify-center h-30">
+	<div class="flow-auto flex items-center justify-center h-30">
 		<div class="w-[70rem] overflow-x-auto flex items-center justify-center">
 			<ul class="steps">
 				for _, dailyLog := range dailyLogs {

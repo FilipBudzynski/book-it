@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"net/http"
-	"net/url"
 	"strconv"
 
 	web_books "github.com/FilipBudzynski/book_it/cmd/web/books"
@@ -102,9 +101,7 @@ func (h *BookHandler) List(c echo.Context) error {
 
 func (h *BookHandler) ReducedSearch(c echo.Context) error {
 	query := c.FormValue("book-title")
-	encodedQuery := url.QueryEscape(query)
-
-	books, err := h.bookService.GetByQuery(encodedQuery, QueryTypeTitle, 1)
+	books, err := h.bookService.GetByQuery(query, QueryTypeTitle, 1)
 	if err != nil {
 		return errs.HttpErrorInternalServerError(err)
 	}
@@ -135,7 +132,7 @@ func (g *BookHandler) Recommend(c echo.Context) error {
 }
 
 func (h *BookHandler) getBooksAndUserData(c echo.Context, query, queryTypeString string, page int) ([]*models.Book, []*models.UserBook, error) {
-	//encodedQuery := url.QueryEscape(query)
+	// encodedQuery := url.QueryEscape(query)
 	queryType := stringToQueryType(queryTypeString)
 
 	books, err := h.bookService.GetByQuery(query, queryType, page)

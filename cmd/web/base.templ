@@ -25,9 +25,12 @@ templ Base() {
 			<script src="https://unpkg.com/htmx.org@2.0.4"></script>
 			// hyperscript
 			<script src="https://unpkg.com/hyperscript.org@0.9.13"></script>
-			<!-- <script src="https://unpkg.com/hyperscript.org@0.9.13"></script> -->
-			<!-- <link href="https://unpkg.com/flowbite@1.6.5/dist/flowbite.min.css" rel="stylesheet"/> -->
 			<script src="/static/toast/toast.js" defer></script>
+			<!-- Leaflet JavaScript -->
+			<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+			<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+			<!-- geoapify -->
+			<script src="https://unpkg.com/@geoapify/geocoder-autocomplete@1.0.0/dist/geocoder-autocomplete.min.js"></script>
 			<style>
        @keyframes fade-in {
          from { opacity: 0; }
@@ -56,33 +59,40 @@ templ Base() {
        }
     
        /* tie the view transition to a given CSS class */
-       .sample-transition {
+       sample-transition {
            view-transition-name: slide-it;
        }
 
-       ::view-transition-old(fade-in) {
+       ::view-transition-old(fade-it) {
          animation: 180ms cubic-bezier(0.4, 0, 1, 1) both fade-out;
        }
-       ::view-transition-new(fade-in) {
+       ::view-transition-new(fade-it) {
          animation: 420ms cubic-bezier(0, 0, 0.2, 1) 90ms both fade-in;
        }
+
        .fadein-transition {
-           view-transition-name: fade-in;
+           view-transition-name: fade-it;
         }
-        
+
     </style>
 		</head>
 		<body>
 			// tailwind flowbite 
 			<main class="base max-w-screen gap-2 px-6 pt-5">
 				<div id="navbar-container" hx-get="/navbar" hx-trigger="load" hx-swap="outerHTML"></div>
-				<div hx-boost="true" id="content-container" class="sample-transition" hx-history-elt="true">
+				<div hx-boost="true" id="content-container" class="fadein-transition">
 					{ children... }
 					@Loading()
 				</div>
 				<div id="toast-container" class="toast toast-start z-50"></div>
 				<div id="alert-container" class=""></div>
 			</main>
+			<!-- <script>  -->
+			<!--              htmx.onLoad(function(content) {  -->
+			<!--              initializeMap();  -->
+			<!--              });  -->
+			<!--          </script> -->
+			<script src="/static/geoapify/geoapify.js" defer></script>
 		</body>
 	</html>
 }

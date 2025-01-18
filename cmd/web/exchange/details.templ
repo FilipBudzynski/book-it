@@ -6,8 +6,8 @@ import "fmt"
 
 templ ExchangeDetails(exchangeRequest *models.ExchangeRequest) {
 	<div class="flex justify-center items-center">
-		<div class="max-w-screen-lg mx-60 p-4">
-			<div class="justify-center w-full mb-10">
+		<div class="max-w-screen-lg mx-60">
+			<div class="justify-center w-full mb-6">
 				<div class="flex w-full relative justify-center">
 					<div class="breadcrumbs text-lg">
 						<ul>
@@ -26,6 +26,21 @@ templ ExchangeDetails(exchangeRequest *models.ExchangeRequest) {
 						</ul>
 					</div>
 				</div>
+				<!-- filters -->
+				<div class="flex flex-row justify-between items-end">
+					<div class="flex w-full flex-row justify-start">
+						<input type="range" min="0" max="7000" value="1000" class="range range-sm range-neutral mr-4 mb-4"/>
+						<span>2000 m</span>
+					</div>
+					<div class="flex w-full justify-end ">
+						<div class="flex filter w-full mb-4 justify-end">
+							<input class="btn btn-sm btn-outline filter-reset" type="radio" name="status" aria-label="All"/>
+							<input class="btn btn-sm btn-outline" type="radio" name="status" aria-label="accepted"/>
+							<input class="btn btn-sm btn-outline" type="radio" name="status" aria-label="declined"/>
+							<input class="btn btn-sm btn-outline" type="radio" name="status" aria-label="pending"/>
+						</div>
+					</div>
+				</div>
 				<div
 					id="request-matches"
 					hx-get={ fmt.Sprintf("/exchange/%d/matches", exchangeRequest.ID) }
@@ -38,15 +53,15 @@ templ ExchangeDetails(exchangeRequest *models.ExchangeRequest) {
 }
 
 templ DetailsDiv(er *models.ExchangeRequest) {
-	<div class="grid grid-cols-2 w-full items-start justify-between py-5 gap-6">
+	<div class="grid grid-cols-2 w-full items-start justify-between py-4 gap-4">
 		<div class="flex-grow justify-between items-center">
 			<!-- Desired book -->
 			<div class="card w-full bg-base-100 shadow-md">
 				<div class="card-body flex-grow">
-					<h2 class="card-title">Your desired book</h2>
+					<article class="prose card-title"><h2>Book you want</h2></article>
 				</div>
 				<figure>
-					<div class="flex items-center gap-3">
+					<div class="flex items-center gap-1">
 						<div class="avatar">
 							<div class="mask h-40 w-28 rounded-xl">
 								<img
@@ -64,11 +79,11 @@ templ DetailsDiv(er *models.ExchangeRequest) {
 				</div>
 			</div>
 			<!-- Request info -->
-			<div class="card bg-base-100 mt-6 shadow-md">
+			<div class="card bg-base-100 mt-4 shadow-md">
 				<div class="card-body">
 					<div class="grid grid-cols-2">
 						<div class="grid grid-rows-2">
-							<h2 class="card-title mb-2">Created</h2>
+							<h2 class="card-title">Created</h2>
 							<div>
 								<div>
 									{ er.CreatedAt.Format(time.DateOnly) }
@@ -78,9 +93,9 @@ templ DetailsDiv(er *models.ExchangeRequest) {
 						</div>
 						<div class="grid grid-rows-2">
 							<h2
-								class="card-title mb-2"
+								class="card-title"
 							>Status</h2>
-							<div id="exchange-details-status" >
+							<div id="exchange-details-status">
 								@StatusDiv(er.Status)
 							</div>
 						</div>
@@ -91,13 +106,13 @@ templ DetailsDiv(er *models.ExchangeRequest) {
 		<!-- Books offered -->
 		<div class="card bg-base-100 w-full h-grow shadow-md">
 			<div class="card-body grid-cols-3 flex-grow">
-				<h2 class="card-title">Books you offer</h2>
+				<article class="prose card-title"><h2>Books you offer</h2></article>
 				<table class="bg-base-100 table table-lg">
 					<tbody>
 						for _, offeredBook := range er.OfferedBooks {
 							<tr>
 								<td>
-									<div class="flex items-center gap-3">
+									<div class="flex items-center gap-4">
 										<div class="avatar">
 											<div class="mask h-16 w-11 rounded-sm  ">
 												<img
@@ -110,7 +125,7 @@ templ DetailsDiv(er *models.ExchangeRequest) {
 									</div>
 								</td>
 								<td>
-									<div class="font-bold">{ offeredBook.Book.Title }</div>
+									<div class="font-bold text-md">{ offeredBook.Book.Title }</div>
 									<div class="text-sm opacity-50">by { offeredBook.Book.Authors }</div>
 								</td>
 							</tr>

@@ -6,7 +6,7 @@ import (
 )
 
 templ List(exchanges []*models.ExchangeRequest) {
-	<div class="w-[80rem] overflow-x-auto mt-10">
+	<div class="mt-4 w-full">
 		<table class="bg-base-100 table table-lg">
 			<!-- head -->
 			<thead>
@@ -64,7 +64,7 @@ templ ExchangeTableRow(er models.ExchangeRequest) {
 		</td>
 		<th>
 			<button
-				class="btn btn"
+				class="btn btn-outline btn-neutral"
 				hx-get={ fmt.Sprintf("/exchange/details/%d", er.ID) }
 				hx-target="#content-container"
 				hx-push-url="true"
@@ -72,7 +72,7 @@ templ ExchangeTableRow(er models.ExchangeRequest) {
 		</th>
 		<th>
 			<button
-				class="btn btn-error btn"
+				class="btn btn-outline btn-error"
 				hx-delete={ fmt.Sprintf("/exchange/%d", er.ID) }
 				hx-confirm="Are you sure?"
 				_="on htmx:afterRequest if event.detail.xhr.status is 204 

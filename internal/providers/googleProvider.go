@@ -136,6 +136,8 @@ func (p *googleProvider) GetBooksByQuery(query string, queryType handlers.QueryT
 	params := url.Values{}
 	urlRequest := fmt.Sprintf("%s\"%s\"", queryType, query)
 
+    fmt.Println(urlRequest)
+
 	params.Add("q", urlRequest)
 	params.Add("maxResults", fmt.Sprintf("%d", limit))
 	params.Add("startIndex", fmt.Sprintf("%d", startIndex))

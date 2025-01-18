@@ -2,9 +2,11 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	webExchange "github.com/FilipBudzynski/book_it/cmd/web/exchange"
 	"github.com/FilipBudzynski/book_it/internal/errs"
+	"github.com/FilipBudzynski/book_it/internal/geo"
 	"github.com/FilipBudzynski/book_it/internal/models"
 	"github.com/FilipBudzynski/book_it/internal/toast"
 	"github.com/FilipBudzynski/book_it/utils"
@@ -12,7 +14,7 @@ import (
 )
 
 type ExchangeService interface {
-	Create(userId, userEmail, desiredBookID string, userBookIDs []string) (*models.ExchangeRequest, error)
+	Create(userId, userEmail, desiredBookID string, userBookIDs []string, latitude, longitude float64) (*models.ExchangeRequest, error)
 	Get(id, userId string) (*models.ExchangeRequest, error)
 	GetAll(userId string) ([]*models.ExchangeRequest, error)
 	Delete(id string) error
@@ -20,7 +22,7 @@ type ExchangeService interface {
 
 	// match
 	CreateMatch(requestId, matchedRequestId uint) (*models.ExchangeMatch, error)
-	//CheckMatch(requestId, matchId uint) (bool, error)
+	// CheckMatch(requestId, matchId uint) (bool, error)
 	GetMatches(requestId string) ([]*models.ExchangeMatch, error)
 	AcceptMatch(requestId, matchedRequestId string) (*models.ExchangeMatch, error)
 	DeclineMatch(requestId, matchedRequestId string) (*models.ExchangeMatch, error)
@@ -48,11 +50,21 @@ func (h *exchangeHandler) RegisterRoutes(app *echo.Echo) {
 	group.DELETE("/:id", h.Delete)
 	group.POST("/accept/:id/:requestID", h.AcceptMatch)
 	group.POST("/decline/:id/:requestID", h.DeclineMatch)
+	group.GET("/localization", h.LocalizationAutocomplete)
 }
 
 func (h *exchangeHandler) CreateExchange(c echo.Context) error {
 	exchangeBind := &exchangeFormBinding{}
 	if err := exchangeBind.bind(c); err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+
+	lat, err := strconv.ParseFloat(exchangeBind.Latitude, 64)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+	lon, err := strconv.ParseFloat(exchangeBind.Latitude, 64)
+	if err != nil {
 		return errs.HttpErrorInternalServerError(err)
 	}
 
@@ -66,6 +78,8 @@ func (h *exchangeHandler) CreateExchange(c echo.Context) error {
 		userSession.UserEmail,
 		exchangeBind.DesiredBookID,
 		exchangeBind.UserBookIDs,
+		lat,
+		lon,
 	)
 	if err != nil {
 		return errs.HttpErrorInternalServerError(err)
@@ -199,4 +213,17 @@ func (h *exchangeHandler) Delete(c echo.Context) error {
 		return errs.HttpErrorInternalServerError(err)
 	}
 	return c.NoContent(http.StatusNoContent)
+}
+
+func (h *exchangeHandler) LocalizationAutocomplete(c echo.Context) error {
+	id := c.FormValue("geoloc-query")
+	if id == "" {
+		return c.NoContent(http.StatusNoContent)
+	}
+	results, err := geo.GetLocalizationAutocomplete(id)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+
+	return utils.RenderView(c, webExchange.GeoResultsList(results))
 }

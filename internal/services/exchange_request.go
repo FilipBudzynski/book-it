@@ -34,10 +34,17 @@ func NewExchangeService(r ExchangeRequestRepository) *exchangeService {
 	}
 }
 
-func (s *exchangeService) Create(userId, userEmail, desiredBookID string, userBookIDs []string) (*models.ExchangeRequest, error) {
+func (s *exchangeService) Create(
+	userId string,
+	userEmail string,
+	desiredBookID string,
+	userBookIDs []string,
+	latitude float64,
+	longitude float64,
+) (*models.ExchangeRequest, error) {
 	offeredBooks := make([]models.OfferedBook, len(userBookIDs))
 	for i, id := range userBookIDs {
-		offeredBooks[i] = models.OfferedBook{BookId: id}
+		offeredBooks[i] = models.OfferedBook{BookID: id}
 	}
 
 	exchange := &models.ExchangeRequest{
@@ -46,6 +53,8 @@ func (s *exchangeService) Create(userId, userEmail, desiredBookID string, userBo
 		DesiredBookID: desiredBookID,
 		OfferedBooks:  offeredBooks,
 		Status:        models.ExchangeRequestStatusActive,
+		Latitude:      latitude,
+		Longitude:     longitude,
 	}
 
 	if err := exchange.Validate(); err != nil {
@@ -89,6 +98,10 @@ func (s *exchangeService) FindMatchingRequests(requestId, userId string) ([]*mod
 		return nil, err
 	}
 
+    if len(matchingRequests) == 0 {
+        fmt.Println("No matching requests found")
+    }
+
 	if err := s.repo.Update(r); err != nil {
 		return nil, err
 	}
@@ -106,7 +119,7 @@ func (s *exchangeService) FindMatchingRequests(requestId, userId string) ([]*mod
 func getOfferedBookIDs(offeredBooks []models.OfferedBook) []string {
 	ids := make([]string, len(offeredBooks))
 	for i, book := range offeredBooks {
-		ids[i] = book.BookId
+		ids[i] = book.BookID
 	}
 	return ids
 }

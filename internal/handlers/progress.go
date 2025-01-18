@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -35,11 +36,13 @@ type ProgressService interface {
 
 type progressHandler struct {
 	progressService ProgressService
+	userBookService UserBookService
 }
 
-func NewProgressHandler(s ProgressService) *progressHandler {
+func NewProgressHandler(s ProgressService, u UserBookService) *progressHandler {
 	return &progressHandler{
 		progressService: s,
+		userBookService: u,
 	}
 }
 
@@ -54,6 +57,7 @@ func (h *progressHandler) RegisterRoutes(app *echo.Echo) {
 	group.PUT("/log/:id", h.UpdateLog)
 	// htmx routes
 	group.GET("/log/details/modal/:id", h.GetLogModal)
+	group.GET("/details/:id", h.GetProgressDetails)
 }
 
 func (h *progressHandler) Create(c echo.Context) error {
@@ -91,6 +95,19 @@ func (h *progressHandler) GetByUserBookId(c echo.Context) error {
 	}
 
 	return utils.RenderView(c, webProgress.ProgressStatistics(progress))
+}
+
+func (h *progressHandler) GetProgressDetails(c echo.Context) error {
+	id := c.Param("id")
+	progress, err := h.progressService.GetByUserBookId(id)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+	book, err := h.userBookService.Get(id)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+	return utils.RenderView(c, webProgress.CardProgress(progress, book))
 }
 
 func (h *progressHandler) Delete(c echo.Context) error {
@@ -134,7 +151,12 @@ func (h *progressHandler) UpdateLog(c echo.Context) error {
 		_ = toast.Success(c, CompletedBookMessage)
 	}
 
-	return utils.RenderView(c, webProgress.StatisticsAndButtonUpdate(progress))
+	userBook, err := h.userBookService.Get(fmt.Sprintf("%d", progress.UserBookID))
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+
+	return utils.RenderView(c, webProgress.ProgressDetailsOverview(progress, userBook, log))
 }
 
 func (h *progressHandler) GetLogModal(c echo.Context) error {

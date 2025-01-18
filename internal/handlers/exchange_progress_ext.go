@@ -10,6 +10,8 @@ import (
 type exchangeFormBinding struct {
 	DesiredBookID string `form:"desired-book-id"`
 	UserBookIDs   []string
+	Latitude      string `form:"latitude"`
+	Longitude     string `form:"longitude"`
 }
 
 func (e *exchangeFormBinding) bind(c echo.Context) error {
