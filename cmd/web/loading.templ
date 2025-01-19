@@ -16,3 +16,25 @@ templ Loading() {
     </style>
 	<span id="loading-spinner" class="loading loading-spinner text-neutral htmx-indicator"></span>
 }
+
+templ LoadingBooks() {
+	<style>
+        .my-indicator {
+            display: none
+        }
+
+        .htmx-request .my-indicator {
+            display: flex;
+        }
+
+        .htmx-request.my-indicator {
+            display: flex;
+        }
+    </style>
+	<div id="loading-books-skeleton" class="flex flex-row gap-4 justify-center my-indicator">
+		<div class="skeleton h-32 w-32"></div>
+		<div class="skeleton h-32 w-32"></div>
+		<div class="skeleton h-32 w-32"></div>
+		<div class="skeleton h-32 w-32"></div>
+	</div>
+}

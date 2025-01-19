@@ -8,34 +8,40 @@ import (
 
 templ BooksSearch() {
 	<div class="max-w-screen-lg mx-auto items-center">
-		<div class="flex flex-col items-center mx-10">
-			<!-- tabs  -->
-			<div class="w-full justify-center mb-4">
-				<!-- search form  -->
-				<form
-					hx-post="/books"
-					method="POST"
-					hx-target="#books-container"
-					hx-indicator="#loading-spinner"
-				>
-					<div class="flex w-full justify-center">
-						<div role="tablist" class="tabs tabs-border tabs-lg my-4">
-							<input value="title" type="radio" name="type" role="tab" class="tab" aria-label="Title" checked="checked"/>
-							<input value="author" type="radio" name="type" role="tab" class="tab" aria-label="Authors"/>
-							<input value="subject" type="radio" name="type" role="tab" class="tab" aria-label="Subject"/>
-							<input value="isbn" type="radio" name="type" role="tab" class="tab" aria-label="ISBN"/>
-						</div>
-					</div>
-					<input
-						type="text"
-						id="book-title"
-						name="query"
-						class="w-full input input-lg"
-						placeholder="Search for new reads"
-					/>
-				</form>
+		<div class="breadcrumbs text-lg">
+			<ul>
+				<li>Search Books</li>
+			</ul>
+		</div>
+		<form
+			hx-post="/books"
+			method="POST"
+			hx-target="#books-container"
+			hx-indicator="#loading-spinner"
+			class="w-full flex flex-row justify-between"
+		>
+			<div class="flex w-full justify-start">
+				<div role="tablist" class="tabs tabs-border tabs-lg lp-0">
+					<input value="title" type="radio" name="type" role="tab" class="tab" aria-label="Title" checked="checked"/>
+					<input value="author" type="radio" name="type" role="tab" class="tab" aria-label="Authors"/>
+					<input value="subject" type="radio" name="type" role="tab" class="tab" aria-label="Subject"/>
+					<input value="isbn" type="radio" name="type" role="tab" class="tab" aria-label="ISBN"/>
+				</div>
 			</div>
-			<div class="flex justify-center w-[80rem] mb-10">
+			<label class="w-full input input-bordered flex items-center gap-2">
+				<input
+					type="text"
+					id="book-title"
+					name="query"
+					class="grow"
+					placeholder="Search for new reads"
+				/>
+				<svg class="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></g></svg>
+			</label>
+		</form>
+		<div class="divider"></div>
+		<div class="w-full justify-center mb-10">
+			<div class="flex w-full relative justify-center">
 				@BooksTable()
 			</div>
 			@web.Loading()

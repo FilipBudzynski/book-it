@@ -6,13 +6,11 @@ import "github.com/FilipBudzynski/book_it/internal/models"
 import "github.com/FilipBudzynski/book_it/cmd/web"
 
 templ Profile(user *models.User, genres []*models.Genre) {
-	<div class="max-w-screen-lg mx-auto p-4 items-center">
-		<div class="flex flex-col items-center mx-10 md:mx-20">
-			<div class="breadcrumbs text-lg">
-				<ul>
-					<li>My Profile</li>
-				</ul>
-			</div>
+	<div class="max-w-screen-lg mx-auto items-start flex flex-col">
+		<div class="breadcrumbs text-lg">
+			<ul>
+				<li>My Profile</li>
+			</ul>
 		</div>
 		<!-- genres picker -->
 		<article class="prose">
@@ -35,14 +33,14 @@ templ Profile(user *models.User, genres []*models.Genre) {
 			<h1>What to read?</h1>
 			<span>Based on your preferences and reading history we recommend books that you might enjoy.</span>
 		</article>
+		@web.LoadingBooks()
 		<div
 			class="carousel carousel-center rounded-box h-100"
 			hx-get="/books/recommendations"
 			hx-swap="outerHTML"
 			hx-trigger="load"
-			hx-indicator="#loading-spinner"
+			hx-indicator="#loading-books-skeleton"
 		></div>
-		@web.Loading()
 	</div>
 }
 

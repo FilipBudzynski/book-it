@@ -23,18 +23,6 @@ func (s *Server) WithMiddleware(e *echo.Echo) *Server {
 	e.Use(utils.CustomRecoverMiddleware)
 	e.Use(utils.RefreshSessionMiddleware)
 	e.Use(toast.ToastMiddleware)
-	// e.Use(utils.ErrorPagesMiddleware)
-	//
-	// cors := cors.New(cors.Options{
-	//         AllowedOrigins:   []string{"http://localhost:3000"},
-	//         AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-	//         AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
-	//         AllowCredentials: true,
-	//         MaxAge:           300, // Maximum age for preflight requests
-	//     })
-	// })
-	//
-	// e.Use(cors.Hanlder)
 
 	return s
 }

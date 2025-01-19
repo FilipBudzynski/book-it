@@ -107,7 +107,7 @@ func (s *exchangeService) FindMatchingRequests(requestId, userId string) ([]*mod
 	}
 
 	for _, matchingReq := range matchingRequests {
-		_, err := s.CreateMatch(r.ID, matchingReq.ID)
+		_, err := s.CreateMatch(r, matchingReq)
 		if err != nil {
 			return nil, err
 		}

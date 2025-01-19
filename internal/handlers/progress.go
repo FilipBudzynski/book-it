@@ -103,11 +103,11 @@ func (h *progressHandler) GetProgressDetails(c echo.Context) error {
 	if err != nil {
 		return errs.HttpErrorInternalServerError(err)
 	}
-	book, err := h.userBookService.Get(id)
+	userBook, err := h.userBookService.Get(id)
 	if err != nil {
 		return errs.HttpErrorInternalServerError(err)
 	}
-	return utils.RenderView(c, webProgress.CardProgress(progress, book))
+	return utils.RenderView(c, webProgress.CardProgress(progress, userBook))
 }
 
 func (h *progressHandler) Delete(c echo.Context) error {

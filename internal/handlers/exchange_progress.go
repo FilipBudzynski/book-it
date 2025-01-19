@@ -21,9 +21,10 @@ type ExchangeService interface {
 	FindMatchingRequests(requestId, userId string) ([]*models.ExchangeRequest, error)
 
 	// match
-	CreateMatch(requestId, matchedRequestId uint) (*models.ExchangeMatch, error)
+	CreateMatch(request, otherRequest *models.ExchangeRequest) (*models.ExchangeMatch, error)
 	// CheckMatch(requestId, matchId uint) (bool, error)
 	GetMatches(requestId string) ([]*models.ExchangeMatch, error)
+	GetMatchesDistanceFiltered(requestId string, distanceThreshold float64) ([]*models.ExchangeMatch, error)
 	AcceptMatch(requestId, matchedRequestId string) (*models.ExchangeMatch, error)
 	DeclineMatch(requestId, matchedRequestId string) (*models.ExchangeMatch, error)
 }
@@ -47,6 +48,7 @@ func (h *exchangeHandler) RegisterRoutes(app *echo.Echo) {
 	group.GET("/list", h.GetAll)
 	group.GET("/details/:id", h.Details)
 	group.GET("/:id/matches", h.Matches)
+	group.GET("/:id/matches/filter", h.FilteredMatches)
 	group.DELETE("/:id", h.Delete)
 	group.POST("/accept/:id/:requestID", h.AcceptMatch)
 	group.POST("/decline/:id/:requestID", h.DeclineMatch)
@@ -144,6 +146,33 @@ func (h *exchangeHandler) Matches(c echo.Context) error {
 	}
 
 	matches, err := h.exchangeService.GetMatches(requestId)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+
+	usersRequest, err := h.exchangeService.Get(requestId, userId)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+
+	return utils.RenderView(c, webExchange.Matches(matches, usersRequest))
+}
+
+func (h *exchangeHandler) FilteredMatches(c echo.Context) error {
+	requestId := c.Param("id")
+	distance := c.QueryParam("distance")
+
+	floatDistance, err := strconv.ParseFloat(distance, 64)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+
+	userId, err := utils.GetUserIDFromSession(c.Request())
+	if err != nil {
+		return errs.HttpErrorUnauthorized(err)
+	}
+
+	matches, err := h.exchangeService.GetMatchesDistanceFiltered(requestId, floatDistance)
 	if err != nil {
 		return errs.HttpErrorInternalServerError(err)
 	}

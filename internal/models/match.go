@@ -50,6 +50,7 @@ type ExchangeMatch struct {
 	Request1Decision         MatchDecision
 	Request2Decision         MatchDecision
 	Status                   MatchStatus
+    Distance                 float64
 }
 
 func (e *ExchangeMatch) MatchedRequest(requestId uint) *ExchangeRequest {

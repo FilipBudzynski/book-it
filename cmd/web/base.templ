@@ -13,13 +13,13 @@ templ Base() {
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>Book It</title>
-			<!-- <link href="assets/css/output.css" rel="stylesheet"/> -->
+			<link href="/assets/css/output.css" rel="stylesheet"/>
 			<!-- <script src="assets/js/htmx.min.js"></script> -->
 			// daisyUi
-			<link href="https://cdn.jsdelivr.net/npm/daisyui@5.0.0-beta.1/daisyui.css" rel="stylesheet" type="text/css"/>
-			<link href="https://cdn.jsdelivr.net/npm/daisyui@5.0.0-beta.1/themes.css" rel="stylesheet" type="text/css"/>
+			<!-- <link href="https://cdn.jsdelivr.net/npm/daisyui@5.0.0-beta.1/daisyui.css" rel="stylesheet" type="text/css"/> -->
+			<!-- <link href="https://cdn.jsdelivr.net/npm/daisyui@5.0.0-beta.1/themes.css" rel="stylesheet" type="text/css"/> -->
 			// tailwind flowbite
-			<script src="https://cdn.tailwindcss.com"></script>
+			<!-- <script src="https://cdn.tailwindcss.com"></script> -->
 			<script src="https://cdn.tailwindcss.com?plugins=typography"></script>
 			// htmx
 			<script src="https://unpkg.com/htmx.org@2.0.4"></script>
@@ -80,7 +80,7 @@ templ Base() {
 			// tailwind flowbite 
 			<main class="base max-w-screen gap-2 px-6 pt-5">
 				<div id="navbar-container" hx-get="/navbar" hx-trigger="load" hx-swap="outerHTML"></div>
-				<div hx-boost="true" id="content-container" class="fadein-transition">
+				<div hx-boost="true" id="content-container" class="sample-transition">
 					{ children... }
 					@Loading()
 				</div>
