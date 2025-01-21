@@ -13,33 +13,12 @@ var MatchExchangeID = func(matchID uint) string {
 }
 
 templ Matches(matches []*models.ExchangeMatch, request *models.ExchangeRequest) {
+	if len(matches) == 0 {
+		<h2 class="text-center mb-10">No matches found</h2>
+	}
 	for _, match := range matches {
 		@MatchDiv(match, request)
 	}
-	<!-- <div class="htmx-added:opacity-0 transition-opacity duration-300 flex justify-center w-full mb-10"> -->
-	<!-- 	if len(matches) == 0 { -->
-	<!-- 		<h1 class="text-3xl">No matches found</h1> -->
-	<!-- 	} else { -->
-	<!-- 		<table class="bg-base-100 table table-md z-1 "> -->
-	<!-- 			<thead> -->
-	<!-- 				<th>Your book for exchange </th> -->
-	<!-- 				<th>Title</th> -->
-	<!-- 				<th>Status</th> -->
-	<!-- 				<th>Distance</th> -->
-	<!-- 				<th>Get Connected</th> -->
-	<!-- 				<th>Action</th> -->
-	<!-- 			</thead> -->
-	<!-- 			<tbody -->
-	<!-- 				id="matched-exchanges" -->
-	<!-- 			> -->
-	<!-- 				for _, match := range matches { -->
-	<!-- 					@MatchTableRow(match, request) -->
-	<!-- 				} -->
-	<!-- 			</tbody> -->
-	<!-- 			<tfoot></tfoot> -->
-	<!-- 		</table> -->
-	<!-- 	} -->
-	<!-- </div> -->
 	<div id="exchange-details-status" hx-swap-oob="true">
 		@StatusDiv(request.Status)
 	</div>
@@ -47,7 +26,7 @@ templ Matches(matches []*models.ExchangeMatch, request *models.ExchangeRequest) 
 
 templ MatchDiv(match *models.ExchangeMatch, request *models.ExchangeRequest) {
 	{{ matchedReq := match.MatchedRequest(request.ID) }}
-	<div id={ MatchExchangeID(match.ID) } class="flex flex-row w-full my-4 bg-base-100 p-4 rounded-lg shadow-lg">
+	<div id={ MatchExchangeID(match.ID) } class="flex w-full my-4 bg-base-100 p-4 rounded-xl shadow-lg">
 		<!-- Book Image -->
 		<div class="h-30 w-27 rounded-lg">
 			<img src={ matchedReq.DesiredBook.ImageLink } alt="img"/>
@@ -66,7 +45,7 @@ templ MatchDiv(match *models.ExchangeMatch, request *models.ExchangeRequest) {
 				</div>
 				<!-- Gmail Object -->
 				<div
-					class="w-fit bg-base-100 shadow-md p-4 rounded-md flex flex-row items-center gap-2 bg-white self-start"
+					class="w-fit bg-base-100 shadow-md p-4 rounded-lg flex flex-row items-center gap-2 bg-base-100 self-start"
 					href={ EmailMessage(matchedReq.UserEmail, matchedReq.DesiredBook.Title) }
 				>
 					<img
@@ -75,7 +54,7 @@ templ MatchDiv(match *models.ExchangeMatch, request *models.ExchangeRequest) {
 						loading="lazy"
 						alt="google logo"
 					/>
-					<span>{ matchedReq.UserEmail }</span>
+					<p>{ matchedReq.UserEmail }</p>
 					<div
 						class="tooltip tooltip-top tooltip-neutral [justify-self:right] self-start"
 						data-tip="copy"
@@ -85,7 +64,7 @@ templ MatchDiv(match *models.ExchangeMatch, request *models.ExchangeRequest) {
                             wait 2s
                             put 'copy' into my[@data-tip]"
 					>
-						<button class="btn btn-square btn-sm" aria-label="Copy to clipboard">
+						<button class="btn btn-square btn-neutral btn-sm" aria-label="Copy to clipboard">
 							<svg class="h-5 w-5 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M 16 3 C 14.742188 3 13.847656 3.890625 13.40625 5 L 6 5 L 6 28 L 26 28 L 26 5 L 18.59375 5 C 18.152344 3.890625 17.257813 3 16 3 Z M 16 5 C 16.554688 5 17 5.445313 17 6 L 17 7 L 20 7 L 20 9 L 12 9 L 12 7 L 15 7 L 15 6 C 15 5.445313 15.445313 5 16 5 Z M 8 7 L 10 7 L 10 11 L 22 11 L 22 7 L 24 7 L 24 26 L 8 26 Z"></path></svg><!---->
 						</button>
 					</div>

@@ -10,9 +10,9 @@ import (
 
 type User struct {
 	gorm.Model
+	GoogleId         string            `gorm:"primaryKey" json:"google_id"`
 	Username         string            `gorm:"not null" json:"username"`
 	Email            string            `gorm:"unique;not null" json:"email"`
-	GoogleId         string            `gorm:"primaryKey" json:"google_id"`
 	Books            []UserBook        `gorm:"onDelete:CASCADE"`
 	ExchangeRequests []ExchangeRequest `gorm:"foreignKey:UserGoogleId;onDelete:CASCADE"`
 	Genres           []Genre           `gorm:"many2many:user_genres;"`

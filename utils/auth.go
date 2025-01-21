@@ -56,6 +56,14 @@ func GetUserIDFromSession(r *http.Request) (string, error) {
 	return user.UserID, nil
 }
 
+func GetUserEmailFromSession(r *http.Request) (string, error) {
+	user, err := GetUserSessionFromStore(r)
+	if err != nil {
+		return "", err
+	}
+	return user.UserEmail, nil
+}
+
 func SetUserSession(w http.ResponseWriter, r *http.Request, userSession UserSession) error {
 	return SetSessionValue(w, r, "userSession", userSession)
 }

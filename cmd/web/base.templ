@@ -10,19 +10,32 @@ templ Base() {
 		hx-trigger="load"
 	>
 		<head>
+			<meta
+				name="htmx-config"
+				content='{
+        "responseHandling":[
+            {"code":"401", "swap": true},
+            {"code":"[45]..", "swap": false, "error":true},
+            {"code":"...", "swap": true}
+        ]
+    }'
+			/>
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>Book It</title>
 			<link href="/assets/css/output.css" rel="stylesheet"/>
 			<!-- <script src="assets/js/htmx.min.js"></script> -->
 			// daisyUi
-			<!-- <link href="https://cdn.jsdelivr.net/npm/daisyui@5.0.0-beta.1/daisyui.css" rel="stylesheet" type="text/css"/> -->
-			<!-- <link href="https://cdn.jsdelivr.net/npm/daisyui@5.0.0-beta.1/themes.css" rel="stylesheet" type="text/css"/> -->
+			<link href="https://cdn.jsdelivr.net/npm/daisyui@5.0.0-beta.1/daisyui.css" rel="stylesheet" type="text/css"/>
+			<link href="https://cdn.jsdelivr.net/npm/daisyui@5.0.0-beta.1/themes.css" rel="stylesheet" type="text/css"/>
 			// tailwind flowbite
 			<!-- <script src="https://cdn.tailwindcss.com"></script> -->
 			<script src="https://cdn.tailwindcss.com?plugins=typography"></script>
 			// htmx
 			<script src="https://unpkg.com/htmx.org@2.0.4"></script>
+			<script src="https://unpkg.com/htmx-ext-response-targets@2.0.0/response-targets.js"></script>
+			<script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
+			<script>htmx.config.getCacheBusterParam = true</script>
 			// hyperscript
 			<script src="https://unpkg.com/hyperscript.org@0.9.13"></script>
 			<script src="/static/toast/toast.js" defer></script>
@@ -59,7 +72,7 @@ templ Base() {
        }
     
        /* tie the view transition to a given CSS class */
-       sample-transition {
+       .sample-transition {
            view-transition-name: slide-it;
        }
 
@@ -80,7 +93,8 @@ templ Base() {
 			// tailwind flowbite 
 			<main class="base max-w-screen gap-2 px-6 pt-5">
 				<div id="navbar-container" hx-get="/navbar" hx-trigger="load" hx-swap="outerHTML"></div>
-				<div hx-boost="true" id="content-container" class="sample-transition">
+				<div hx-ext="sse" sse-connect="/sse" sse-swap="message">No events so far</div>
+				<div id="content-container" class="sample-transition" hx-history-elt>
 					{ children... }
 					@Loading()
 				</div>

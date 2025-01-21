@@ -2,11 +2,5 @@
   "devDependencies": {
     "daisyui": "^5.0.0-beta.1",
     "tailwindcss": "^4.0.0-beta.9"
-  },
-  "scripts": {
-    "build": "npx @tailwindcss/cli -i ./cmd/web/assets/css/input.css -o ./cmd/web/assets/output.css --watch"
-  },
-  "dependencies": {
-    "@tailwindcss/cli": "^4.0.0-beta.9"
   }
 }

@@ -10,17 +10,18 @@ templ Landing() {
 				<li>My Requests</li>
 			</ul>
 		</div>
+		<div
+			hx-get="/exchange/modal/new"
+            hx-push-url="true"
+			hx-swap="innerHTML"
+			hx-target="#htmx_modal"
+			hx-trigerr="click"
+			onclick="exchange_modal.showModal()"
+			class="btn btn-neutral btn-outline"
+		>
+			Create
+		</div>
 		<div class="justify-center w-full ">
-			<div
-				hx-get="/exchange/modal/new"
-				hx-swap="innerHTML"
-				hx-target="#htmx_modal"
-				hx-trigerr="click"
-				onclick="exchange_modal.showModal()"
-				class="btn btn-neutral btn-outline"
-			>
-				+ Create
-			</div>
 			<div class="divider"></div>
 			<div class="flex flex-col justify-center items-center">
 				<div

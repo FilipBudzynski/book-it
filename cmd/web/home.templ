@@ -4,14 +4,19 @@ import "github.com/FilipBudzynski/book_it/internal/models"
 
 templ HomePage(user *models.User) {
 	<div class="max-w-screen-lg mx-auto items-start flex flex-col mb-10" hx-target="#content-container" hx-swap="innerHTML">
-		<article class="prose mt-4">
+		<article class="prose prose-sm lg:prose-h1:text-5xl lg:prose-h2:text-4xl lg:prose-h3:text-3xl md:text-sm md:prose-base w-full max-w-4xl grow pt-10">
 			<h1>Welcome to <span class="text-green-700">Book it</span></h1>
 			<!-- Feature 1 -->
 			<h3>Track Your <span class="text-green-700">Reading Progress</span></h3>
 			<p class="text-gray-600 mb-2">Pick your start and end dates, and we'll calculate how many pages you need to read daily. We'll even adjust your targets if you miss a day or read more than planned!</p>
 			<div
-				href="/user-books"
 				class="btn btn-neutral"
+				href="/user-books"
+				hx-get="/user-books"
+				hx-target="#content-container"
+				hx-swap="innerHTML transition:true"
+				hx-push-url="true"
+				hx-indicator="#loading-spinner"
 			>
 				Track Progress
 				<svg class="w-3.5 h-3.5 ms-2 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10">
@@ -22,8 +27,13 @@ templ HomePage(user *models.User) {
 			<h3><span class="text-green-700">Exchange</span> Books</h3>
 			<p class="text-gray-600 mb-2">Don’t want to pay for new books? Find someone nearby to exchange books with! Filter by distance and start sharing.</p>
 			<div
-				href="/exchange"
 				class="btn btn-neutral"
+				href="/exchange"
+				hx-get="/exchange"
+				hx-target="#content-container"
+				hx-swap="innerHTML transition:true"
+				hx-push-url="true"
+				hx-indicator="#loading-spinner"
 			>
 				Find Exchanges
 				<svg class="w-3.5 h-3.5 ms-2 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10">
@@ -34,8 +44,13 @@ templ HomePage(user *models.User) {
 			<h3>Get Personalized <span class="text-green-700">Recommendations</span></h3>
 			<p class="text-gray-600 mb-2">Not sure what to read next? Check your profile for personalized recommendations based on your interests!</p>
 			<div
-				href="/users/profile"
 				class="btn btn-neutral"
+				href="/users/profile"
+				hx-get="/users/profile"
+				hx-target="#content-container"
+				hx-swap="innerHTML transition:true"
+				hx-push-url="true"
+				hx-indicator="#loading-spinner"
 			>
 				Recommendations
 				<svg class="w-3.5 h-3.5 ms-2 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10">

@@ -12,8 +12,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// BookService provides actions for managing book resources.
-// BookSerice should uses a provider to get books from external APIs or database
 type BookService interface {
 	Create(book *models.Book) error
 	Delete(userID, bookID string) error
@@ -27,8 +25,6 @@ type BookService interface {
 	Provider() BookProvider
 }
 
-// BookProvider is used to communicate with the external API or Database
-// in order to retreive response and parse it into models.Book struct
 type BookProvider interface {
 	GetBook(id string) (*models.Book, error)
 	GetBooksByQuery(query string, queryType QueryType, limit, page int) ([]*models.Book, error)

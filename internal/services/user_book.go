@@ -1,6 +1,8 @@
 package services
 
 import (
+	"fmt"
+
 	"github.com/FilipBudzynski/book_it/internal/models"
 )
 
@@ -53,10 +55,12 @@ func (s *userBookService) Delete(id string) error {
 		return err
 	}
 
-	activeRequests, err := s.exchangeRepo.GetActiveExchangeRequestsByBookID(userBook.BookID)
+	activeRequests, err := s.exchangeRepo.GetActiveExchangeRequestsByBookID(userBook.BookID, userBook.UserGoogleId)
 	if err != nil {
 		return err
 	}
+
+	fmt.Println(activeRequests)
 
 	if len(activeRequests) > 0 {
 		return models.ErrUserBookInActiveExchangeRequest

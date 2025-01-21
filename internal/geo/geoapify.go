@@ -107,16 +107,5 @@ func GetLocalizationAutocomplete(query string) ([]Result, error) {
 		log.Fatalf("Error unmarshalling JSON response: %v", err)
 	}
 
-	if len(geoapifyResponse.Results) > 0 {
-		for _, result := range geoapifyResponse.Results {
-			fmt.Printf("Formatted Address: %s\n", result.Formatted)
-			fmt.Printf("Latitude: %f, Longitude: %f\n", result.Lat, result.Lon)
-			fmt.Printf("Country: %s, City: %s, State: %s\n", result.Country, result.City, result.State)
-			fmt.Printf("Place ID: %s\n", result.PlaceID)
-			fmt.Println("===================================")
-		}
-	} else {
-		return []Result{}, nil
-	}
 	return geoapifyResponse.Results, nil
 }

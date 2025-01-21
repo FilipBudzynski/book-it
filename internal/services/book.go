@@ -32,7 +32,7 @@ func (s *bookService) WithProvider(provider handlers.BookProvider) handlers.Book
 // get fetches the first book by isbn
 func (s *bookService) get(id string) (*models.Book, error) {
 	var book models.Book
-	err := s.db.First(&book, id).Error
+	err := s.db.Where("id = ?", id).First(&book).Error
 	if err != nil {
 		return nil, err
 	}
@@ -59,11 +59,12 @@ func (s *bookService) Get(id string) (*models.Book, error) {
 // GetByID fetches the book from Database
 // if no book is found, it fetches the book from the provider and saves it to the database
 func (s *bookService) GetByID(bookId string) (*models.Book, error) {
-	if book, _ := s.get(bookId); book != nil {
+	book, err := s.get(bookId)
+	if err == nil && book != nil {
 		return book, nil
 	}
 
-	book, err := s.provider.GetBook(bookId)
+	book, err = s.provider.GetBook(bookId)
 	if err != nil {
 		return nil, err
 	}

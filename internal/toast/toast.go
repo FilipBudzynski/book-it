@@ -64,12 +64,12 @@ func (t Toast) SetHXTriggerHeader(c echo.Context) Toast {
 func ToastMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		err := next(c)
-		handleToast(err, c)
+		HandleToast(err, c)
 		return err
 	}
 }
 
-func handleToast(err error, c echo.Context) {
+func HandleToast(err error, c echo.Context) {
 	if err == nil {
 		return
 	}
@@ -78,11 +78,12 @@ func handleToast(err error, c echo.Context) {
 	te, ok := he.Unwrap().(Toast)
 
 	if !ok {
+        return
 		fmt.Println(err)
 		te = Danger("there has been an unexpected error")
 	}
 
-	if te.Level != SUCCESS && te.Level != INFO {
+	if te.Level != SUCCESS && te.Level != INFO && ok{
 		c.Response().Header().Set("HX-Reswap", "none")
 	}
 

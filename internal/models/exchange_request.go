@@ -56,8 +56,8 @@ var (
 type ExchangeRequest struct {
 	gorm.Model
 	UserEmail     string
-	UserGoogleId  string        `gorm:"not null,foreignKey:UserGoogleId,form:user_id"`
-	User          User          `gorm:"foreignKey:UserGoogleId;references:GoogleId"`
+	UserGoogleId  string        `gorm:"type:text;not null"`
+	User          User          
 	DesiredBookID string        `gorm:"not null,foreignKey:BookID" form:"book_id"`
 	DesiredBook   Book          `gorm:"foreignKey:DesiredBookID;constraint:OnDelete:SET NULL"`
 	OfferedBooks  []OfferedBook `gorm:"constraint:OnDelete:SET NULL"`

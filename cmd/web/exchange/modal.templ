@@ -6,7 +6,7 @@ import "fmt"
 
 const keyUpDelay = 300
 
-templ ExchangeModal() {
+templ ExchangeModal(book *models.Book) {
 	<form
 		method="dialog"
 		hx-on::load="initMap()"
@@ -21,7 +21,14 @@ templ ExchangeModal() {
 	>
 		<form id="exchange-form">
 			<div class="mb-4 grid grid-cols-2 gap-8">
-				<input name="desired-book-id" id="book-id-input" class="input hidden input-bordered w-full mt-2"/>
+				<input
+					name="desired-book-id"
+					if book != nil {
+						value={ book.ID }
+					}
+					id="book-id-input"
+					class="input hidden input-bordered w-full mt-2"
+				/>
 				<div>
 					<label class="block text-md font-medium text-gray-700">Desired Book</label>
 					<div class="flex justify-normal mt-2">
@@ -29,6 +36,10 @@ templ ExchangeModal() {
 							id="book-title"
 							name="book-title"
 							type="text"
+							if book != nil {
+								value={ book.Title }
+								disabled="true"
+							}
 							class="input w-full grow mr-2"
 							placeholder="Start typing to search for books..."
 							hx-get="/books/reduced/search"
@@ -98,7 +109,9 @@ templ ExchangeModal() {
 				<button
 					class="btn"
 					hx-post="/exchange"
-					hx-target="#exchanges-table-body"
+					if book == nil {
+						hx-target="#exchanges-table-body"
+					}
 					hx-swap="beforeend"
 					onclick="exchange_modal.close()"
 				>Submit</button>

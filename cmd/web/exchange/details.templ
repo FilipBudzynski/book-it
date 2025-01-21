@@ -5,24 +5,20 @@ import "time"
 import "fmt"
 
 templ ExchangeDetails(exchangeRequest *models.ExchangeRequest) {
-	<div class="max-w-screen-lg mx-auto p-4 items-center">
-		<div class="flex flex-col items-center mx-10 md:mx-20">
-			<div class="breadcrumbs text-lg">
-				<ul>
-					<li><a href="/exchange">My Requests</a></li>
-					<li>{ exchangeRequest.DesiredBook.Title }</li>
-				</ul>
-			</div>
+	<div class="max-w-screen-lg mx-auto items-start flex flex-col">
+		<div class="breadcrumbs text-lg">
+			<ul>
+				<li><a>My Requests</a></li>
+				<li>{ exchangeRequest.DesiredBook.Title }</li>
+			</ul>
 		</div>
-		<div class="justify-center w-full mb-10">
+		<div class="justify-center w-full">
 			@DetailsDiv(exchangeRequest)
 		</div>
-		<div class="flex flex-col items-center mx-10 md:mx-40 pb-4">
-			<div class="breadcrumbs text-lg">
-				<ul>
-					<li>Matches Found</li>
-				</ul>
-			</div>
+		<div class="breadcrumbs text-lg">
+			<ul>
+				<li>Matches Found</li>
+			</ul>
 		</div>
 		<!-- filters -->
 		<div class="flex w-full flex-row justify-start items-center mb-4">
@@ -43,9 +39,9 @@ templ ExchangeDetails(exchangeRequest *models.ExchangeRequest) {
 				value="12"
 				class="w-full range range-sm range-neutral mr-4 transition-opacity duration-300 opacity-100"
 				hx-get={ fmt.Sprintf("/exchange/%d/matches/filter", exchangeRequest.ID) }
-				hx-trigger="input changed delay:100ms"
+				hx-trigger="input changed throttle:100ms"
 				hx-target="#request-matches"
-				hx-swap="innerHTML settle:0.3s"
+				hx-swap="innerHTML"
 				hx-include="#distance-range"
 				_="on input set #distance-value's innerText to my.value + ' km'"
 				_="on htmx:beforeSwap
@@ -58,6 +54,7 @@ templ ExchangeDetails(exchangeRequest *models.ExchangeRequest) {
 			hx-get={ fmt.Sprintf("/exchange/%d/matches", exchangeRequest.ID) }
 			hx-trigger="load"
 			hx-swap="innerHTML"
+			class="w-full"
 		></div>
 	</div>
 }

@@ -18,109 +18,69 @@ templ CardProgress(progress *models.ReadingProgress, userBook *models.UserBook) 
 		</div>
 	</div>
 	<div class="mx-auto max-w-3xl">
-		@ProgressDetailsOverview(progress, userBook, nil)
-		<div class="my-4 mb-6 divider">Logs</div>
-		for _, log := range progress.DailyProgress {
-			<div>
-				@LogDiv(log)
-			</div>
-		}
+		<div class="mt-14">
+			@ProgressDetailsOverview(progress, userBook)
+		</div>
 	</div>
 }
 
-templ ProgressDetailsOverview(progress *models.ReadingProgress, userBook *models.UserBook, log *models.DailyProgressLog) {
-	<div
-		id="progress-details"
-		class="htmx-swapping:opacity-20 transition-opacity duration-300 w-full bg-base-100 rounded-3xl shadow-lg my-10 p-4 flex flex-col gap-4 "
-	>
-		<div class="flex flex-row gap-4 justify-between items-start">
-			<div class="flex flex-col gap-4 w-full">
-				<div class="flex flex-row w-full justify-between gap-4 items-start">
-					<div class="w-full">
-						<article class="prose">
-							<h3>{ progress.BookTitle }</h3>
-							<span>by { userBook.Book.Authors }</span>
-						</article>
-					</div>
-					<div class="">
-						{{ readingProgress := fmt.Sprintf("%d", int(100*(float64(progress.CurrentPage)/float64(progress.TotalPages)))) }}
-						<div
-							class="radial-progress"
-							{ templ.Attributes{"style": fmt.Sprintf("--value:%s; --size:7rem;", readingProgress) }... }
-							aria-valuenow={ readingProgress }
-							role="progressbar"
-						>
-							{ readingProgress }% 
+templ ProgressDetailsOverview(progress *models.ReadingProgress, userBook *models.UserBook) {
+	<div id="progress-details">
+		<div
+			class="w-full bg-base-100 rounded-3xl shadow-lg my-4 p-4 flex flex-col gap-4 "
+		>
+			<div class="flex flex-row gap-4 justify-between items-start">
+				<div class="flex flex-col gap-4 w-full">
+					<div class="flex flex-row w-full justify-between gap-4 items-start">
+						<div class="w-full">
+							<article class="prose">
+								<h3>{ progress.BookTitle }</h3>
+								<span>by { userBook.Book.Authors }</span>
+							</article>
+						</div>
+						<div class="">
+							{{ readingProgress := fmt.Sprintf("%d", int(100*(float64(progress.CurrentPage)/float64(progress.TotalPages)))) }}
+							<div
+								class="radial-progress"
+								{ templ.Attributes{"style": fmt.Sprintf("--value:%s; --size:7rem;", readingProgress) }... }
+								aria-valuenow={ readingProgress }
+								role="progressbar"
+							>
+								{ readingProgress }% 
+							</div>
 						</div>
 					</div>
 				</div>
-			</div>
-			<div class="relative -mt-12 lg:-mt-16 flex-none flex flex-col space-y-2 items-center">
-				<div class="overflow-hidden group transition-all relative">
-					<img
-						class="rounded-xl h-210 w-128"
-						src={ userBook.Book.ImageLink }
-						alt={ userBook.Book.Title }
-					/>
+				<div class="relative -mt-12 lg:-mt-16 flex-none flex flex-col space-y-2 items-center">
+					<div class="overflow-hidden group transition-all relative">
+						<img
+							class="rounded-xl h-210 w-128"
+							src={ userBook.Book.ImageLink }
+							alt={ userBook.Book.Title }
+						/>
+					</div>
 				</div>
 			</div>
-		</div>
-		<div class="mt-4">
-			<article class="prose">
-				<h4>{ fmt.Sprintf("On page %d of %d", progress.CurrentPage, progress.TotalPages) }</h4>
-				<span>Update your progress</span>
-			</article>
-		</div>
-		<div class="">
-			@DailyProgressLogs(progress.DailyProgress)
-		</div>
-	</div>
-	if log != nil {
-		<div
-			id={ fmt.Sprintf("log-container-%d", log.ID) }
-			hx-swap-oob="true"
-			hx-swap="outerHTML"
-		>
-			@LogDiv(*log)
-		</div>
-	}
-}
-
-templ LogDiv(log models.DailyProgressLog) {
-	<div
-		class="htmx-swapping:opacity-0 transition-opacity duration-300 collapse collapse-arrow w-full bg-base-100 rounded-xl shadow-lg my-4 p-1"
-		id={ fmt.Sprintf("log-container-%d", log.ID) }
-	>
-		<input type="radio" name="my-acordion-1"/>
-		<div class="collapse-title flex flex-col gap-2 w-full">
-			if log.Comment != "" {
-				<span>🗒️</span>
-			}
-			<div class="flex flex-row justify-between space-x-2 items-baseline">
+			<div class="mt-4 flex flex-row justify-between items-end gap-4">
 				<article class="prose">
-					<span>{ fmt.Sprintf("Read %d pages of %d for today", log.PagesRead, log.TargetPages) } </span>
-					if log.Date.Before(Today()) {
-						<span class="scale-125">
-							if log.PagesRead == 0 {
-								😰
-							} else if log.PagesRead < log.TargetPages {
-								😁
-							} else if log.PagesRead >= log.TargetPages {
-								🔥
-							}
-						</span>
-					}
+					<span>Update your progress</span>
+					<h4 class="mt-0">{ fmt.Sprintf("On page %d of %d", progress.CurrentPage, progress.TotalPages) }</h4>
 				</article>
-				<span>{ log.Date.Format("2006-01-02") }</span>
+				<div 
+                hx-delete={ fmt.Sprintf("/progress/%d", progress.ID) }
+                hx-replace-url="/user-books"
+                hx-confirm="Are you sure you want to stop tracking?"
+                class="btn btn-outline btn-neutral py-2">Stop Tracking</div>
+			</div>
+			<div class="">
+				@DailyProgressLogs(progress.DailyProgress)
 			</div>
 		</div>
-		<div class="collapse-content">
-			<div class="flex flex-col gap-2">
-				<article>
-					<h5>Notes:</h5>
-					<span>{ log.Comment }</span>
-				</article>
-			</div>
+		<div class="my-4 mb-6 divider">Logs</div>
+		<div id="log-container">
+			for _, log := range progress.DailyProgress {
+				@LogDiv(log)
+			}
 		</div>
 	</div>
 }

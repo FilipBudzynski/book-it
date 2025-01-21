@@ -7,6 +7,9 @@ import (
 )
 
 templ BooksSearch() {
+	<dialog id="exchange_modal" class="modal modal-lg">
+		<div class="modal-box w-11/12 max-w-5xl h-auto overflow-visible" id="htmx_modal"></div>
+	</dialog>
 	<div class="max-w-screen-lg mx-auto items-center">
 		<div class="breadcrumbs text-lg">
 			<ul>
@@ -52,29 +55,29 @@ templ BooksSearch() {
 
 templ BooksPost(books []*models.Book, userBooks []*models.UserBook, page int, query string) {
 	for _, book := range books {
-		<tr>
-			<td class="w-1/12 px-3 py-2">
+		<tr class="flex">
+			<td class="w-1/6 px-3 py-2">
 				<div class="flex items-center gap-3">
-					<div class="avatar">
-						<div class="mask mask-squircle h-30 w-23">
-							<img src={ book.ImageLink } alt="img"/>
-						</div>
+					<div class="w-full">
+						<img class="h-40" src={ book.ImageLink } alt="img"/>
 					</div>
 				</div>
 			</td>
-			<td class="w-max px-3 py-2">
-				<div class="flex flex-col">
-					<span class="text-base">
-						<a href="" class="transition ease-in-out delay-150 hover:text-black">{ book.Title } </a>
-					</span>
-					<span class="text-sm text-gray-300">
-						by 
-						{ book.Authors }
-					</span>
+			<td class="flex flex-col w-full justify-between">
+				<div class="flex flex-row w-full justify-between items-start">
+					<div class="flex flex-col">
+						<span class=""><a href="" class="hover:text-black">{ book.Title } </a> </span>
+						<span class="text-sm text-gray-300">
+							by { book.Authors }
+						</span>
+					</div>
 				</div>
-			</td>
-			<td class="w-1/5 px-3 py-2">
-				@WantToReadButton(book.ID, models.BookInUserBooks(book.ID, userBooks))
+				<div class="flex w-full flex-row justify-between">
+					<span class="flex items-end text-sm">{ fmt.Sprintf("%d pages", book.Pages) } </span>
+					<div class="self-end">
+						@WantToReadButton(book.ID, models.BookInUserBooks(book.ID, userBooks))
+					</div>
+				</div>
 			</td>
 		</tr>
 	}

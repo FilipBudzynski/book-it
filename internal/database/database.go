@@ -27,6 +27,7 @@ func init() {
 	}
 
 	// migration of models to database
+	 //db.Migrator().DropTable(&models.ExchangeRequest{}) // Drop the existing table
 	err = db.AutoMigrate(models.MigrateModels...)
 	if err != nil {
 		panic("failed to migrate database")

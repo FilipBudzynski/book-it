@@ -97,12 +97,12 @@ func (r *ExchangeRequestRepository) CreateMatch(match *models.ExchangeMatch) err
 }
 
 func (r *ExchangeRequestRepository) GetMatch(matchID, requestID string) (*models.ExchangeMatch, error) {
-    matches, err := r.getMatches(requestID, matchID)
-    return matches[0], err
+	matches, err := r.getMatches(requestID, matchID)
+	return matches[0], err
 }
 
 func (r *ExchangeRequestRepository) GetAllMatches(requestId string) ([]*models.ExchangeMatch, error) {
-    return r.getMatches(requestId, "")
+	return r.getMatches(requestId, "")
 }
 
 func (r *ExchangeRequestRepository) getMatches(requestId string, matchID string) ([]*models.ExchangeMatch, error) {
@@ -130,9 +130,14 @@ func (r *ExchangeRequestRepository) UpdateMatch(match *models.ExchangeMatch) err
 	// return r.db.Model(match).Updates(map[string]interface{}{"request1_accept": match.Request1Accept, "request2_accept": match.Request2Accept}).Error
 }
 
-func (r *ExchangeRequestRepository) GetActiveExchangeRequestsByBookID(id string) ([]*models.ExchangeRequest, error) {
+func (r *ExchangeRequestRepository) GetActiveExchangeRequestsByBookID(id string, userID string) ([]*models.ExchangeRequest, error) {
 	exchanges := []*models.ExchangeRequest{}
-	// TODO: Add here a filter by status
-	// e.g. Where("status = ?", models.ExchangeRequestStatusActive)
-	return exchanges, r.db.Preload("OfferedBooks", "book_id = ?", id).Find(&exchanges).Error
+
+	// Use a WHERE EXISTS or IN approach to get ExchangeRequests where the OfferedBooks contain the specified book_id
+	err := r.db.Preload("OfferedBooks.Book").
+		Where("user_google_id = ?", userID).
+		Where("EXISTS (SELECT 1 FROM offered_books ob WHERE ob.exchange_request_id = exchange_requests.id AND ob.book_id = ?)", id).
+		Find(&exchanges).Error
+
+	return exchanges, err
 }

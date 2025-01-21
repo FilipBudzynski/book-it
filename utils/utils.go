@@ -28,14 +28,13 @@ func ErrorPagesMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		err := next(c)
 		if err != nil {
 			if httpErr, ok := err.(*echo.HTTPError); ok {
-				c.Response().Header().Set("HX-Target", "#content-container")
+				c.Response().WriteHeader(httpErr.Code)
+				c.Response().Header().Set("HX-Retarget", "#content-container")
 				switch httpErr.Code {
 				case http.StatusNotFound:
 					return RenderView(c, webError.ErrorPage404())
 				case http.StatusUnauthorized:
 					return RenderView(c, webError.ErrorPage401())
-				case http.StatusInternalServerError:
-					return RenderView(c, webError.ErrorPage500())
 				}
 			}
 		}
@@ -52,8 +51,8 @@ func TodaysDate() time.Time {
 
 func ParseStringToUint(s string) (uint, error) {
 	i, err := strconv.Atoi(s)
-    if err != nil {
-        return 0, err
-    }
+	if err != nil {
+		return 0, err
+	}
 	return uint(i), nil
 }

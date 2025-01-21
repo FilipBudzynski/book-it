@@ -75,9 +75,7 @@ templ ExchangeTableRow(er models.ExchangeRequest) {
 				class="btn btn-outline btn-error"
 				hx-delete={ fmt.Sprintf("/exchange/%d", er.ID) }
 				hx-confirm="Are you sure?"
-				_="on htmx:afterRequest if event.detail.xhr.status is 204 
-                    then 
-                        remove closest <tr/>"
+				_="on htmx:afterRequest if event.detail.xhr.status == 204 then remove closest <tr/>"
 			>remove</button>
 		</th>
 	</tr>

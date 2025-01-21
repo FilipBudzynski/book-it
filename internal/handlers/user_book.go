@@ -72,8 +72,7 @@ func (h *UserBookHandler) Delete(c echo.Context) error {
 	}
 
 	if err := h.userBookService.Delete(userBookID); err != nil {
-		// return utils.RenderView(c, webAlerts.AlertUserBookInActiveExchange())
-		return errs.HttpErrorInternalServerError(err)
+		return errs.HttpErrorConflict(err)
 	}
 
 	return c.NoContent(http.StatusOK)

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -30,12 +31,16 @@ type ExchangeService interface {
 }
 
 type exchangeHandler struct {
-	exchangeService ExchangeService
+	exchangeService   ExchangeService
+	bookService       BookService
+	connectionManager *ConnectionManager
 }
 
-func NewExchangeHandler(exchangeService ExchangeService) *exchangeHandler {
+func NewExchangeHandler(exchangeService ExchangeService, bookService BookService, connManager *ConnectionManager) *exchangeHandler {
 	return &exchangeHandler{
-		exchangeService: exchangeService,
+		exchangeService:   exchangeService,
+		bookService:       bookService,
+		connectionManager: connManager,
 	}
 }
 
@@ -45,6 +50,7 @@ func (h *exchangeHandler) RegisterRoutes(app *echo.Echo) {
 	group.POST("", h.CreateExchange)
 	group.GET("", h.Landing)
 	group.GET("/modal/new", h.GetNewExchangeModal)
+	group.GET("/modal", h.GetPrefilledExchangeModal)
 	group.GET("/list", h.GetAll)
 	group.GET("/details/:id", h.Details)
 	group.GET("/:id/matches", h.Matches)
@@ -129,7 +135,18 @@ func (h *exchangeHandler) Details(c echo.Context) error {
 }
 
 func (h *exchangeHandler) GetNewExchangeModal(c echo.Context) error {
-	return utils.RenderView(c, webExchange.ExchangeModal())
+	return utils.RenderView(c, webExchange.ExchangeModal(nil))
+}
+
+func (h *exchangeHandler) GetPrefilledExchangeModal(c echo.Context) error {
+	bookID := c.QueryParam("book-id")
+
+	book, err := h.bookService.GetByID(bookID)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+
+	return utils.RenderView(c, webExchange.ExchangeModal(book))
 }
 
 func (h *exchangeHandler) Matches(c echo.Context) error {
@@ -232,7 +249,22 @@ func (h *exchangeHandler) DeclineMatch(c echo.Context) error {
 		return errs.HttpErrorInternalServerError(err)
 	}
 
-	return utils.RenderView(c, webExchange.MatchTableRow(match, request))
+	matchedRequest := match.MatchedRequest(request.ID)
+	otherPartyUserID := matchedRequest.UserEmail
+
+	fmt.Printf("Handler Exchanges: otherPartyID: %s\n", otherPartyUserID)
+	// send SSE notification
+	if msgChannel, ok := h.connectionManager.GetClientChannel(otherPartyUserID); ok {
+		select {
+		case msgChannel <- fmt.Sprintf("Your exchange request (ID: %s) was declined by the other party.", requestID):
+		default:
+			fmt.Println("Channel full or closed, message not sent")
+		}
+	} else {
+		fmt.Println("No active channel for the user")
+	}
+
+	return utils.RenderView(c, webExchange.MatchDiv(match, request))
 }
 
 func (h *exchangeHandler) Delete(c echo.Context) error {

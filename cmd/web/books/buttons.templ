@@ -4,43 +4,34 @@ import "fmt"
 
 templ WantToReadButton(bookID string, isBookInUserBooks bool) {
 	if isBookInUserBooks {
-		<div class="w-full pr-4 outer-div">
-			<div
-				hx-delete={ fmt.Sprintf("/user-books/search/%s", bookID) }
-				hx-swap="outerHTML transition:true"
-				hx-target="closest .outer-div"
-				role="button"
-				class="btn btn-md w-full btn-outline btn-error"
-			>Remove from Bookshelfs</div>
-		</div>
+		<div
+			hx-delete={ fmt.Sprintf("/user-books/search/%s", bookID) }
+			hx-swap="outerHTML transition:true"
+			hx-target="closest div"
+			role="button"
+			class="btn btn-outline btn-error"
+		>Remove</div>
 	} else {
-		<div class="dropdown w-full pr-4">
-			<div
-				tabindex="0"
-				role="button"
-				class="btn btn-md w-full btn-accent"
-			>Add to Bookshelf</div>
-			<ul
-				tabindex="0"
-				class="dropdown-content menu py-2 bg-base-100 z-[1]"
-			>
+		<div class="dropdown dropdown-end">
+			<div tabindex="0" role="button" class="btn btn-outline btn-neutral m-1">Want to read</div>
+			<ul tabindex="0" class="dropdown-content menu p-2 w-52 bg-base-200 rounded-box z-1 shadow-sm">
 				<li>
 					<a
 						href="#"
 						hx-post={ fmt.Sprintf("/user-books/%s", bookID) }
 						hx-swap="outerHTML transition:true"
 						hx-target="closest div"
-						class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
-					>Want to read</a>
+					>Add to My Books</a>
 				</li>
 				<li>
-					<a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Settings</a>
-				</li>
-				<li>
-					<a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Earnings</a>
-				</li>
-				<li>
-					<a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Sign out</a>
+					<a
+						hx-get={ fmt.Sprintf("/exchange/modal?book-id=%s", bookID) }
+						hx-push-url="true"
+						hx-swap="innerHTML"
+						hx-target="#htmx_modal"
+						hx-trigerr="click"
+						onclick="exchange_modal.showModal()"
+					>Create an Exchange</a>
 				</li>
 			</ul>
 		</div>

@@ -21,7 +21,7 @@ type ExchangeRequestRepository interface {
 	GetAllMatches(requestId string) ([]*models.ExchangeMatch, error)
 	GetMatchByID(id string) (*models.ExchangeMatch, error)
 	// utility
-	GetActiveExchangeRequestsByBookID(id string) ([]*models.ExchangeRequest, error)
+	GetActiveExchangeRequestsByBookID(id string, userID string) ([]*models.ExchangeRequest, error)
 }
 
 type exchangeService struct {
@@ -97,10 +97,6 @@ func (s *exchangeService) FindMatchingRequests(requestId, userId string) ([]*mod
 	if err != nil {
 		return nil, err
 	}
-
-    if len(matchingRequests) == 0 {
-        fmt.Println("No matching requests found")
-    }
 
 	if err := s.repo.Update(r); err != nil {
 		return nil, err

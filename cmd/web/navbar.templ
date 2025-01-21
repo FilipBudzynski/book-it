@@ -63,14 +63,13 @@ templ Navbar(user *models.User) {
 						href="#"
 						hx-get="/books"
 						hx-target="#content-container"
-						hx-swap="innerHTML transition:true"
 						hx-push-url="true"
+						hx-swap="innerHTML transition:true"
 						hx-indicator="#loading-spinner"
 					>Search</a>
 				</li>
 				<li>
 					<a
-						href="#"
 						hx-get="/user-books"
 						hx-target="#content-container"
 						hx-swap="innerHTML transition:true"
@@ -149,8 +148,6 @@ templ Navbar(user *models.User) {
 			</label>
 			if user != nil {
 				<a
-					hx-boost="false"
-                    hx-history-elt="false"
 					href="/auth/logout?provider=google"
 					class="btn"
 				>

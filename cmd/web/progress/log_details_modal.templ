@@ -49,7 +49,7 @@ templ ProgressLogModal(dailyLog models.DailyProgressLog) {
 				<button
 					hx-put={ fmt.Sprintf("/progress/log/%d", dailyLog.ID) }
 					hx-target="#progress-details"
-					hx-swap="outerHTML swap:0.3s"
+					hx-swap="outerHTML"
 					hx-trigger="click"
 					class="btn"
 					onclick="my_modal_1.close()"

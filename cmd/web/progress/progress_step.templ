@@ -29,8 +29,14 @@ templ ProgressStep(log models.DailyProgressLog) {
 		{{ stepAtributes.message = "^" }}
 	}
 	if log.Date.After(time.Now().Truncate(24 * time.Hour)) {
-		{{ stepAtributes.class += "hx-disable opacity-50" }}
+		{{ stepAtributes.class += "hx-disable" }}
 		{{ stepAtributes.onclick = false }}
+	}
+	if log.Date.Before(time.Now().Truncate(24 * time.Hour)) {
+		{{ stepAtributes.dataContent = "⏰" }}
+	}
+	if log.Date.Equal(time.Now().Truncate(24 * time.Hour)) {
+		{{ stepAtributes.class += " step-primary" }}
 	}
 	if log.PagesRead > 0 {
 		{{ stepAtributes.dataContent = "✓" }}

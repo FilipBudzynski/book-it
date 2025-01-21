@@ -80,12 +80,10 @@ templ UserBooksTable(books []*models.UserBook) {
 templ BooksTableRows(books []*models.UserBook) {
 	for _, book := range books {
 		<tr>
-			<td class="w-1/12 px-3 py-2">
+			<td>
 				<div class="flex items-center gap-3">
-					<div class="avatar">
-						<div class="mask mask-squircle h-12 w-12">
-							<img src={ book.Book.ImageLink } alt="img"/>
-						</div>
+					<div class="w-full">
+						<img class="h-20" src={ book.Book.ImageLink } alt="img"/>
 					</div>
 				</div>
 			</td>
@@ -111,20 +109,20 @@ templ BooksTableRows(books []*models.UserBook) {
 							hx-swap="innerHTML"
 							hx-trigger="click"
 							onclick="my_modal_1.showModal()"
-							class="btn btn-neutral btn-outline"
-						>Start tracking</button>
+							class="w-full btn btn-neutral btn-outline"
+						>Start</button>
 					}
 				</div>
 			</td>
-			<td class="w-1/5 px-3 py-2">
+			<td>
 				<div class="w-full pr-4">
 					<button
 						hx-delete={ fmt.Sprintf("/user-books/%d", book.ID) }
 						hx-confirm="Are you sure?"
 						hx-target="closest tr"
-						hx-swap="outerHTML 0.5s"
+						hx-swap="outerHTML"
 						class="btn btn-outline btn-error"
-					>x</button>
+					>Remove</button>
 				</div>
 			</td>
 		</tr>

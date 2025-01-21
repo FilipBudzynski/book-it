@@ -101,7 +101,8 @@ func (h *progressHandler) GetProgressDetails(c echo.Context) error {
 	id := c.Param("id")
 	progress, err := h.progressService.GetByUserBookId(id)
 	if err != nil {
-		return errs.HttpErrorInternalServerError(err)
+		c.Response().Status = http.StatusNotFound
+		return errs.HttpErrorNotFound(err)
 	}
 	userBook, err := h.userBookService.Get(id)
 	if err != nil {
@@ -156,7 +157,7 @@ func (h *progressHandler) UpdateLog(c echo.Context) error {
 		return errs.HttpErrorInternalServerError(err)
 	}
 
-	return utils.RenderView(c, webProgress.ProgressDetailsOverview(progress, userBook, log))
+	return utils.RenderView(c, webProgress.ProgressDetailsOverview(progress, userBook))
 }
 
 func (h *progressHandler) GetLogModal(c echo.Context) error {
