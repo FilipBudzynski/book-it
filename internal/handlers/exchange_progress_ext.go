@@ -7,6 +7,14 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+var ExchangeDeclineAlertMessage = func(title, user string) string {
+	return fmt.Sprintf("Your exchange request for '%s' was declined by %s.", title, user)
+}
+
+var ExchangeAcceptedAlertMessage = func(title, user string) string {
+	return fmt.Sprintf("Your exchange request for '%s' was ACCEPTED by %s.", title, user)
+}
+
 type exchangeFormBinding struct {
 	DesiredBookID string `form:"desired-book-id"`
 	UserBookIDs   []string

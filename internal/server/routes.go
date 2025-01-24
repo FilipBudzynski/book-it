@@ -28,10 +28,10 @@ func (s *Server) WithMiddleware(e *echo.Echo) *Server {
 	return s
 }
 
-var notifyManager *handlers.ConnectionManager
+var notifyManager *handlers.NotificationManager
 
 func (s *Server) WithRegisterRoutes(e *echo.Echo) *Server {
-	db := s.db.Db
+	db := s.db
 
 	progressRepo := repositories.NewProgressRepository(db)
 	userRepo := repositories.NewUserRepository(db)
@@ -53,7 +53,7 @@ func (s *Server) WithRegisterRoutes(e *echo.Echo) *Server {
 		handlers.NewBookHandler(bookService, userBookService, userService),
 		handlers.NewUserBookHandler(userBookService),
 		handlers.NewProgressHandler(progressService, userBookService),
-		handlers.NewExchangeHandler(exchangeService, bookService, notifyManager),
+		handlers.NewExchangeHandler(exchangeService, bookService, userService).WithNotifier(notifyManager),
 	}
 
 	for _, routeRegistrar := range routeRegistrars {
@@ -68,32 +68,3 @@ func (s *Server) WithRegisterRoutes(e *echo.Echo) *Server {
 
 	return s
 }
-
-// func sseHandler(c echo.Context) error {
-// 	// Set headers for SSE
-// 	c.Response().Header().Set("Content-Type", "text/event-stream")
-// 	c.Response().Header().Set("Cache-Control", "no-cache")
-// 	c.Response().Header().Set("Connection", "keep-alive")
-//
-// 	// Create a channel to send data
-// 	dataCh := make(chan string)
-//
-// 	// Create a context for handling client disconnection
-// 	_, cancel := context.WithCancel(c.Request().Context())
-// 	defer cancel()
-//
-// 	// Send data to the client
-// 	go func() {
-// 		for data := range dataCh {
-// 			fmt.Fprintf(c.Response().Writer, "data: %s\n\n", data)
-// 			c.Response().Writer.(http.Flusher).Flush()
-// 		}
-// 	}()
-//
-// 	// Simulate sending data periodically
-// 	for {
-// 		dataCh <- time.Now().Format(time.TimeOnly)
-// 		time.Sleep(1 * time.Second)
-// 	}
-//
-// }

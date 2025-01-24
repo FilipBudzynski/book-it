@@ -10,11 +10,12 @@ import (
 	"github.com/FilipBudzynski/book_it/internal/database"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
 
 type Server struct {
 	port int
-	db   *database.Repository
+	db   *gorm.DB
 }
 
 func NewServer() *http.Server {

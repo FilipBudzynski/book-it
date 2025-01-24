@@ -21,17 +21,17 @@ func (r *userRepository) Create(user *models.User) error {
 
 func (r *userRepository) GetById(id string) (*models.User, error) {
 	user := &models.User{}
-	return user, r.db.Preload("Genres").First(user, id).Error
+	return user, r.db.Preload("Genres").Preload("Location").First(user, id).Error
 }
 
 func (r *userRepository) GetByGoogleID(googleID string) (*models.User, error) {
 	user := &models.User{}
-	return user, r.db.Preload("Genres").First(user, "google_id = ?", googleID).Error
+	return user, r.db.Preload("Genres").Preload("Location").First(user, "google_id = ?", googleID).Error
 }
 
 func (r *userRepository) GetByEmail(email string) (*models.User, error) {
 	user := &models.User{}
-	return user, r.db.First(user, "email = ?", email).Error
+	return user, r.db.Preload("Location").First(user, "email = ?", email).Error
 }
 
 func (r *userRepository) GetAll() ([]models.User, error) {
@@ -43,8 +43,9 @@ func (r *userRepository) Update(user *models.User) error {
 	return r.db.Session(&gorm.Session{FullSaveAssociations: true}).Save(user).Error
 }
 
-func (r *userRepository) Delete(user models.User) error {
-	return r.db.Delete(&user).Error
+func (r *userRepository) Delete(userID string) error {
+	//return r.db.Debug().Unscoped().Delete(&models.User{}, userID).Error
+    return r.db.Unscoped().Where("google_id = ?", userID).Delete(&models.User{}).Error
 }
 
 func (r *userRepository) AddGenre(user *models.User, genre *models.Genre) error {

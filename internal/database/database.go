@@ -17,7 +17,7 @@ import (
 
 var (
 	dburl      = os.Getenv("DB_URL")
-	dbInstance *Repository
+	dbInstance *gorm.DB
 )
 
 func init() {
@@ -26,8 +26,12 @@ func init() {
 		panic("failed to connect database")
 	}
 
+	if err := db.Exec("PRAGMA foreign_keys = ON;").Error; err != nil {
+		log.Fatalf("failed to enable foreign key support: %v", err)
+	}
+
 	// migration of models to database
-	 //db.Migrator().DropTable(&models.ExchangeRequest{}) // Drop the existing table
+	// db.Migrator().DropTable(&models.ExchangeRequest{}) // Drop the existing table
 	err = db.AutoMigrate(models.MigrateModels...)
 	if err != nil {
 		panic("failed to migrate database")
@@ -49,7 +53,7 @@ type Repository struct {
 	Db *gorm.DB
 }
 
-func New() *Repository {
+func New() *gorm.DB {
 	// Reuse Connection
 	if dbInstance != nil {
 		return dbInstance
@@ -62,10 +66,15 @@ func New() *Repository {
 		log.Fatal(err)
 	}
 
-	dbInstance = &Repository{
-		Db: db,
+	if err := db.Exec("PRAGMA foreign_keys = ON;").Error; err != nil {
+		log.Fatalf("failed to enable foreign key support: %v", err)
 	}
-	return dbInstance
+
+	return db
+	// dbInstance = &Repository{
+	// 	Db: db,
+	// }
+	// return dbInstance
 }
 
 // Health checks the health of the database connection by pinging the database.

@@ -12,14 +12,34 @@ function initMap() {
   const mapContainer = document.querySelector("#map");
 
   const myAPIKey = "e1a483fb384e43d28d5a8eb3698df683";
+
+  const markerIcon = L.icon({
+    iconUrl: `https://api.geoapify.com/v1/icon/?type=awesome&color=%232ea2ff&size=large&scaleFactor=2&apiKey=${myAPIKey}`,
+    iconSize: [38, 56],
+    iconAnchor: [19, 51],
+    popupAnchor: [0, -60],
+  });
+
   if (mapContainer) {
     if (currentMap) {
       currentMap.remove();
       currentMap = null;
     }
 
+    // Get initial latitude and longitude from hidden input fields
+    const latInput = document.querySelector("#geolocation-lat");
+    const lonInput = document.querySelector("#geolocation-lon");
+
+    let initialLat = 38.908838755401035; // Default latitude
+    let initialLon = -77.02346458179596; // Default longitude
+
+    if (latInput && lonInput && latInput.value && lonInput.value) {
+      initialLat = parseFloat(latInput.value);
+      initialLon = parseFloat(lonInput.value);
+    }
+
     currentMap = L.map("map", { zoomControl: false }).setView(
-      [38.908838755401035, -77.02346458179596],
+      [initialLat, initialLon],
       12,
     );
 
@@ -40,15 +60,17 @@ function initMap() {
         position: "bottomright",
       })
       .addTo(currentMap);
+
+    // Add marker at initial position if available
+    if (initialLat && initialLon) {
+      marker = L.marker([initialLat, initialLon], {
+        icon: markerIcon,
+      }).addTo(currentMap);
+      currentMap.panTo([initialLat, initialLon]);
+    }
   }
 
-  const markerIcon = L.icon({
-    iconUrl: `https://api.geoapify.com/v1/icon/?type=awesome&color=%232ea2ff&size=large&scaleFactor=2&apiKey=${myAPIKey}`,
-    iconSize: [38, 56],
-    iconAnchor: [19, 51],
-    popupAnchor: [0, -60],
-  });
-
+  // The rest of your initMap() logic remains the same
   window.handleLocationSelect = function (location) {
     if (marker) {
       marker.remove();
@@ -67,15 +89,14 @@ function initMap() {
       resultsContainer.style.display = "none";
     }
 
-    const latInput = document.querySelector("#geolocaction-lat");
-    const lonInput = document.querySelector("#geolocaction-lon");
+    const latInput = document.querySelector("#geolocation-lat");
+    const lonInput = document.querySelector("#geolocation-lon");
+    const locName = document.querySelector("#geolocation-name");
 
     if (latInput && lonInput) {
-      console.log("Updating lat and lon inputs"); // Log before updating the inputs
       latInput.value = location.lat;
       lonInput.value = location.lon;
-      console.log("Lat Input:", latInput.value); // Log the new value of the lat input
-      console.log("Lon Input:", lonInput.value); // Log the new value of the lon input
+      locName.value = location.formatted;
     } else {
       console.log("Lat and/or Lon input fields not found.");
     }

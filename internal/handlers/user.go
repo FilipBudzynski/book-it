@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/FilipBudzynski/book_it/cmd/web"
 	webUser "github.com/FilipBudzynski/book_it/cmd/web/user"
@@ -21,7 +22,7 @@ type UserService interface {
 	GetByEmail(email string) (*models.User, error)
 	GetByGoogleID(googleID string) (*models.User, error)
 	GetAll() ([]models.User, error)
-	Delete(u models.User) error
+	Delete(id string) error
 
 	AddGenre(userID, genre string) (*models.Genre, error)
 	RemoveGenre(userID, genre string) (*models.Genre, error)
@@ -45,8 +46,11 @@ func (h *UserHandler) RegisterRoutes(app *echo.Echo) {
 	group.Use(utils.CheckLoggedInMiddleware)
 	group.GET("", h.ListUsers)
 	group.GET("/profile", h.Profile)
+	group.GET("/profile/location/modal", h.GetLocationModal)
 	group.POST("/profile/genres/:genre_id", h.AddGenre)
 	group.DELETE("/profile/genres/:genre_id", h.RemoveGenre)
+	group.DELETE("", h.Delete)
+	group.POST("/profile/location", h.ChangeLocation)
 }
 
 func (h *UserHandler) CreateUser(c echo.Context) error {
@@ -86,6 +90,10 @@ func (h *UserHandler) Profile(c echo.Context) error {
 	return utils.RenderView(c, webUser.Profile(user, genres))
 }
 
+func (h *UserHandler) GetLocationModal(c echo.Context) error {
+	return utils.RenderView(c, webUser.LocationModal())
+}
+
 func (h *UserHandler) ListUsers(c echo.Context) error {
 	users, err := h.userService.GetAll()
 	if err != nil {
@@ -102,7 +110,6 @@ func (h *UserHandler) AddGenre(c echo.Context) error {
 	if err != nil {
 		return errs.HttpErrorUnauthorized(err)
 	}
-	fmt.Println("USER ID: ", userID)
 
 	genre, err := h.userService.AddGenre(userID, genreID)
 	if err != nil {
@@ -155,4 +162,61 @@ func (h *UserHandler) Navbar(c echo.Context) error {
 	}
 
 	return utils.RenderView(c, web.Navbar(user))
+}
+
+func (h *UserHandler) Delete(c echo.Context) error {
+	userID, err := utils.GetUserIDFromSession(c.Request())
+	if err != nil {
+		return errs.HttpErrorUnauthorized(err)
+	}
+
+	err = utils.RemoveCookieSession(c.Response().Writer, c.Request())
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+
+	err = h.userService.Delete(userID)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+
+	c.Response().Header().Set("HX-Redirect", "/")
+	return c.NoContent(http.StatusOK)
+}
+
+func (h *UserHandler) ChangeLocation(c echo.Context) error {
+	lat := c.FormValue("latitude")
+	lon := c.FormValue("longitude")
+	formatted := c.FormValue("formatted")
+
+	latParsed, err := strconv.ParseFloat(lat, 64)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+	lonParsed, err := strconv.ParseFloat(lon, 64)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+
+	userID, err := utils.GetUserIDFromSession(c.Request())
+	if err != nil {
+		return errs.HttpErrorUnauthorized(err)
+	}
+	user, err := h.userService.GetByGoogleID(userID)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+
+	loc := &models.Location{
+		Formatted: formatted,
+		Latitude:  latParsed,
+		Longitude: lonParsed,
+	}
+	user.Location = loc
+	err = h.userService.Update(user)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+
+	return c.NoContent(http.StatusOK)
 }

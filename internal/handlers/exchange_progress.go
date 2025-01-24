@@ -1,10 +1,12 @@
 package handlers
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"strconv"
 
+	webAlerts "github.com/FilipBudzynski/book_it/cmd/web/alerts"
 	webExchange "github.com/FilipBudzynski/book_it/cmd/web/exchange"
 	"github.com/FilipBudzynski/book_it/internal/errs"
 	"github.com/FilipBudzynski/book_it/internal/geo"
@@ -31,17 +33,23 @@ type ExchangeService interface {
 }
 
 type exchangeHandler struct {
-	exchangeService   ExchangeService
-	bookService       BookService
-	connectionManager *ConnectionManager
+	exchangeService ExchangeService
+	bookService     BookService
+	userService     UserService
+	notifier        *NotificationManager
 }
 
-func NewExchangeHandler(exchangeService ExchangeService, bookService BookService, connManager *ConnectionManager) *exchangeHandler {
+func NewExchangeHandler(exchangeService ExchangeService, bookService BookService, userService UserService) *exchangeHandler {
 	return &exchangeHandler{
-		exchangeService:   exchangeService,
-		bookService:       bookService,
-		connectionManager: connManager,
+		exchangeService: exchangeService,
+		bookService:     bookService,
+		userService:     userService,
 	}
+}
+
+func (h *exchangeHandler) WithNotifier(notifier *NotificationManager) *exchangeHandler {
+	h.notifier = notifier
+	return h
 }
 
 func (h *exchangeHandler) RegisterRoutes(app *echo.Echo) {
@@ -135,10 +143,23 @@ func (h *exchangeHandler) Details(c echo.Context) error {
 }
 
 func (h *exchangeHandler) GetNewExchangeModal(c echo.Context) error {
-	return utils.RenderView(c, webExchange.ExchangeModal(nil))
+	userID, err := utils.GetUserIDFromSession(c.Request())
+	if err != nil {
+		return errs.HttpErrorUnauthorized(err)
+	}
+	user, err := h.userService.GetByGoogleID(userID)
+    if err != nil {
+        return errs.HttpErrorInternalServerError(err)
+    }
+	return utils.RenderView(c, webExchange.ExchangeModal(nil, user))
 }
 
 func (h *exchangeHandler) GetPrefilledExchangeModal(c echo.Context) error {
+	userID, err := utils.GetUserIDFromSession(c.Request())
+	if err != nil {
+		return errs.HttpErrorUnauthorized(err)
+	}
+
 	bookID := c.QueryParam("book-id")
 
 	book, err := h.bookService.GetByID(bookID)
@@ -146,7 +167,12 @@ func (h *exchangeHandler) GetPrefilledExchangeModal(c echo.Context) error {
 		return errs.HttpErrorInternalServerError(err)
 	}
 
-	return utils.RenderView(c, webExchange.ExchangeModal(book))
+	user, err := h.userService.GetByGoogleID(userID)
+    if err != nil {
+        return errs.HttpErrorInternalServerError(err)
+    }
+
+	return utils.RenderView(c, webExchange.ExchangeModal(book, user))
 }
 
 func (h *exchangeHandler) Matches(c echo.Context) error {
@@ -226,7 +252,19 @@ func (h *exchangeHandler) AcceptMatch(c echo.Context) error {
 		return errs.HttpErrorInternalServerError(err)
 	}
 
-	return utils.RenderView(c, webExchange.MatchTableRow(match, request))
+	if h.notifier != nil {
+		matchedRequest := match.MatchedRequest(request.ID)
+		otherPartyUserID := matchedRequest.UserEmail
+
+		var buffer bytes.Buffer
+		_ = webAlerts.AlertSuccess(
+			ExchangeAcceptedAlertMessage(request.DesiredBook.Title, matchedRequest.UserEmail),
+			fmt.Sprintf("/exchange/details/%d", matchedRequest.ID),
+		).Render(c.Request().Context(), &buffer)
+		h.notifier.Notify(otherPartyUserID, buffer.String())
+	}
+
+	return utils.RenderView(c, webExchange.MatchDiv(match, request))
 }
 
 func (h *exchangeHandler) DeclineMatch(c echo.Context) error {
@@ -249,19 +287,16 @@ func (h *exchangeHandler) DeclineMatch(c echo.Context) error {
 		return errs.HttpErrorInternalServerError(err)
 	}
 
-	matchedRequest := match.MatchedRequest(request.ID)
-	otherPartyUserID := matchedRequest.UserEmail
+	if h.notifier != nil {
+		matchedRequest := match.MatchedRequest(request.ID)
+		otherPartyUserID := matchedRequest.UserEmail
 
-	fmt.Printf("Handler Exchanges: otherPartyID: %s\n", otherPartyUserID)
-	// send SSE notification
-	if msgChannel, ok := h.connectionManager.GetClientChannel(otherPartyUserID); ok {
-		select {
-		case msgChannel <- fmt.Sprintf("Your exchange request (ID: %s) was declined by the other party.", requestID):
-		default:
-			fmt.Println("Channel full or closed, message not sent")
-		}
-	} else {
-		fmt.Println("No active channel for the user")
+		var buffer bytes.Buffer
+		_ = webAlerts.AlertInfo(
+			ExchangeDeclineAlertMessage(request.DesiredBook.Title, matchedRequest.UserEmail),
+			fmt.Sprintf("/exchange/details/%d", matchedRequest.ID),
+		).Render(c.Request().Context(), &buffer)
+		h.notifier.Notify(otherPartyUserID, buffer.String())
 	}
 
 	return utils.RenderView(c, webExchange.MatchDiv(match, request))

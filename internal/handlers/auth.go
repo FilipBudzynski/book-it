@@ -64,6 +64,7 @@ func (a *AuthHandler) GetAuthCallbackFunc(c echo.Context) error {
 				Username: gothUser.Name,
 				Email:    gothUser.Email,
 				GoogleId: gothUser.UserID,
+                AvatarURL: gothUser.AvatarURL,
 			}
 			if err = a.userService.Create(user); err != nil {
 				return echo.NewHTTPError(http.StatusInternalServerError, err)

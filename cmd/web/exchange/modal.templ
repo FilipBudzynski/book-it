@@ -6,7 +6,7 @@ import "fmt"
 
 const keyUpDelay = 300
 
-templ ExchangeModal(book *models.Book) {
+templ ExchangeModal(book *models.Book, user *models.User) {
 	<form
 		method="dialog"
 		hx-on::load="initMap()"
@@ -63,8 +63,26 @@ templ ExchangeModal(book *models.Book) {
 						class="absolute z-40 mt-2 w-1/2 max-h-80 overflow-y-auto shadow-lg"
 					></div>
 					<!-- map -->
-					<input name="latitude" id="geolocaction-lat" value="" class="input hidden input-bordered w-full mt-2"/>
-					<input name="longitude" id="geolocaction-lon" value="" class="input hidden input-bordered w-full mt-2"/>
+					<input
+						name="latitude"
+						id="geolocation-lat"
+						if user.Location != nil {
+							value={ fmt.Sprintf("%f", user.Location.Latitude) }
+						} else {
+							value=""
+						}
+						class="input hidden input-bordered w-full mt-2"
+					/>
+					<input
+						name="longitude"
+						id="geolocation-lon"
+						if user.Location != nil {
+							value={ fmt.Sprintf("%f", user.Location.Longitude) }
+						} else {
+							value=""
+						}
+						class="input hidden input-bordered w-full mt-2"
+					/>
 					<input
 						class="input w-full mt-4"
 						name="geoloc-query"
@@ -75,6 +93,9 @@ templ ExchangeModal(book *models.Book) {
 						hx-trigger={ fmt.Sprintf("keyup changed delay:%dms", keyUpDelay) }
 						hx-target="#geoloc-results"
 						hx-swap="innerHTML"
+						if user.Location != nil {
+							value={ user.Location.Formatted }
+						}
 					/>
 					<div
 						class="relative rounded-lg"

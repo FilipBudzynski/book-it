@@ -10,4 +10,5 @@ var MigrateModels = []any{
 	&OfferedBook{},
 	&ExchangeMatch{},
 	&Genre{},
+    &Location{},
 }

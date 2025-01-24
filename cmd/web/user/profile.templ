@@ -6,6 +6,9 @@ import "github.com/FilipBudzynski/book_it/internal/models"
 import "github.com/FilipBudzynski/book_it/cmd/web"
 
 templ Profile(user *models.User, genres []*models.Genre) {
+	<dialog id="location_modal" class="modal modal-md">
+		<div class="modal-box" id="htmx_modal"></div>
+	</dialog>
 	<div class="max-w-screen-lg mx-auto items-start flex flex-col">
 		<div class="breadcrumbs text-lg">
 			<ul>
@@ -19,11 +22,50 @@ templ Profile(user *models.User, genres []*models.Genre) {
 		<div class="justify-center w-full ">
 			<div class="flex flex-col items-center ">
 				<div class="grid grid-cols-2 w-full items-start justify-between py-5 gap-6 ">
+					<!-- genres -->
 					<div class="felx justify-items-center">
 						<div class="flex flex-wrap gap-2 justify-start">
 							for _, genre := range genres {
 								@GenreButton(genre, user.ContainsGenre(genre.Name))
 							}
+						</div>
+					</div>
+					<!-- user info -->
+					<div class="flex flex-wrap gap-2 justify-start">
+						<div class="p-4 btn btn-neutral" disabled="disabled">
+							{ user.Username }
+						</div>
+						<div class="avatar">
+							<div class="w-32 rounded-full">
+								<img src={ user.AvatarURL }/>
+							</div>
+						</div>
+						<div class="p-4 btn btn-neutral" disabled="disabled">
+							{ user.Email }
+						</div>
+						if user.Location != nil {
+							<div class="p-4 btn btn-neutral">
+                                Change Default Location
+							</div>
+							<div class="p-4 btn btn-neutral" disabled="disabled">
+								{ user.Location.Formatted }
+							</div>
+						} else {
+							<div
+								class="p-4 btn btn-neutral"
+								hx-get="/users/profile/location/modal"
+								hx-push-url="true"
+								hx-swap="innerHTML"
+								hx-target="#htmx_modal"
+								hx-trigerr="click"
+								onclick="location_modal.showModal()"
+								class="btn btn-neutral btn-outline"
+							>
+								Default Location
+							</div>
+						}
+						<div class="p-4 btn btn-neutral" hx-delete="/users" hx-confirm="Are you sure you want to delete the account?">
+							Remove Account
 						</div>
 					</div>
 				</div>
@@ -145,3 +187,61 @@ templ Recommendations(books []*models.Book) {
 // 	hx-post="/users/profile/genres/Drama"
 // 	hx-swap="outerHTML"
 // ># Drama</button>
+templ LocationModal() {
+	<form
+		method="dialog"
+		hx-on::load="initMap()"
+	>
+		<button
+			class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+		>✕</button>
+	</form>
+	<h3 class="text-lg font-bold">Change default location</h3>
+	<div
+		class="flex-row relative"
+	>
+		<form id="location-form">
+				<!-- map -->
+				<input name="latitude" id="geolocation-lat" value="" class="input hidden input-bordered mt-2"/>
+				<input name="longitude" id="geolocation-lon" value="" class="input hidden input-bordered mt-2"/>
+				<input name="formatted" id="geolocation-name" value="" class="input hidden input-bordered mt-2"/>
+				<input
+					class="input w-full mt-4"
+					name="geoloc-query"
+					id="geoloc"
+					type="text"
+					placeholder="Enter your location"
+					hx-get="/exchange/localization"
+					hx-trigger={ fmt.Sprintf("keyup changed delay:%dms", 300) }
+					hx-target="#geoloc-results"
+					hx-swap="innerHTML"
+				/>
+				<div
+					class="relative rounded-lg"
+				>
+					<!-- Autocomplete Results -->
+					<div
+						id="geoloc-results"
+						class="absolute z-50 w-full max-h-80 overflow-y-auto bg-white shadow-lg rounded-lg"
+					></div>
+					<!-- Map Container -->
+					<div class="mt-4 rounded-lg">
+						<div
+							id="map"
+							class="rounded-lg"
+							style="width: 100%; height: 400px; z-index: 0;"
+						></div>
+					</div>
+				</div>
+				<!-- end map -->
+			<!-- if there is a button in form, it will close the modal -->
+			<div class="modal-action">
+				<button
+					class="btn"
+					hx-post="/users/profile/location"
+					onclick="location_modal.close()"
+				>Submit</button>
+			</div>
+		</form>
+	</div>
+}

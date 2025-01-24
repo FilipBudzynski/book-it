@@ -35,7 +35,7 @@ templ Base() {
 			<script src="https://unpkg.com/htmx.org@2.0.4"></script>
 			<script src="https://unpkg.com/htmx-ext-response-targets@2.0.0/response-targets.js"></script>
 			<script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
-			<script>htmx.config.getCacheBusterParam = true</script>
+			//<script>htmx.config.getCacheBusterParam = true</script>
 			// hyperscript
 			<script src="https://unpkg.com/hyperscript.org@0.9.13"></script>
 			<script src="/static/toast/toast.js" defer></script>
@@ -44,6 +44,7 @@ templ Base() {
 			<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 			<!-- geoapify -->
 			<script src="https://unpkg.com/@geoapify/geocoder-autocomplete@1.0.0/dist/geocoder-autocomplete.min.js"></script>
+			<script src="/static/geoapify/geoapify.js?r=123" defer></script>
 			<style>
        @keyframes fade-in {
          from { opacity: 0; }
@@ -93,20 +94,16 @@ templ Base() {
 			// tailwind flowbite 
 			<main class="base max-w-screen gap-2 px-6 pt-5">
 				<div id="navbar-container" hx-get="/navbar" hx-trigger="load" hx-swap="outerHTML"></div>
-				<div hx-ext="sse" sse-connect="/sse" sse-swap="message">No events so far</div>
 				<div id="content-container" class="sample-transition" hx-history-elt>
 					{ children... }
 					@Loading()
 				</div>
+				<div hx-ext="sse" sse-connect="/sse" sse-swap="message" class="toast toast-start z-50" hx-swap="beforeend"></div>
 				<div id="toast-container" class="toast toast-start z-50"></div>
 				<div id="alert-container" class=""></div>
 			</main>
-			<!-- <script>  -->
-			<!--              htmx.onLoad(function(content) {  -->
-			<!--              initializeMap();  -->
-			<!--              });  -->
-			<!--          </script> -->
-			<script src="/static/geoapify/geoapify.js" defer></script>
 		</body>
 	</html>
 }
+
+

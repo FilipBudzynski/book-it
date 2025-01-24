@@ -13,7 +13,7 @@ type UserRepository interface {
 	GetByEmail(email string) (*models.User, error)
 	GetAll() ([]models.User, error)
 	Update(user *models.User) error
-	Delete(user models.User) error
+	Delete(userID string) error
 	FirstGenre(genreID string) (*models.Genre, error)
 	GetAllGenres() ([]*models.Genre, error)
 	AddGenre(user *models.User, genre *models.Genre) error
@@ -94,8 +94,8 @@ func (s *userService) Update(user *models.User) error {
 	return s.repo.Update(user)
 }
 
-func (s *userService) Delete(user models.User) error {
-	return s.repo.Delete(user)
+func (s *userService) Delete(userID string) error {
+	return s.repo.Delete(userID)
 }
 
 func (s *userService) GetAllGenres() ([]*models.Genre, error) {

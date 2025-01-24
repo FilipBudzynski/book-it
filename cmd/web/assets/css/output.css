@@ -1061,6 +1061,10 @@ video {
   border-radius: 1.5rem;
 }
 
+.rounded-full {
+  border-radius: 9999px;
+}
+
 .rounded-lg {
   border-radius: 0.5rem;
 }
@@ -1329,6 +1333,10 @@ video {
   color: rgb(255 255 255 / var(--tw-text-opacity));
 }
 
+.opacity-0 {
+  opacity: 0;
+}
+
 .opacity-100 {
   opacity: 1;
 }
@@ -1458,6 +1466,14 @@ video {
 .focus\:ring-blue-300:focus {
   --tw-ring-opacity: 1;
   --tw-ring-color: rgb(147 197 253 / var(--tw-ring-opacity));
+}
+
+.htmx-added\:opacity-0.htmx-added {
+  opacity: 0;
+}
+
+.htmx-added .htmx-added\:opacity-0 {
+  opacity: 0;
 }
 
 @media (min-width: 640px) {

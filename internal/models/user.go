@@ -4,18 +4,32 @@ import (
 	"errors"
 	"slices"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 )
 
 type User struct {
+	GoogleId  string `gorm:"primaryKey;column:google_id" json:"google_id"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt `gorm:"index"`
+	Username  string         `gorm:"not null" json:"username"`
+	Email     string         `gorm:"unique;not null;" json:"email"`
+	// Books            []UserBook        `gorm:"constraint:OnDelete:CASCADE;"`
+	Books            []UserBook        `gorm:"foreignKey:UserGoogleId;constraint:OnDelete:CASCADE;"` // Ensure CASCADE delete on UserBook
+	ExchangeRequests []ExchangeRequest `gorm:"foreignKey:UserGoogleId;constraint:OnDelete:CASCADE;"`
+	Genres           []Genre           `gorm:"many2many:user_genres;constraint:OnDelete:CASCADE;"`
+	AvatarURL        string
+	Location         *Location `gorm:"foreignKey:UserGoogleId;constraint:OnDelete:CASCADE;"`
+}
+
+type Location struct {
 	gorm.Model
-	GoogleId         string            `gorm:"primaryKey" json:"google_id"`
-	Username         string            `gorm:"not null" json:"username"`
-	Email            string            `gorm:"unique;not null" json:"email"`
-	Books            []UserBook        `gorm:"onDelete:CASCADE"`
-	ExchangeRequests []ExchangeRequest `gorm:"foreignKey:UserGoogleId;onDelete:CASCADE"`
-	Genres           []Genre           `gorm:"many2many:user_genres;"`
+	UserGoogleId string `gorm:"not null;"`
+	Latitude     float64
+	Longitude    float64
+	Formatted    string
 }
 
 var (

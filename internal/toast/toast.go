@@ -78,12 +78,11 @@ func HandleToast(err error, c echo.Context) {
 	te, ok := he.Unwrap().(Toast)
 
 	if !ok {
-        return
-		fmt.Println(err)
-		te = Danger("there has been an unexpected error")
+		return
+		// te = Danger("there has been an unexpected error")
 	}
 
-	if te.Level != SUCCESS && te.Level != INFO && ok{
+	if te.Level != SUCCESS && te.Level != INFO && ok {
 		c.Response().Header().Set("HX-Reswap", "none")
 	}
 

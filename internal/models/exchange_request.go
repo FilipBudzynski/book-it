@@ -56,11 +56,12 @@ var (
 type ExchangeRequest struct {
 	gorm.Model
 	UserEmail     string
-	UserGoogleId  string        `gorm:"type:text;not null"`
-	User          User          
+	UserGoogleId  string        `gorm:"not null"`
+	//User          User          
+    User          User          `gorm:"foreignKey:UserGoogleId;references:GoogleId;"`
 	DesiredBookID string        `gorm:"not null,foreignKey:BookID" form:"book_id"`
 	DesiredBook   Book          `gorm:"foreignKey:DesiredBookID;constraint:OnDelete:SET NULL"`
-	OfferedBooks  []OfferedBook `gorm:"constraint:OnDelete:SET NULL"`
+	OfferedBooks  []OfferedBook `gorm:"onDelete:CASCADE"`
 	Status        ExchangeRequestStatus
 	Matches       []ExchangeMatch `gorm:"constraint:OnDelete:CASCADE,OnUpdate:CASCADE"`
 	Latitude      float64
