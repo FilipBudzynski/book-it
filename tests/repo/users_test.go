@@ -147,6 +147,11 @@ func TestCascadeDeleteExchangeRequest(t *testing.T) {
 		UserGoogleId:  "123",
 		UserEmail:     "test@example.com",
 		DesiredBookID: "book1",
+		OfferedBooks: []models.OfferedBook{
+			{
+				BookID: "book2",
+			},
+		},
 	}
 
 	if err := db.Create(&exchangeRequest).Error; err != nil {

@@ -55,13 +55,13 @@ var (
 
 type ExchangeRequest struct {
 	gorm.Model
-	UserEmail     string
-	UserGoogleId  string        `gorm:"not null"`
-	//User          User          
-    User          User          `gorm:"foreignKey:UserGoogleId;references:GoogleId;"`
-	DesiredBookID string        `gorm:"not null,foreignKey:BookID" form:"book_id"`
+	UserEmail    string
+	UserGoogleId string `gorm:"not null"`
+	// User          User
+	User          User          `gorm:"foreignKey:UserGoogleId;references:GoogleId;"`
+	DesiredBookID string        `gorm:"not null;" form:"book_id"`
 	DesiredBook   Book          `gorm:"foreignKey:DesiredBookID;constraint:OnDelete:SET NULL"`
-	OfferedBooks  []OfferedBook `gorm:"onDelete:CASCADE"`
+	OfferedBooks  []OfferedBook `gorm:"constraint:OnDelete:CASCADE"`
 	Status        ExchangeRequestStatus
 	Matches       []ExchangeMatch `gorm:"constraint:OnDelete:CASCADE,OnUpdate:CASCADE"`
 	Latitude      float64
@@ -114,6 +114,6 @@ func (e *ExchangeRequest) checkDuplicates() error {
 type OfferedBook struct {
 	gorm.Model
 	ExchangeRequestID uint
-	BookID            string `gorm:"not null,foreignKey:BookID" form:"book_id"`
-	Book              Book   `gorm:"foreignKey:BookID;constraint:OnDelete:SET NULL"`
+	BookID            string `gorm:"not null;" form:"book_id"`
+	Book              Book   `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE"`
 }
