@@ -68,7 +68,7 @@ func (h *BookHandler) ListBooks(c echo.Context) error {
 
 	books, userBooks, err := h.getBooksAndUserData(c, query, queryType, 1)
 	if err != nil {
-		return err
+		return errs.HttpErrorInternalServerError(err)
 	}
 	return utils.RenderView(c, web_books.BooksPost(books, userBooks, 2, query))
 }
@@ -133,17 +133,17 @@ func (h *BookHandler) getBooksAndUserData(c echo.Context, query, queryTypeString
 
 	books, err := h.bookService.GetByQuery(query, queryType, page)
 	if err != nil {
-		return nil, nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return nil, nil, err
 	}
 
 	userID, err := utils.GetUserIDFromSession(c.Request())
 	if err != nil {
-		return nil, nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return nil, nil, err
 	}
 
 	userBooks, err := h.userBooksService.GetAll(userID)
 	if err != nil {
-		return nil, nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return nil, nil, err
 	}
 
 	return books, userBooks, nil

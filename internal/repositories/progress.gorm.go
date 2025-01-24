@@ -16,7 +16,7 @@ func NewProgressRepository(db *gorm.DB) *progressRepository {
 }
 
 func (r *progressRepository) Create(progress models.ReadingProgress) error {
-	return r.db.Create(&progress).Error
+	return r.db.Debug().Create(&progress).Error
 }
 
 func (r *progressRepository) GetById(id string) (*models.ReadingProgress, error) {

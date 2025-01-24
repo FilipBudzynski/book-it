@@ -21,12 +21,12 @@ var (
 )
 
 func init() {
-	db, err := gorm.Open(sqlite.Open(dburl), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(dburl+"?_fk=1"), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
 	}
 
-	if err := db.Exec("PRAGMA foreign_keys = ON;").Error; err != nil {
+	if err := db.Exec("PRAGMA foreign_keys = ON", nil).Error; err != nil {
 		log.Fatalf("failed to enable foreign key support: %v", err)
 	}
 
@@ -59,14 +59,14 @@ func New() *gorm.DB {
 		return dbInstance
 	}
 
-	db, err := gorm.Open(sqlite.Open(dburl), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(dburl+"?_fk=1"), &gorm.Config{})
 	if err != nil {
 		// This will not be a connection error, but a DSN parse error or
 		// another initialization error.
 		log.Fatal(err)
 	}
 
-	if err := db.Exec("PRAGMA foreign_keys = ON;").Error; err != nil {
+	if err := db.Exec("PRAGMA foreign_keys = ON", nil).Error; err != nil {
 		log.Fatalf("failed to enable foreign key support: %v", err)
 	}
 

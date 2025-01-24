@@ -847,6 +847,10 @@ video {
   width: 70rem;
 }
 
+.w-\[8rem\] {
+  width: 8rem;
+}
+
 .w-auto {
   width: auto;
 }

@@ -43,25 +43,24 @@ templ Profile(user *models.User, genres []*models.Genre) {
 						<div class="p-4 btn btn-neutral" disabled="disabled">
 							{ user.Email }
 						</div>
+						<div
+							class="p-4 btn btn-neutral"
+							hx-get="/users/profile/location/modal"
+							hx-swap="innerHTML"
+							hx-target="#htmx_modal"
+							hx-trigerr="click"
+							onclick="location_modal.showModal()"
+							class="btn btn-neutral btn-outline"
+						>
+							if user.Location == nil {
+								Set Default Location
+							} else {
+								Change Default Location
+							}
+						</div>
 						if user.Location != nil {
-							<div class="p-4 btn btn-neutral">
-                                Change Default Location
-							</div>
 							<div class="p-4 btn btn-neutral" disabled="disabled">
 								{ user.Location.Formatted }
-							</div>
-						} else {
-							<div
-								class="p-4 btn btn-neutral"
-								hx-get="/users/profile/location/modal"
-								hx-push-url="true"
-								hx-swap="innerHTML"
-								hx-target="#htmx_modal"
-								hx-trigerr="click"
-								onclick="location_modal.showModal()"
-								class="btn btn-neutral btn-outline"
-							>
-								Default Location
 							</div>
 						}
 						<div class="p-4 btn btn-neutral" hx-delete="/users" hx-confirm="Are you sure you want to delete the account?">
@@ -187,7 +186,7 @@ templ Recommendations(books []*models.Book) {
 // 	hx-post="/users/profile/genres/Drama"
 // 	hx-swap="outerHTML"
 // ># Drama</button>
-templ LocationModal() {
+templ LocationModal(user *models.User) {
 	<form
 		method="dialog"
 		hx-on::load="initMap()"
@@ -201,39 +200,65 @@ templ LocationModal() {
 		class="flex-row relative"
 	>
 		<form id="location-form">
-				<!-- map -->
-				<input name="latitude" id="geolocation-lat" value="" class="input hidden input-bordered mt-2"/>
-				<input name="longitude" id="geolocation-lon" value="" class="input hidden input-bordered mt-2"/>
-				<input name="formatted" id="geolocation-name" value="" class="input hidden input-bordered mt-2"/>
-				<input
-					class="input w-full mt-4"
-					name="geoloc-query"
-					id="geoloc"
-					type="text"
-					placeholder="Enter your location"
-					hx-get="/exchange/localization"
-					hx-trigger={ fmt.Sprintf("keyup changed delay:%dms", 300) }
-					hx-target="#geoloc-results"
-					hx-swap="innerHTML"
-				/>
+			<!-- map -->
+			<input
+				name="latitude"
+				id="geolocation-lat"
+				if user.Location != nil {
+					value={ fmt.Sprintf("%f", user.Location.Latitude) }
+				} else {
+					value=""
+				}
+				class="input hidden input-bordered mt-2"
+			/>
+			<input
+				name="longitude"
+				id="geolocation-lon"
+				if user.Location != nil {
+					value={ fmt.Sprintf("%f", user.Location.Longitude) }
+				} else {
+					value=""
+				}
+				class="input hidden input-bordered mt-2"
+			/>
+			<input
+				name="formatted"
+				id="geolocation-name"
+				value=""
+				class="input hidden input-bordered mt-2"
+			/>
+			<input
+				class="input w-full mt-4"
+				name="geoloc-query"
+				id="geoloc"
+				type="text"
+				placeholder="Enter your location"
+				hx-get="/exchange/localization"
+				hx-trigger={ fmt.Sprintf("keyup changed delay:%dms", 300) }
+				hx-target="#geoloc-results"
+				hx-swap="innerHTML"
+				if user.Location != nil {
+					value={ user.Location.Formatted }
+				}
+			/>
+			<div
+				class="relative rounded-lg"
+			>
+				<!-- Autocomplete Results -->
 				<div
-					class="relative rounded-lg"
-				>
-					<!-- Autocomplete Results -->
+					id="geoloc-results"
+					class="absolute z-50 w-full max-h-80 overflow-y-auto bg-white shadow-lg rounded-lg"
+				></div>
+				<!-- Map Container -->
+				<div class="mt-4 rounded-lg">
 					<div
-						id="geoloc-results"
-						class="absolute z-50 w-full max-h-80 overflow-y-auto bg-white shadow-lg rounded-lg"
+						id="map"
+						class="rounded-lg"
+						style="width: 100%; height: 400px; z-index: 0;"
 					></div>
-					<!-- Map Container -->
-					<div class="mt-4 rounded-lg">
-						<div
-							id="map"
-							class="rounded-lg"
-							style="width: 100%; height: 400px; z-index: 0;"
-						></div>
-					</div>
 				</div>
-				<!-- end map -->
+			</div>
+			<!-- end map -->
 			<!-- if there is a button in form, it will close the modal -->
 			<div class="modal-action">
 				<button

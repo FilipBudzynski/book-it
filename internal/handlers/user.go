@@ -91,7 +91,15 @@ func (h *UserHandler) Profile(c echo.Context) error {
 }
 
 func (h *UserHandler) GetLocationModal(c echo.Context) error {
-	return utils.RenderView(c, webUser.LocationModal())
+	userID, err := utils.GetUserIDFromSession(c.Request())
+	if err != nil {
+		return errs.HttpErrorUnauthorized(err)
+	}
+	user, err := h.userService.GetByGoogleID(userID)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+	return utils.RenderView(c, webUser.LocationModal(user))
 }
 
 func (h *UserHandler) ListUsers(c echo.Context) error {
@@ -170,12 +178,12 @@ func (h *UserHandler) Delete(c echo.Context) error {
 		return errs.HttpErrorUnauthorized(err)
 	}
 
-	err = utils.RemoveCookieSession(c.Response().Writer, c.Request())
+	err = h.userService.Delete(userID)
 	if err != nil {
 		return errs.HttpErrorInternalServerError(err)
 	}
 
-	err = h.userService.Delete(userID)
+	err = utils.RemoveCookieSession(c.Response().Writer, c.Request())
 	if err != nil {
 		return errs.HttpErrorInternalServerError(err)
 	}
