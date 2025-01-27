@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"time"
 
 	webProgress "github.com/FilipBudzynski/book_it/cmd/web/progress"
 	"github.com/FilipBudzynski/book_it/internal/errs"
@@ -25,13 +24,13 @@ type ProgressService interface {
 	Get(id string) (*models.ReadingProgress, error)
 	GetByUserBookId(userBookId string) (*models.ReadingProgress, error)
 	GetProgressAssosiatedWithLogId(id string) (*models.ReadingProgress, error)
-	UpdateTargetPages(progressId uint, date time.Time) error
+	UpdateTargetPages(progressID string, logID uint) error
 	Delete(id string) error
 
 	// log methods
 	GetLog(id string) (*models.DailyProgressLog, error)
 	UpdateLog(id string, pagesRead int, comment string) (*models.DailyProgressLog, error)
-	RefreshTargetPagesForNewDay(id uint, date time.Time) error
+	RefreshTargetPagesForNewDay(progressID string, logID uint) error
 }
 
 type progressHandler struct {
@@ -90,9 +89,10 @@ func (h *progressHandler) GetByUserBookId(c echo.Context) error {
 		return errs.HttpErrorBadRequest(err)
 	}
 
-	if err := h.progressService.RefreshTargetPagesForNewDay(progress.ID, utils.TodaysDate()); err != nil {
-		return errs.HttpErrorInternalServerError(err)
-	}
+	// progressID := fmt.Sprintf("%d", progress.ID)
+	// if err := h.progressService.RefreshTargetPagesForNewDay(progressID); err != nil {
+	// 	return errs.HttpErrorInternalServerError(err)
+	// }
 
 	return utils.RenderView(c, webProgress.ProgressStatistics(progress))
 }
@@ -135,7 +135,8 @@ func (h *progressHandler) UpdateLog(c echo.Context) error {
 		return errs.HttpErrorInternalServerError(err)
 	}
 
-	if err := h.progressService.UpdateTargetPages(log.ReadingProgressID, log.Date); err != nil {
+	progressID := fmt.Sprintf("%d", log.ReadingProgressID)
+	if err := h.progressService.UpdateTargetPages(progressID, log.ID); err != nil {
 		return errs.HttpErrorInternalServerError(err)
 	}
 

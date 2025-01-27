@@ -16,12 +16,8 @@ type (
 )
 
 const (
-	ExchangeRequestStatusPending    ExchangeRequestStatus = "pending"
-	ExchangeRequestStatusMatched    ExchangeRequestStatus = "matched"
-	ExchangeRequestStatusAccepted   ExchangeRequestStatus = "accepted"
-	ExchangeRequestStatusRejected   ExchangeRequestStatus = "recjected"
-	ExchangeRequestStatusFoundMatch ExchangeRequestStatus = "found match"
-	ExchangeRequestStatusActive     ExchangeRequestStatus = "active"
+	ExchangeRequestStatusCompleted    ExchangeRequestStatus = "completed"
+	ExchangeRequestStatusActive       ExchangeRequestStatus = "active"
 )
 
 func (s ExchangeRequestStatus) String() string {
@@ -30,16 +26,10 @@ func (s ExchangeRequestStatus) String() string {
 
 func (s ExchangeRequestStatus) Badge() string {
 	switch s {
-	case ExchangeRequestStatusPending:
-		return "neutral"
-	case ExchangeRequestStatusMatched,
-		ExchangeRequestStatusFoundMatch:
-		return "info"
-	case ExchangeRequestStatusAccepted,
-		ExchangeRequestStatusActive:
+	case ExchangeRequestStatusCompleted:
 		return "success"
-	case ExchangeRequestStatusRejected:
-		return "error"
+	case ExchangeRequestStatusActive:
+		return "info"
 	}
 	return "secondary"
 }
@@ -55,9 +45,8 @@ var (
 
 type ExchangeRequest struct {
 	gorm.Model
-	UserEmail    string
-	UserGoogleId string `gorm:"not null"`
-	// User          User
+	UserEmail     string
+	UserGoogleId  string        `gorm:"not null"`
 	User          User          `gorm:"foreignKey:UserGoogleId;references:GoogleId;"`
 	DesiredBookID string        `gorm:"not null;" form:"book_id"`
 	DesiredBook   Book          `gorm:"foreignKey:DesiredBookID;constraint:OnDelete:SET NULL"`

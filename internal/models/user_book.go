@@ -18,7 +18,6 @@ type UserBook struct {
 	UserGoogleId    string `gorm:"not null;"` // foreignKey
 	BookID          string `gorm:"not null"`
 	Book            Book
-	//ReadingProgress *ReadingProgress `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
     ReadingProgress *ReadingProgress `gorm:"foreignKey:UserBookID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }
 

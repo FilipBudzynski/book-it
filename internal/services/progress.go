@@ -57,7 +57,7 @@ func (s *progressService) Create(bookId uint, totalPages int, bookTitle, startDa
 	for i := range days {
 
 		logDate := startDateParsed.AddDate(0, 0, i)
-		if logDate.Before(today) {
+		if logDate.Before(today) || logDate.Equal(today) {
 			logTargetPages = CalculateTargetPages(totalPages, days-i)
 		}
 
@@ -126,70 +126,79 @@ func (s *progressService) UpdateLog(id string, pagesRead int, comment string) (*
 	return log, nil
 }
 
-func (s *progressService) RefreshTargetPagesForNewDay(progressId uint, date time.Time) error {
-	return s.updateTargetPages(progressId, date, false)
+func (s *progressService) RefreshTargetPagesForNewDay(progressID string, logID uint) error {
+	return s.updateTargetPages(progressID, logID)
 }
 
-func (s *progressService) UpdateTargetPages(progressId uint, updatedLogDate time.Time) error {
-	return s.updateTargetPages(progressId, updatedLogDate, true)
+func (s *progressService) UpdateTargetPages(progressID string, logID uint) error {
+	return s.updateTargetPages(progressID, logID)
 }
 
-func (s *progressService) updateTargetPages(progressId uint, referenceDate time.Time, includeEqualDate bool) error {
-	progress, err := s.repo.GetById(strconv.FormatUint(uint64(progressId), 10))
+func (s *progressService) updateTargetPages(progressID string, logID uint) error {
+	progress, err := s.repo.GetById(progressID)
 	if err != nil {
 		return err
 	}
-	original := *progress
 
-	pagesLeft := progress.PagesLeft()
-	daysLeft := progress.DaysLeft(utils.TodaysDate()) + 1
-
-	latestPositiveLog := progress.GetLatestPositiveLog()
-	if latestPositiveLog != nil && !latestPositiveLog.IsEmptyOrOverdue(utils.TodaysDate()) {
-		daysLeft = progress.DaysLeft(latestPositiveLog.Date)
-	}
-	progress.DailyTargetPages = CalculateTargetPages(pagesLeft, daysLeft)
-
-	if err := progress.Validate(); err != nil {
-		return err
+	if progress.Completed {
+		return nil
 	}
 
+	pagesLeft := progress.TotalPages
+	var targetPages int
 	for i := range progress.DailyProgress {
 		log := &progress.DailyProgress[i]
-		if log.Date.Before(referenceDate) || (includeEqualDate && log.Date.Equal(referenceDate)) {
+
+		if log.ID == logID {
+			if log.Date.Equal(utils.TodaysDate()) {
+				pagesLeft -= max(log.PagesRead, log.TargetPages)
+			} else {
+				pagesLeft -= log.PagesRead
+			}
 			continue
 		}
 
-		if log.Date.After(utils.TodaysDate()) {
-			log.TargetPages = progress.DailyTargetPages
-		} else {
+		if log.Date.Before(utils.TodaysDate()) {
 			log.TargetPages = CalculateTargetPages(pagesLeft, log.DaysLeft(progress.EndDate))
+			pagesLeft -= max(log.PagesRead, targetPages)
+			continue
 		}
 
-		if err := log.Validate(); err != nil {
-			return err
-		}
+		log.TargetPages = CalculateTargetPages(pagesLeft, log.DaysLeft(progress.EndDate))
+		pagesLeft -= log.TargetPages
 	}
-
-	if !progress.Equal(original) {
-		return s.repo.Update(progress)
-	}
-	return nil
+	progress.DailyTargetPages = targetPages
+	return s.repo.Update(progress)
 }
 
+// func CalculateTargetPages(pagesLeft, daysLeft int) int {
+// 	if pagesLeft < 0 {
+// 		return -1
+// 	}
+//
+// 	switch {
+// 	case daysLeft == 0:
+// 		return pagesLeft
+// 	case daysLeft > 0:
+// 		return int((pagesLeft + daysLeft - 1) / daysLeft)
+// 	default:
+// 		return -1
+// 	}
+// }
+
 func CalculateTargetPages(pagesLeft, daysLeft int) int {
-	if pagesLeft < 0 {
-		return -1
+	// Validate inputs
+	if pagesLeft < 0 || daysLeft < 0 {
+		return -1 // Invalid input
 	}
 
-	switch {
-	case daysLeft == 0:
-		return pagesLeft
-	case daysLeft > 0:
-		return int((pagesLeft + daysLeft - 1) / daysLeft)
-	default:
-		return -1
+	// Handle special case where daysLeft is zero
+	if daysLeft == 0 {
+		return pagesLeft // All remaining pages must be read in one day
 	}
+
+	// Calculate target pages using ceiling division
+	return (pagesLeft + daysLeft - 1) / daysLeft
 }
 
 func (s *progressService) GetLog(id string) (*models.DailyProgressLog, error) {

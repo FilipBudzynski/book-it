@@ -63,6 +63,8 @@ func (s *exchangeService) AcceptMatch(matchID, requestID string) (*models.Exchan
 
 	if match.Request1Decision.Accepted() && match.Request2Decision.Accepted() {
 		match.Status = models.MatchStatusAccepted
+		match.Request.Status = models.ExchangeRequestStatusCompleted
+		match.MatchedExchangeRequest.Status = models.ExchangeRequestStatusCompleted
 	} else if match.Request1Decision.Declined() || match.Request2Decision.Declined() {
 		match.Status = models.MatchStatusDeclined
 	}

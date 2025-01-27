@@ -11,23 +11,36 @@ templ LogDiv(log models.DailyProgressLog) {
 		id={ fmt.Sprintf("log-container-%d", log.ID) }
 	>
 		<input type="radio" name="my-acordion-1"/>
-		<div class="collapse-title flex flex-col gap-2 w-full">
+		<div
+			if log.Date.Before(Today()) {
+				class="collapse-title flex flex-col gap-2 w-full opacity-50"
+			} else {
+				class="collapse-title flex flex-col gap-2 w-full"
+			}
+		>
+			if log.Date.Equal(Today()) {
+				<div class="flex flex-row justify-between space-x-2 items-baseline">
+					<div class="badge badge-primary">Today</div>
+				</div>
+			}
 			<div class="flex flex-row justify-between space-x-2 items-baseline">
-				<article class="prose">
-					<span>Read <b>{ fmt.Sprintf("%d",log.PagesRead) }</b> of <b>{ fmt.Sprintf("%d",log.TargetPages) }</b> for today </span>
-					<!-- <span>{ fmt.Sprintf("Read <b>%d</b> pages of <b>%d</b> for today", log.PagesRead, log.TargetPages) } </span> -->
-					if log.Date.Before(Today()) {
-						<span class="scale-125">
-							if log.PagesRead == 0 {
-								😰
-							} else if log.PagesRead < log.TargetPages {
-								😁
-							} else if log.PagesRead >= log.TargetPages {
-								🔥
-							}
-						</span>
-					}
-				</article>
+				<div>
+					<article class="prose">
+						<span>Read <b>{ fmt.Sprintf("%d",log.PagesRead) }</b> of <b>{ fmt.Sprintf("%d",log.TargetPages) }</b> pages </span>
+						<!-- <span>{ fmt.Sprintf("Read <b>%d</b> pages of <b>%d</b> for today", log.PagesRead, log.TargetPages) } </span> -->
+						if log.Date.Before(Today()) {
+							<span class="scale-125">
+								if log.PagesRead == 0 {
+									😰
+								} else if log.PagesRead < log.TargetPages {
+									😁
+								} else if log.PagesRead >= log.TargetPages {
+									🔥
+								}
+							</span>
+						}
+					</article>
+				</div>
 				<div class="space-x-2">
 					if log.Comment != "" {
 						<span>🗒️</span>
@@ -39,13 +52,15 @@ templ LogDiv(log models.DailyProgressLog) {
 				</div>
 			</div>
 		</div>
-		<div class="collapse-content">
-			<div class="flex flex-col gap-2">
-				<article>
-					<h5>Notes:</h5>
-					<span>{ log.Comment }</span>
-				</article>
+		if log.Comment != "" {
+			<div class="collapse-content">
+				<div class="flex flex-col gap-2">
+					<article>
+						<h5 class="opacity-50">Notes:</h5>
+						<span>{ log.Comment }</span>
+					</article>
+				</div>
 			</div>
-		</div>
+		}
 	</div>
 }

@@ -25,15 +25,17 @@ func NewConnectionManager() *NotificationManager {
 func (cm *NotificationManager) AddClient(userID string, ch chan string) {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
-	cm.clients[userID] = ch
-	fmt.Println("Added client: ", userID)
+	if _, exists := cm.clients[userID]; !exists {
+		cm.clients[userID] = ch
+		fmt.Println("Added client:", userID)
+	}
 }
 
 func (cm *NotificationManager) RemoveClient(userID string) {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
 	if ch, exists := cm.clients[userID]; exists {
-		close(ch) // Close the channel to stop sending messages
+		close(ch)
 		delete(cm.clients, userID)
 		fmt.Println("Removed client:", userID)
 	}
@@ -59,28 +61,39 @@ func (cm *NotificationManager) SseHandler(c echo.Context) error {
 
 	dataCh, ok := cm.GetClientChannel(userID)
 	if !ok {
-		dataCh = make(chan string)
+		dataCh = make(chan string, 10)
 		cm.AddClient(userID, dataCh)
 	}
 
-	_, cancel := context.WithCancel(c.Request().Context())
-	defer cancel()
+	ctx, cancel := context.WithCancel(c.Request().Context())
+	defer func() {
+		cancel()
+		cm.RemoveClient(userID)
+	}()
 
-	for {
-		select {
-		case data := <-dataCh:
-			fmt.Fprintf(c.Response().Writer, "data: %s\n\n", data)
+	go func() {
+		for {
+			select {
+			case data, ok := <-dataCh:
+				if !ok {
+					return
+				}
 
-			if flusher, ok := c.Response().Writer.(http.Flusher); ok {
-				flusher.Flush()
+				_, _ = fmt.Fprintf(w.Writer, "data: %s\n\n", data)
+				if flusher, ok := w.Writer.(http.Flusher); ok {
+					flusher.Flush()
+				}
+
+			case <-ctx.Done():
+				return
 			}
-
-		case <-c.Request().Context().Done():
-			fmt.Println("Client disconnected")
-			cm.RemoveClient(userID)
-			return nil
 		}
-	}
+	}()
+
+	<-ctx.Done()
+	fmt.Println("Client disconnected:", userID)
+
+	return nil
 }
 
 func (cm *NotificationManager) Notify(userID string, message string) {

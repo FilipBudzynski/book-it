@@ -3,6 +3,7 @@ package services
 import (
 	"fmt"
 
+	"github.com/FilipBudzynski/book_it/internal/geo"
 	"github.com/FilipBudzynski/book_it/internal/models"
 )
 
@@ -118,4 +119,8 @@ func getOfferedBookIDs(offeredBooks []models.OfferedBook) []string {
 		ids[i] = book.BookID
 	}
 	return ids
+}
+
+func (s *exchangeService) GetLocalizationAutocomplete(query string) ([]geo.Result, error) {
+	return geo.GetLocalizationAutocomplete(query)
 }

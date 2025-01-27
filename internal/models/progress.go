@@ -9,6 +9,17 @@ import (
 
 const MaxDailyLogs = 365
 
+var (
+	ErrProgressCurrentPageGreaterThanTotal = errors.New("current page cannot be greater than total pages")
+	ErrProgressCurrentPageNegative         = errors.New("current page cannot be negative")
+	ErrProgressDailyTargetPagesNegative    = errors.New("daily target pages cannot be negative")
+	ErrProgressDaysLeftNegative            = errors.New("days left cannot be negative")
+	ErrProgressInvalidEndDate              = errors.New("end date must be after start date")
+	ErrProgressLastDayNotFinished          = errors.New("this is the last day - finish reading today or change the end date to add more days")
+	ErrProgressPagesLeftNegative           = errors.New("pages left cannot be negative")
+	ErrProgressMaxLogsExceeded             = errors.New("max 365 logs per book")
+)
+
 type ReadingProgress struct {
 	gorm.Model
 	UserBookID       uint   `gorm:"not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" form:"user-book-id"`
@@ -22,16 +33,14 @@ type ReadingProgress struct {
 	Completed        bool
 }
 
-var (
-	ErrProgressCurrentPageGreaterThanTotal = errors.New("current page cannot be greater than total pages")
-	ErrProgressCurrentPageNegative         = errors.New("current page cannot be negative")
-	ErrProgressDailyTargetPagesNegative    = errors.New("daily target pages cannot be negative")
-	ErrProgressDaysLeftNegative            = errors.New("days left cannot be negative")
-	ErrProgressInvalidEndDate              = errors.New("end date must be after start date")
-	ErrProgressLastDayNotFinished          = errors.New("this is the last day - finish reading today or change the end date to add more days")
-	ErrProgressPagesLeftNegative           = errors.New("pages left cannot be negative")
-	ErrProgressMaxLogsExceeded             = errors.New("max 365 logs per book")
-)
+func (r *ReadingProgress) AfterSave(db *gorm.DB) error {
+	if r.CurrentPage == r.TotalPages {
+		r.Completed = true
+	} else {
+        r.Completed = false
+    }
+	return nil
+}
 
 func (r *ReadingProgress) Validate() error {
 	if r.CurrentPage > r.TotalPages {

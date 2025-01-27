@@ -68,3 +68,4 @@ func (s *Server) WithRegisterRoutes(e *echo.Echo) *Server {
 
 	return s
 }
+

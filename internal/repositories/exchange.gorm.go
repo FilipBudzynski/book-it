@@ -77,7 +77,7 @@ func (r *ExchangeRequestRepository) FindMatchingRequests(requestId, userId, desi
 		Not("user_google_id = ?", userId).                                                               // Exclude user's own requests
 		Where("desired_book_id IN ?", offeredBooks).                                                     // Their desired book is in your offered books
 		Where("id IN (SELECT exchange_request_id FROM offered_books WHERE book_id = ?)", desiredBookId). // Your desired book is in their offered books
-		Not("status = ?", models.ExchangeRequestStatusAccepted).
+		Not("status = ?", models.ExchangeRequestStatusCompleted).
 		Find(&matches).Error
 	if err != nil {
 		return nil, err

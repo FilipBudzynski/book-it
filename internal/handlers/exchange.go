@@ -30,6 +30,7 @@ type ExchangeService interface {
 	GetMatchesDistanceFiltered(requestId string, distanceThreshold float64) ([]*models.ExchangeMatch, error)
 	AcceptMatch(requestId, matchedRequestId string) (*models.ExchangeMatch, error)
 	DeclineMatch(requestId, matchedRequestId string) (*models.ExchangeMatch, error)
+	GetLocalizationAutocomplete(query string) ([]geo.Result, error)
 }
 
 type exchangeHandler struct {
@@ -148,9 +149,9 @@ func (h *exchangeHandler) GetNewExchangeModal(c echo.Context) error {
 		return errs.HttpErrorUnauthorized(err)
 	}
 	user, err := h.userService.GetByGoogleID(userID)
-    if err != nil {
-        return errs.HttpErrorInternalServerError(err)
-    }
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
 	return utils.RenderView(c, webExchange.ExchangeModal(nil, user))
 }
 
@@ -168,9 +169,9 @@ func (h *exchangeHandler) GetPrefilledExchangeModal(c echo.Context) error {
 	}
 
 	user, err := h.userService.GetByGoogleID(userID)
-    if err != nil {
-        return errs.HttpErrorInternalServerError(err)
-    }
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
 
 	return utils.RenderView(c, webExchange.ExchangeModal(book, user))
 }
@@ -312,11 +313,12 @@ func (h *exchangeHandler) Delete(c echo.Context) error {
 }
 
 func (h *exchangeHandler) LocalizationAutocomplete(c echo.Context) error {
-	id := c.FormValue("geoloc-query")
-	if id == "" {
+	query := c.FormValue("geoloc-query")
+	if query == "" {
 		return c.NoContent(http.StatusNoContent)
 	}
-	results, err := geo.GetLocalizationAutocomplete(id)
+
+	results, err := h.exchangeService.GetLocalizationAutocomplete(query)
 	if err != nil {
 		return errs.HttpErrorInternalServerError(err)
 	}

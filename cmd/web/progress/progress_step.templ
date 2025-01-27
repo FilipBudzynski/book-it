@@ -3,8 +3,8 @@ package web_tracking
 import (
 	"fmt"
 
-	"time"
 	"github.com/FilipBudzynski/book_it/internal/models"
+	"github.com/FilipBudzynski/book_it/utils"
 )
 
 const progressLogStepId = "progress-log-%d"
@@ -26,17 +26,17 @@ func NewProgressStep() *progressStep {
 // TODO: if user finishes before end date, what should we do with the future logs?
 templ ProgressStep(log models.DailyProgressLog) {
 	{{ stepAtributes := NewProgressStep() }}
-	if log.Date.Equal(time.Now().Truncate(24 * time.Hour)) {
+	if log.Date.Equal(utils.TodaysDate()) {
 		{{ stepAtributes.message = "^" }}
 	}
-	if log.Date.After(time.Now().Truncate(24 * time.Hour)) {
+	if log.Date.After(utils.TodaysDate()) {
 		{{ stepAtributes.class += "hx-disable" }}
 		{{ stepAtributes.onclick = false }}
 	}
-	if log.Date.Before(time.Now().Truncate(24 * time.Hour)) {
+	if log.Date.Before(utils.TodaysDate()) {
 		{{ stepAtributes.dataContent = "⏰" }}
 	}
-	if log.Date.Equal(time.Now().Truncate(24 * time.Hour)) {
+	if log.Date.Equal(utils.TodaysDate()) {
 		{{ stepAtributes.class += " step-primary" }}
 	}
 	if log.PagesRead > 0 {
