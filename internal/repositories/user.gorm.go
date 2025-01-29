@@ -48,7 +48,6 @@ func (r *userRepository) Update(user *models.User) error {
 }
 
 func (r *userRepository) Delete(userID string) error {
-	// return r.db.Debug().Unscoped().Delete(&models.User{}, userID).Error
 	return r.db.Debug().Unscoped().Where("google_id = ?", userID).Delete(&models.User{}).Error
 }
 
@@ -57,7 +56,11 @@ func (r *userRepository) AddGenre(user *models.User, genre *models.Genre) error 
 }
 
 func (r *userRepository) RemoveGenre(user *models.User, genre *models.Genre) error {
-	return r.db.Model(user).Association("Genres").Delete(genre)
+	return r.db.Debug().Model(user).Association("Genres").Delete(genre)
+
+// languages := user.Languages 
+// DB.Model(&user).Association("Languages").Clear()
+// user.Languages = languages
 }
 
 func (r *userRepository) FindOrCreateGenre(genreName string) (*models.Genre, error) {

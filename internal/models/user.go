@@ -16,10 +16,9 @@ type User struct {
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 	Username  string         `gorm:"not null" json:"username"`
 	Email     string         `gorm:"unique;not null;" json:"email"`
-	// Books            []UserBook        `gorm:"constraint:OnDelete:CASCADE;"`
 	Books            []UserBook        `gorm:"foreignKey:UserGoogleId;constraint:OnDelete:CASCADE;"` // Ensure CASCADE delete on UserBook
 	ExchangeRequests []ExchangeRequest `gorm:"foreignKey:UserGoogleId;constraint:OnDelete:CASCADE;"`
-	Genres           []Genre           `gorm:"many2many:user_genres;constraint:OnDelete:CASCADE;"`
+	Genres           []Genre           `gorm:"many2many:user_genres;"`
 	AvatarURL        string
 	Location         *Location `gorm:"foreignKey:UserGoogleId;constraint:OnDelete:CASCADE;"`
 }
@@ -54,7 +53,7 @@ func (u *User) Validate() error {
 	return nil
 }
 
-func (u *User) ContainsGenre(genre string) bool {
+func (u *User) HasGenre(genre string) bool {
 	genreNames := make([]string, len(u.Genres))
 	for i, genre := range u.Genres {
 		genreNames[i] = genre.Name

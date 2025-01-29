@@ -44,7 +44,6 @@ func (h *UserHandler) RegisterRoutes(app *echo.Echo) {
 	app.GET("/navbar", h.Navbar)
 	group := app.Group("/users")
 	group.Use(utils.CheckLoggedInMiddleware)
-	group.GET("", h.ListUsers)
 	group.GET("/profile", h.Profile)
 	group.GET("/profile/location/modal", h.GetLocationModal)
 	group.POST("/profile/genres/:genre_id", h.AddGenre)
@@ -102,15 +101,6 @@ func (h *UserHandler) GetLocationModal(c echo.Context) error {
 	return utils.RenderView(c, webUser.LocationModal(user))
 }
 
-func (h *UserHandler) ListUsers(c echo.Context) error {
-	users, err := h.userService.GetAll()
-	if err != nil {
-		return errs.HttpErrorInternalServerError(err)
-	}
-
-	return utils.RenderView(c, web.UserForm(users))
-}
-
 func (h *UserHandler) AddGenre(c echo.Context) error {
 	genreID := c.Param("genre_id")
 
@@ -143,19 +133,8 @@ func (h *UserHandler) RemoveGenre(c echo.Context) error {
 	return utils.RenderView(c, webUser.GenreButton(genre, false))
 }
 
-// LandingPageHandler returns a landing page
 func (h *UserHandler) LandingPage(c echo.Context) error {
-	userSession, _ := utils.GetUserSessionFromStore(c.Request())
-	if (userSession == utils.UserSession{}) {
-		return utils.RenderView(c, web.HomePage(nil))
-	}
-
-	dbUser, err := h.userService.GetByGoogleID(userSession.UserID)
-	if dbUser == nil {
-		return errs.HttpErrorInternalServerError(err)
-	}
-
-	return utils.RenderView(c, web.HomePage(dbUser))
+	return utils.RenderView(c, web.HomePage())
 }
 
 func (h *UserHandler) Navbar(c echo.Context) error {

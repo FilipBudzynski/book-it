@@ -33,7 +33,6 @@ func (s *userBookService) Create(userID, bookID string) error {
 		UserGoogleId: userID,
 		BookID:       bookID,
 	}
-
 	return s.repo.Create(userBook)
 }
 

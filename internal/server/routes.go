@@ -37,12 +37,12 @@ func (s *Server) WithRegisterRoutes(e *echo.Echo) *Server {
 	userRepo := repositories.NewUserRepository(db)
 	userBookRepo := repositories.NewUserBookRepository(db)
 	exchangeRequestRepo := repositories.NewExchangeRequestRepository(db)
+	bookRepo := repositories.NewBookRepository(db)
 
 	userService := services.NewUserService(userRepo)
 	userBookService := services.NewUserBookService(userBookRepo, exchangeRequestRepo)
 	progressService := services.NewProgressService(progressRepo)
-	bookService := services.NewBookService(db).
-		WithProvider(providers.NewGoogleProvider())
+	bookService := services.NewBookService(bookRepo).WithProvider(providers.NewGoogleProvider())
 	exchangeService := services.NewExchangeService(exchangeRequestRepo)
 
 	notifyManager = handlers.NewConnectionManager()
@@ -68,4 +68,3 @@ func (s *Server) WithRegisterRoutes(e *echo.Echo) *Server {
 
 	return s
 }
-

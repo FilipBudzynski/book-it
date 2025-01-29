@@ -1,8 +1,7 @@
 package web
 
-import "github.com/FilipBudzynski/book_it/internal/models"
 
-templ HomePage(user *models.User) {
+templ HomePage() {
 	<div class="max-w-screen-lg mx-auto items-start flex flex-col mb-10" hx-target="#content-container" hx-swap="innerHTML">
 		<article class="prose prose-sm lg:prose-h1:text-5xl lg:prose-h2:text-4xl lg:prose-h3:text-3xl md:text-sm md:prose-base w-full max-w-4xl grow pt-10">
 			<h1>Welcome to <span class="text-green-700">Book it</span></h1>

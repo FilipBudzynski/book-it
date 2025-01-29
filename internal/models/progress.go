@@ -37,8 +37,8 @@ func (r *ReadingProgress) AfterSave(db *gorm.DB) error {
 	if r.CurrentPage == r.TotalPages {
 		r.Completed = true
 	} else {
-        r.Completed = false
-    }
+		r.Completed = false
+	}
 	return nil
 }
 
@@ -135,5 +135,19 @@ func (r *ReadingProgress) GetLogForDate(date time.Time) *DailyProgressLog {
 			return &log
 		}
 	}
+	return nil
+}
+
+func (r *ReadingProgress) GetTodaysLog() *DailyProgressLog {
+	now := time.Now()
+	year, month, day := now.Date()
+	today := time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
+	for i := range r.DailyProgress {
+		log := &r.DailyProgress[i]
+		if log.Date.Equal(today) {
+			return log
+		}
+	}
+
 	return nil
 }

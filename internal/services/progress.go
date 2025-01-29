@@ -54,12 +54,14 @@ func (s *progressService) Create(bookId uint, totalPages int, bookTitle, startDa
 
 	today := utils.TodaysDate()
 	logTargetPages := CalculateTargetPages(totalPages, days)
+	pagesLeft := totalPages
 	for i := range days {
 
 		logDate := startDateParsed.AddDate(0, 0, i)
 		if logDate.Before(today) || logDate.Equal(today) {
-			logTargetPages = CalculateTargetPages(totalPages, days-i)
+			logTargetPages = CalculateTargetPages(pagesLeft, days-i)
 		}
+		pagesLeft -= logTargetPages
 
 		progressLog := &models.DailyProgressLog{
 			Date:        logDate,
@@ -126,78 +128,90 @@ func (s *progressService) UpdateLog(id string, pagesRead int, comment string) (*
 	return log, nil
 }
 
-func (s *progressService) RefreshTargetPagesForNewDay(progressID string, logID uint) error {
-	return s.updateTargetPages(progressID, logID)
-}
-
-func (s *progressService) UpdateTargetPages(progressID string, logID uint) error {
-	return s.updateTargetPages(progressID, logID)
-}
-
-func (s *progressService) updateTargetPages(progressID string, logID uint) error {
-	progress, err := s.repo.GetById(progressID)
+func (s *progressService) RefreshTargetPagesForNewDay(progressID string) (*models.ReadingProgress, error) {
+	progress, err := s.Get(progressID)
 	if err != nil {
-		return err
+		return nil, err
+	}
+
+	if progress.Completed || progress.EndDate.Before(utils.TodaysDate()) {
+		return progress, nil
+	}
+
+	log := progress.GetTodaysLog()
+	progress, err = s.updateTargetPages(progress, log.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.repo.Update(progress); err != nil {
+		return nil, err
+	}
+	return progress, nil
+}
+
+func (s *progressService) UpdateTargetPages(progressID string, logID uint) (*models.ReadingProgress, error) {
+	progress, err := s.Get(progressID)
+	if err != nil {
+		return nil, err
 	}
 
 	if progress.Completed {
-		return nil
+		return progress, nil
 	}
 
+	progress, err = s.updateTargetPages(progress, logID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.repo.Update(progress); err != nil {
+		return nil, err
+	}
+	return progress, nil
+}
+
+func (s *progressService) updateTargetPages(progress *models.ReadingProgress, logID uint) (*models.ReadingProgress, error) {
 	pagesLeft := progress.TotalPages
-	var targetPages int
 	for i := range progress.DailyProgress {
 		log := &progress.DailyProgress[i]
+		isToday := log.Date.Equal(utils.TodaysDate())
+		isBackdated := log.Date.Before(utils.TodaysDate())
+		daysLeft := log.DaysLeft(progress.EndDate)
 
-		if log.ID == logID {
-			if log.Date.Equal(utils.TodaysDate()) {
-				pagesLeft -= max(log.PagesRead, log.TargetPages)
+		if log.ID != logID {
+			log.TargetPages = CalculateTargetPages(pagesLeft, daysLeft)
+		}
+
+		if isBackdated {
+			pagesLeft -= log.PagesRead
+			continue
+		}
+
+		if isToday {
+			log.TargetPages = CalculateTargetPages(pagesLeft, daysLeft)
+			if log.PagesRead == 0 {
+				pagesLeft -= log.TargetPages
 			} else {
 				pagesLeft -= log.PagesRead
 			}
+
 			continue
 		}
 
-		if log.Date.Before(utils.TodaysDate()) {
-			log.TargetPages = CalculateTargetPages(pagesLeft, log.DaysLeft(progress.EndDate))
-			pagesLeft -= max(log.PagesRead, targetPages)
-			continue
-		}
-
-		log.TargetPages = CalculateTargetPages(pagesLeft, log.DaysLeft(progress.EndDate))
 		pagesLeft -= log.TargetPages
 	}
-	progress.DailyTargetPages = targetPages
-	return s.repo.Update(progress)
+	return progress, nil
 }
 
-// func CalculateTargetPages(pagesLeft, daysLeft int) int {
-// 	if pagesLeft < 0 {
-// 		return -1
-// 	}
-//
-// 	switch {
-// 	case daysLeft == 0:
-// 		return pagesLeft
-// 	case daysLeft > 0:
-// 		return int((pagesLeft + daysLeft - 1) / daysLeft)
-// 	default:
-// 		return -1
-// 	}
-// }
-
 func CalculateTargetPages(pagesLeft, daysLeft int) int {
-	// Validate inputs
 	if pagesLeft < 0 || daysLeft < 0 {
-		return -1 // Invalid input
+		return -1
 	}
-
-	// Handle special case where daysLeft is zero
 	if daysLeft == 0 {
-		return pagesLeft // All remaining pages must be read in one day
+		return pagesLeft
 	}
 
-	// Calculate target pages using ceiling division
 	return (pagesLeft + daysLeft - 1) / daysLeft
 }
 

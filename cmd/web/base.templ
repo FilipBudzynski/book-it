@@ -96,7 +96,6 @@ templ Base() {
 				<div id="navbar-container" hx-get="/navbar" hx-trigger="load" hx-swap="outerHTML"></div>
 				<div id="content-container" class="sample-transition" hx-history-elt>
 					{ children... }
-					@Loading()
 				</div>
 				<div hx-ext="sse" sse-connect="/sse" sse-swap="message" class="toast toast-start z-50" hx-swap="beforeend"></div>
 				<div id="toast-container" class="toast toast-start z-50"></div>

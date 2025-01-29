@@ -1,40 +1,18 @@
 package web
 
 templ Loading() {
-	<style>
-        .htmx-indicator {
-            display: none
-        }
-
-        .htmx-indicator.htmx-request {
-            display: inline;
-        }
-
-        .htmx-indicator.htmx-request~span {
-            display: none;
-        }
-    </style>
-	<span id="loading-spinner" class="loading loading-spinner text-neutral htmx-indicator"></span>
+	<div class="flex justify-center">
+		<span id="loading-spinner" class="loading loading-spinner loading-xl htmx-indicator [htmx-request]:inline"></span>
+	</div>
 }
 
 templ LoadingBooks() {
-	<style>
-        .my-indicator {
-            display: none
-        }
-
-        .htmx-request .my-indicator {
-            display: flex;
-        }
-
-        .htmx-request.my-indicator {
-            display: flex;
-        }
-    </style>
-	<div id="loading-books-skeleton" class="flex flex-row gap-4 justify-center my-indicator">
-		<div class="skeleton h-32 w-32"></div>
-		<div class="skeleton h-32 w-32"></div>
-		<div class="skeleton h-32 w-32"></div>
-		<div class="skeleton h-32 w-32"></div>
+	<div class="flex w-full justify-center mt-8">
+		<div id="loading-books-skeleton" class="flex-row gap-4 justify-center htmx-indicator hidden [&.htmx-request]:flex">
+			<div class="skeleton h-32 w-32"></div>
+			<div class="skeleton h-32 w-32"></div>
+			<div class="skeleton h-32 w-32"></div>
+			<div class="skeleton h-32 w-32"></div>
+		</div>
 	</div>
 }

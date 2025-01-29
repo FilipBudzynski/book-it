@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/FilipBudzynski/book_it/internal/models"
-	"github.com/FilipBudzynski/book_it/utils"
 )
 
 const progressLogStepId = "progress-log-%d"
@@ -26,17 +25,17 @@ func NewProgressStep() *progressStep {
 // TODO: if user finishes before end date, what should we do with the future logs?
 templ ProgressStep(log models.DailyProgressLog) {
 	{{ stepAtributes := NewProgressStep() }}
-	if log.Date.Equal(utils.TodaysDate()) {
+	if log.Date.Equal(Today()) {
 		{{ stepAtributes.message = "^" }}
 	}
-	if log.Date.After(utils.TodaysDate()) {
+	if log.Date.After(Today()) {
 		{{ stepAtributes.class += "hx-disable" }}
 		{{ stepAtributes.onclick = false }}
 	}
-	if log.Date.Before(utils.TodaysDate()) {
+	if log.Date.Before(Today()) {
 		{{ stepAtributes.dataContent = "⏰" }}
 	}
-	if log.Date.Equal(utils.TodaysDate()) {
+	if log.Date.Equal(Today()) {
 		{{ stepAtributes.class += " step-primary" }}
 	}
 	if log.PagesRead > 0 {

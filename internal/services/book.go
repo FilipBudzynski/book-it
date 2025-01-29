@@ -1,27 +1,31 @@
 package services
 
 import (
-	"math/rand"
-	"time"
+	"math/rand/v2"
+	"slices"
 
 	"github.com/FilipBudzynski/book_it/internal/handlers"
 	"github.com/FilipBudzynski/book_it/internal/models"
-	"gorm.io/gorm"
 )
+
+const MaxRecommendationsResults = 30
+
+type BookRepository interface {
+	Create(book *models.Book) error
+	Get(id string) (*models.Book, error)
+	Delete(id string) error
+	GetByGenre(genre string) ([]*models.Book, error)
+}
 
 type bookService struct {
 	provider handlers.BookProvider
-	db       *gorm.DB
+	repo     BookRepository
 }
 
-func NewBookService(db *gorm.DB) handlers.BookService {
+func NewBookService(repo BookRepository) handlers.BookService {
 	return &bookService{
-		db: db,
+		repo: repo,
 	}
-}
-
-func (s *bookService) Provider() handlers.BookProvider {
-	return s.provider
 }
 
 func (s *bookService) WithProvider(provider handlers.BookProvider) handlers.BookService {
@@ -29,37 +33,20 @@ func (s *bookService) WithProvider(provider handlers.BookProvider) handlers.Book
 	return s
 }
 
-// get fetches the first book by isbn
-func (s *bookService) get(id string) (*models.Book, error) {
-	var book models.Book
-	err := s.db.Where("id = ?", id).First(&book).Error
-	if err != nil {
-		return nil, err
-	}
-	return &book, nil
+func (s *bookService) Provider() handlers.BookProvider {
+	return s.provider
 }
 
-func (s *bookService) Delete(userID, bookID string) error {
-	return s.db.Where("id = ?", bookID).Where("user_google_id = ?", userID).Delete(&models.Book{}).Error
+func (s *bookService) Delete(bookID string) error {
+	return s.repo.Delete(bookID)
 }
 
 func (s *bookService) Create(book *models.Book) error {
-	return s.db.Create(book).Error
+	return s.repo.Create(book)
 }
 
-func (s *bookService) Get(id string) (*models.Book, error) {
-	book := &models.Book{}
-	err := s.db.First(book, "id = ?", id).Error
-	if err != nil {
-		return nil, err
-	}
-	return book, nil
-}
-
-// GetByID fetches the book from Database
-// if no book is found, it fetches the book from the provider and saves it to the database
 func (s *bookService) GetByID(bookId string) (*models.Book, error) {
-	book, err := s.get(bookId)
+	book, err := s.repo.Get(bookId)
 	if err == nil && book != nil {
 		return book, nil
 	}
@@ -76,18 +63,15 @@ func (s *bookService) GetByID(bookId string) (*models.Book, error) {
 	return book, nil
 }
 
-// GetByQuery returns maxResults number of books by title from external api (provider)
-// if no book is found in database, it saves it to the database
 func (s *bookService) GetByQuery(query string, queryType handlers.QueryType, page int) ([]*models.Book, error) {
-	limit := s.provider.GetLimit()
-	books, err := s.provider.GetBooksByQuery(query, queryType, limit, page)
+	books, err := s.provider.GetBooksByQuery(query, queryType, 40, page)
 	if err != nil {
 		return nil, err
 	}
 
 	// store book in database if not found
 	for _, book := range books {
-		if dbBook, _ := s.Get(book.ID); dbBook != nil {
+		if dbBook, _ := s.repo.Get(book.ID); dbBook != nil {
 			continue
 		}
 		if err := s.Create(book); err != nil {
@@ -97,27 +81,54 @@ func (s *bookService) GetByQuery(query string, queryType handlers.QueryType, pag
 	return books, nil
 }
 
-func (s *bookService) FetchReccomendations(genres []models.Genre) ([]*models.Book, error) {
-	maxResults := 30
-
-	booksPerGenre := maxResults / len(genres)
-	if booksPerGenre == 0 {
-		booksPerGenre = 1
+func (s *bookService) FetchReccomendations(genres []models.Genre, userBooks []*models.UserBook) ([]*models.Book, error) {
+	providerBooks := []*models.Book{}
+	dbBooks := []*models.Book{}
+	ub := []string{}
+	for _, userBook := range userBooks {
+		ub = append(ub, userBook.Book.ID)
 	}
 
-	books := []*models.Book{}
 	for _, genre := range genres {
-		genreBooks, err := s.provider.GetBooksByGenre(genre.Name, booksPerGenre)
+		books, err := s.repo.GetByGenre(genre.String())
 		if err != nil {
 			return nil, err
 		}
-		books = append(books, genreBooks...)
+		dbBooks = append(dbBooks, books...)
+
+		genreBooks, err := s.provider.GetBooksByGenre(genre.Name)
+		if err != nil {
+			return nil, err
+		}
+		providerBooks = append(providerBooks, genreBooks...)
 	}
-	rand.Seed(time.Now().UnixNano())
-	rand.Shuffle(len(books), func(i, j int) {
-		books[i], books[j] = books[j], books[i]
+
+	for _, book := range providerBooks {
+		if dbBook, _ := s.repo.Get(book.ID); dbBook != nil {
+			continue
+		}
+		if err := s.Create(book); err != nil {
+			return nil, err
+		}
+	}
+
+	mergedBooks := dbBooks
+	mergedBooks = append(mergedBooks, providerBooks...)
+	resultBooks := []*models.Book{}
+	for _, book := range mergedBooks {
+		if slices.Contains(ub, book.ID) {
+			continue
+		}
+		resultBooks = append(resultBooks, book)
+	}
+
+	rand.Shuffle(len(resultBooks), func(i, j int) {
+		resultBooks[i], resultBooks[j] = resultBooks[j], resultBooks[i]
 	})
 
-	// Return the shuffled books slice
-	return books, nil
+	if len(resultBooks) < MaxRecommendationsResults {
+		return resultBooks, nil
+	} else {
+		return resultBooks[:MaxRecommendationsResults], nil
+	}
 }

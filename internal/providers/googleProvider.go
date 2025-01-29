@@ -52,37 +52,35 @@ func (p *googleProvider) GetLimit() int {
 }
 
 // Google Respnse structs
-type BookResponse struct {
-	ID         string     `json:"id"`
-	VolumeInfo VolumeInfo `json:"volumeInfo"`
-}
 
-type TotalItemsResponse struct {
-	TotalItems int `json:"totalItems"`
-}
+type (
+	BookItemsResponse struct {
+		Items []BookResponse `json:"items"`
+	}
 
-type BookItemsResponse struct {
-	Items []BookResponse `json:"items"`
-}
+	BookResponse struct {
+		ID         string     `json:"id"`
+		VolumeInfo VolumeInfo `json:"volumeInfo"`
+	}
 
-type VolumeInfo struct {
-	Title         string   `json:"title"`
-	Subtitle      string   `json:"subtitle,omitempty"`
-	Authors       []string `json:"authors"`
-	PublishedDate string   `json:"publishedDate"`
-	Description   string   `json:"description,omitempty"`
-	Pages         int      `json:"pageCount"`
-
-	ImageLinks struct {
-		SmallThumbnail string `json:"smallThumbnail"`
-		Thumbnail      string `json:"thumbnail"`
-	} `json:"imageLinks,omitempty"`
-
-	IndustryIdentifiers []struct {
-		Type       string `json:"type"`
-		Identifier string `json:"identifier"`
-	} `json:"industryIdentifiers"`
-}
+	VolumeInfo struct {
+		Title         string   `json:"title"`
+		Subtitle      string   `json:"subtitle,omitempty"`
+		Authors       []string `json:"authors"`
+		PublishedDate string   `json:"publishedDate"`
+		Description   string   `json:"description,omitempty"`
+		Pages         int      `json:"pageCount"`
+		Genres        []string `json:"categories"`
+		ImageLinks struct {
+			SmallThumbnail string `json:"smallThumbnail"`
+			Thumbnail      string `json:"thumbnail"`
+		} `json:"imageLinks,omitempty"`
+		IndustryIdentifiers []struct {
+			Type       string `json:"type"`
+			Identifier string `json:"identifier"`
+		} `json:"industryIdentifiers"`
+	}
+)
 
 func (p *googleProvider) getResponse(url string) (*http.Response, error) {
 	resp, err := http.Get(url)
@@ -112,31 +110,30 @@ func (p *googleProvider) GetBook(bookID string) (*models.Book, error) {
 		return &models.Book{}, err
 	}
 
-	return p.convert(bookResponse), nil
+	return p.Convert(bookResponse), nil
 }
 
-func (p *googleProvider) GetTotalForQuery(query string) int {
-	url := fmt.Sprintf(p.apiUrl+"?q=%s&maxResults=%d", query, p.maxResults)
-	response, err := p.getResponse(url)
-	if err != nil {
-		return -1
+func (p *googleProvider) QueryTypeToString(queryType handlers.QueryType) string {
+	switch queryType {
+	case handlers.QueryTypeTitle:
+		return "intitle:"
+	case handlers.QueryTypeAuthor:
+		return "inauthor:"
+	case handlers.QueryTypeSubject:
+		return "subject:"
+	case handlers.QueryTypeISBN:
+		return ""
+	default:
+		return "intitle:"
 	}
-	defer response.Body.Close()
-
-	var totalItems TotalItemsResponse
-	if err := json.NewDecoder(response.Body).Decode(&totalItems); err != nil {
-		return -1
-	}
-
-	return totalItems.TotalItems
 }
 
 func (p *googleProvider) GetBooksByQuery(query string, queryType handlers.QueryType, limit, page int) ([]*models.Book, error) {
 	startIndex := (page - 1) * limit
 	params := url.Values{}
-	urlRequest := fmt.Sprintf("%s\"%s\"", queryType, query)
+	urlRequest := fmt.Sprintf("%s\"%s\"", p.QueryTypeToString(queryType), query)
 
-    fmt.Println(urlRequest)
+	fmt.Println(urlRequest)
 
 	params.Add("q", urlRequest)
 	params.Add("maxResults", fmt.Sprintf("%d", limit))
@@ -158,15 +155,15 @@ func (p *googleProvider) GetBooksByQuery(query string, queryType handlers.QueryT
 
 	var books []*models.Book
 	for _, bookResp := range bookItemsResponse.Items {
-		books = append(books, p.convert(bookResp))
+		books = append(books, p.Convert(bookResp))
 	}
 
 	return books, nil
 }
 
-func (p *googleProvider) GetBooksByGenre(genre string, maxResults int) ([]*models.Book, error) {
+func (p *googleProvider) GetBooksByGenre(genre string) ([]*models.Book, error) {
 	query := url.QueryEscape(genre)
-	url := fmt.Sprintf(p.apiUrl+"?q=subject:%s&maxResults=%d&key=%s", query, maxResults, GoogleAPIKEY)
+	url := fmt.Sprintf(p.apiUrl+"?q=subject:%s&maxResults=%d&key=%s", query, p.maxResults, GoogleAPIKEY)
 	fmt.Printf("google genres url: %s\n", url)
 
 	response, err := p.getResponse(url)
@@ -182,14 +179,19 @@ func (p *googleProvider) GetBooksByGenre(genre string, maxResults int) ([]*model
 
 	var books []*models.Book
 	for _, bookResp := range bookItemsResponse.Items {
-		books = append(books, p.convert(bookResp))
+		books = append(books, p.Convert(bookResp))
 	}
 
 	return books, nil
 }
 
-func (p *googleProvider) convert(bookResponse BookResponse) *models.Book {
+func (p *googleProvider) Convert(br any) *models.Book {
+	bookResponse, ok := br.(BookResponse)
+	if !ok {
+		return nil
+	}
 	var isbnString string
+
 	volumeInfo := bookResponse.VolumeInfo
 	for _, id := range volumeInfo.IndustryIdentifiers {
 		if id.Type == "ISBN_13" {
@@ -198,16 +200,18 @@ func (p *googleProvider) convert(bookResponse BookResponse) *models.Book {
 		}
 	}
 
-	// Compose the title and subtitle if subtitle is present
 	title := volumeInfo.Title
 	if volumeInfo.Subtitle != "" {
 		title = fmt.Sprintf("%s: %s", title, volumeInfo.Subtitle)
 	}
 
-	// Get description either from or SearchInfo
 	description := volumeInfo.Description
 
-	// Create and return a Book instance
+	genres := make([]models.Genre, len(volumeInfo.Genres))
+	for i, genre := range volumeInfo.Genres {
+		genres[i] = models.Genre{Name: genre}
+	}
+
 	book := &models.Book{
 		ID:            bookResponse.ID,
 		Title:         title,
@@ -217,6 +221,7 @@ func (p *googleProvider) convert(bookResponse BookResponse) *models.Book {
 		ImageLink:     volumeInfo.ImageLinks.SmallThumbnail,
 		PublishedDate: volumeInfo.PublishedDate,
 		Pages:         volumeInfo.Pages,
+		Genres:        genres,
 	}
 	if isbn, err := strconv.ParseUint(isbnString, 10, 0); err != nil {
 		book.ISBN = uint(isbn)

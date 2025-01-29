@@ -1,12 +1,12 @@
 package handlers
 
-type QueryType string
+type QueryType int
 
 const (
-	QueryTypeTitle   = "intitle:"
-	QueryTypeAuthor  = "inauthor:"
-	QueryTypeSubject = "subject:"
-	QueryTypeISBN    = ""
+	QueryTypeTitle QueryType = iota
+	QueryTypeAuthor
+	QueryTypeSubject
+	QueryTypeISBN
 )
 
 func stringToQueryType(queryType string) QueryType {

@@ -24,13 +24,13 @@ type ProgressService interface {
 	Get(id string) (*models.ReadingProgress, error)
 	GetByUserBookId(userBookId string) (*models.ReadingProgress, error)
 	GetProgressAssosiatedWithLogId(id string) (*models.ReadingProgress, error)
-	UpdateTargetPages(progressID string, logID uint) error
+	UpdateTargetPages(progressID string, logID uint) (*models.ReadingProgress, error)
+	RefreshTargetPagesForNewDay(progressID string) (*models.ReadingProgress, error)
 	Delete(id string) error
 
 	// log methods
 	GetLog(id string) (*models.DailyProgressLog, error)
 	UpdateLog(id string, pagesRead int, comment string) (*models.DailyProgressLog, error)
-	RefreshTargetPagesForNewDay(progressID string, logID uint) error
 }
 
 type progressHandler struct {
@@ -89,21 +89,23 @@ func (h *progressHandler) GetByUserBookId(c echo.Context) error {
 		return errs.HttpErrorBadRequest(err)
 	}
 
-	// progressID := fmt.Sprintf("%d", progress.ID)
-	// if err := h.progressService.RefreshTargetPagesForNewDay(progressID); err != nil {
-	// 	return errs.HttpErrorInternalServerError(err)
-	// }
-
 	return utils.RenderView(c, webProgress.ProgressStatistics(progress))
 }
 
 func (h *progressHandler) GetProgressDetails(c echo.Context) error {
 	id := c.Param("id")
+
 	progress, err := h.progressService.GetByUserBookId(id)
 	if err != nil {
 		c.Response().Status = http.StatusNotFound
 		return errs.HttpErrorNotFound(err)
 	}
+
+	progress, err = h.progressService.RefreshTargetPagesForNewDay(fmt.Sprintf("%d", progress.ID))
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+
 	userBook, err := h.userBookService.Get(id)
 	if err != nil {
 		return errs.HttpErrorInternalServerError(err)
@@ -136,14 +138,15 @@ func (h *progressHandler) UpdateLog(c echo.Context) error {
 	}
 
 	progressID := fmt.Sprintf("%d", log.ReadingProgressID)
-	if err := h.progressService.UpdateTargetPages(progressID, log.ID); err != nil {
-		return errs.HttpErrorInternalServerError(err)
-	}
-
-	progress, err := h.progressService.GetProgressAssosiatedWithLogId(id)
+	progress, err := h.progressService.UpdateTargetPages(progressID, log.ID)
 	if err != nil {
 		return errs.HttpErrorInternalServerError(err)
 	}
+
+	// progress, err := h.progressService.GetProgressAssosiatedWithLogId(id)
+	// if err != nil {
+	// 	return errs.HttpErrorInternalServerError(err)
+	// }
 
 	if !progress.IsFinishedOnLastLog(log.Date) {
 		_ = toast.Info(models.ErrProgressLastDayNotFinished.Error()).SetHXTriggerHeader(c)

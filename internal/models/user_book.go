@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	ErrUserBookQueryWithoutId    = errors.New("user book ID not provided in query parameters")
+	ErrUserBookQueryWithoutId          = errors.New("user book ID not provided in query parameters")
 	ErrUserBookInActiveExchangeRequest = errors.New("user book in active exchange request")
 )
 
@@ -15,10 +15,10 @@ var (
 // It bounds book to a user providing more information about user interactions with a book
 type UserBook struct {
 	gorm.Model
-	UserGoogleId    string `gorm:"not null;"` // foreignKey
-	BookID          string `gorm:"not null"`
-	Book            Book
-    ReadingProgress *ReadingProgress `gorm:"foreignKey:UserBookID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	UserGoogleId    string           `gorm:"not null;"` // foreignKey
+	BookID          string           `gorm:"not null;"`
+	Book            Book             `gorm:"foreignKey:BookID;constraint:OnDelete:SET NULL;"`
+	ReadingProgress *ReadingProgress `gorm:"foreignKey:UserBookID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }
 
 func BookInUserBooks(bookID string, userBooks []*UserBook) bool {

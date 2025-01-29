@@ -2,12 +2,12 @@ package geo
 
 import "math"
 
-type RadiusType int
-
 const (
 	Meters RadiusType = 6378137
 	Km     RadiusType = 6378
 )
+
+type RadiusType int
 
 func (r RadiusType) float() float64 {
 	return float64(r)
@@ -18,8 +18,6 @@ type Cord struct {
 	Lon float64
 }
 
-// haversineDistance calculates the distance between two points on the Earth's surface
-// given their latitude and longitude in decimal degrees.
 func HaversineDistance(p, q Cord, r RadiusType) float64 {
 	toRadians := func(deg float64) float64 {
 		return deg * math.Pi / 180

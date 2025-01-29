@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/FilipBudzynski/book_it/internal/models"
 )
@@ -53,7 +54,7 @@ func (s *userService) AddGenre(userID, genreID string) (*models.Genre, error) {
 		return nil, err
 	}
 
-	if user.ContainsGenre(genre.Name) {
+	if user.HasGenre(genre.Name) {
 		return genre, nil
 	}
 
@@ -65,10 +66,12 @@ func (s *userService) AddGenre(userID, genreID string) (*models.Genre, error) {
 }
 
 func (s *userService) RemoveGenre(userID, genreID string) (*models.Genre, error) {
-	user, err := s.GetById(userID)
+	user, err := s.GetByGoogleID(userID)
 	if err != nil {
 		return nil, err
 	}
+
+    fmt.Println(user.Username)
 
 	genre, err := s.repo.FirstGenre(genreID)
 	if err != nil {

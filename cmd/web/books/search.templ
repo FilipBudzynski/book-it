@@ -18,9 +18,8 @@ templ BooksSearch() {
 		</div>
 		<form
 			hx-post="/books"
-			method="POST"
-			hx-target="#books-container"
 			hx-indicator="#loading-spinner"
+			hx-target="#books-container"
 			class="w-full flex flex-row justify-between"
 		>
 			<div class="flex w-full justify-start">
