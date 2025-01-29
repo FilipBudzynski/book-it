@@ -57,10 +57,6 @@ func (r *userRepository) AddGenre(user *models.User, genre *models.Genre) error 
 
 func (r *userRepository) RemoveGenre(user *models.User, genre *models.Genre) error {
 	return r.db.Debug().Model(user).Association("Genres").Delete(genre)
-
-// languages := user.Languages 
-// DB.Model(&user).Association("Languages").Clear()
-// user.Languages = languages
 }
 
 func (r *userRepository) FindOrCreateGenre(genreName string) (*models.Genre, error) {
