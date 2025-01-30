@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"sync"
 
@@ -58,19 +59,16 @@ func (cm *NotificationManager) SseHandler(c echo.Context) error {
 	if err != nil {
 		return errs.HttpErrorUnauthorized(err)
 	}
-
 	dataCh, ok := cm.GetClientChannel(userID)
 	if !ok {
 		dataCh = make(chan string, 10)
 		cm.AddClient(userID, dataCh)
 	}
-
 	ctx, cancel := context.WithCancel(c.Request().Context())
 	defer func() {
 		cancel()
 		cm.RemoveClient(userID)
 	}()
-
 	go func() {
 		for {
 			select {
@@ -78,21 +76,17 @@ func (cm *NotificationManager) SseHandler(c echo.Context) error {
 				if !ok {
 					return
 				}
-
 				_, _ = fmt.Fprintf(w.Writer, "data: %s\n\n", data)
 				if flusher, ok := w.Writer.(http.Flusher); ok {
 					flusher.Flush()
 				}
-
 			case <-ctx.Done():
 				return
 			}
 		}
 	}()
-
 	<-ctx.Done()
-	fmt.Println("Client disconnected:", userID)
-
+	log.Println("Client disconnected:", userID)
 	return nil
 }
 
@@ -101,9 +95,9 @@ func (cm *NotificationManager) Notify(userID string, message string) {
 		select {
 		case msgChannel <- message:
 		default:
-			fmt.Println("Channel full or closed, message not sent")
+			log.Println("Channel full or closed, message not sent")
 		}
 	} else {
-		fmt.Println("No active channel for the user")
+		log.Println("No active channel for the user")
 	}
 }

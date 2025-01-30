@@ -71,12 +71,19 @@ templ ExchangeTableRow(er models.ExchangeRequest) {
 			>details</button>
 		</th>
 		<th>
-			<button
-				class="btn btn-outline btn-error"
-				hx-delete={ fmt.Sprintf("/exchange/%d", er.ID) }
-				hx-confirm="Are you sure?"
-				_="on htmx:afterRequest if event.detail.xhr.status == 204 then remove closest <tr/>"
-			>remove</button>
+			if er.Status == models.ExchangeRequestStatusCompleted {
+				<button
+					class="btn btn-outline btn-error disabled"
+                    disabled
+				>remove</button>
+			} else {
+				<button
+					class="btn btn-outline btn-error"
+					hx-delete={ fmt.Sprintf("/exchange/%d", er.ID) }
+					hx-confirm="Are you sure?"
+					_="on htmx:afterRequest if event.detail.xhr.status == 204 then remove closest <tr/>"
+				>remove</button>
+			}
 		</th>
 	</tr>
 }

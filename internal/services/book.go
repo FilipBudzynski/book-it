@@ -82,20 +82,13 @@ func (s *bookService) GetByQuery(query string, queryType handlers.QueryType, pag
 }
 
 func (s *bookService) FetchReccomendations(genres []models.Genre, userBooks []*models.UserBook) ([]*models.Book, error) {
-	providerBooks := []*models.Book{}
-	dbBooks := []*models.Book{}
-	ub := []string{}
+	userBookIDs := []string{}
 	for _, userBook := range userBooks {
-		ub = append(ub, userBook.Book.ID)
+		userBookIDs = append(userBookIDs, userBook.Book.ID)
 	}
 
+	providerBooks := []*models.Book{}
 	for _, genre := range genres {
-		books, err := s.repo.GetByGenre(genre.String())
-		if err != nil {
-			return nil, err
-		}
-		dbBooks = append(dbBooks, books...)
-
 		genreBooks, err := s.provider.GetBooksByGenre(genre.Name)
 		if err != nil {
 			return nil, err
@@ -112,11 +105,9 @@ func (s *bookService) FetchReccomendations(genres []models.Genre, userBooks []*m
 		}
 	}
 
-	mergedBooks := dbBooks
-	mergedBooks = append(mergedBooks, providerBooks...)
 	resultBooks := []*models.Book{}
-	for _, book := range mergedBooks {
-		if slices.Contains(ub, book.ID) {
+	for _, book := range providerBooks {
+		if slices.Contains(userBookIDs, book.ID) {
 			continue
 		}
 		resultBooks = append(resultBooks, book)
@@ -128,7 +119,6 @@ func (s *bookService) FetchReccomendations(genres []models.Genre, userBooks []*m
 
 	if len(resultBooks) < MaxRecommendationsResults {
 		return resultBooks, nil
-	} else {
-		return resultBooks[:MaxRecommendationsResults], nil
 	}
+	return resultBooks[:MaxRecommendationsResults], nil
 }

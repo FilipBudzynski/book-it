@@ -10,15 +10,49 @@ templ Landing() {
 				<li>My Requests</li>
 			</ul>
 		</div>
-		<div
-			hx-get="/exchange/modal/new"
-			hx-swap="innerHTML"
-			hx-target="#htmx_modal"
-			hx-trigerr="click"
-			onclick="exchange_modal.showModal()"
-			class="btn btn-neutral btn-outline"
-		>
-			Create
+		<div class="flex flex-row gap-4">
+			<div
+				hx-get="/exchange/modal/new"
+				hx-swap="innerHTML"
+				hx-target="#htmx_modal"
+				hx-trigerr="click"
+				onclick="exchange_modal.showModal()"
+				class="btn btn-neutral btn-outline"
+			>
+				+ Create
+			</div>
+			<div class="filter">
+				<input
+					hx-get="/exchange/list"
+					hx-trigger="click"
+					hx-swap="innerHTML"
+					hx-target="#exchanges-container"
+					class="btn filter-reset"
+					type="radio"
+					name="metaframeworks"
+					aria-label="All"
+				/>
+				<input
+					hx-get="/exchange/list/active"
+					hx-trigger="click"
+					hx-swap="innerHTML"
+					hx-target="#exchanges-container"
+					class="btn"
+					type="radio"
+					name="metaframeworks"
+					aria-label="Active"
+				/>
+				<input
+					hx-get="/exchange/list/completed"
+					hx-trigger="click"
+					hx-swap="innerHTML"
+					hx-target="#exchanges-container"
+					class="btn"
+					type="radio"
+					name="metaframeworks"
+					aria-label="Completed"
+				/>
+			</div>
 		</div>
 		<div class="justify-center w-full ">
 			<div class="divider"></div>

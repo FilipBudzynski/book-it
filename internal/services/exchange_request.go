@@ -10,18 +10,18 @@ import (
 type ExchangeRequestRepository interface {
 	Create(exchange *models.ExchangeRequest) error
 	Get(id, userId string) (*models.ExchangeRequest, error)
+	GetByID(id string) (*models.ExchangeRequest, error)
 	GetAll(userId string) ([]*models.ExchangeRequest, error)
+	GetAllWithStatus(userId string, status models.ExchangeRequestStatus) ([]*models.ExchangeRequest, error)
 	Delete(id string) error
 	DeleteMatchesForRequest(requestId string) error
 	Update(exchange *models.ExchangeRequest) error
 	FindMatchingRequests(userId, requestId, desiredBookId string, offeredBooks []string) ([]*models.ExchangeRequest, error)
-	// match
 	CreateMatch(match *models.ExchangeMatch) error
 	GetMatch(requestId, otherRequestId string) (*models.ExchangeMatch, error)
 	UpdateMatch(match *models.ExchangeMatch) error
 	GetAllMatches(requestId string) ([]*models.ExchangeMatch, error)
 	GetMatchByID(id string) (*models.ExchangeMatch, error)
-	// utility
 	GetActiveExchangeRequestsByBookID(id string, userID string) ([]*models.ExchangeRequest, error)
 }
 
@@ -72,11 +72,23 @@ func (s *exchangeService) GetAll(userId string) ([]*models.ExchangeRequest, erro
 	return s.repo.GetAll(userId)
 }
 
+func (s *exchangeService) GetAllWithStatus(userId string, status models.ExchangeRequestStatus) ([]*models.ExchangeRequest, error) {
+	return s.repo.GetAllWithStatus(userId, status)
+}
+
 func (s *exchangeService) Get(id, userId string) (*models.ExchangeRequest, error) {
 	return s.repo.Get(id, userId)
 }
 
 func (s *exchangeService) Delete(id string) error {
+	r, err := s.repo.GetByID(id)
+	if err != nil {
+		return err
+	}
+	if r.Status == models.ExchangeRequestStatusCompleted {
+		return models.ErrExchangeRequestCompleted
+	}
+
 	if err := s.repo.Delete(id); err != nil {
 		return err
 	}
@@ -97,6 +109,10 @@ func (s *exchangeService) FindMatchingRequests(requestId, userId string) ([]*mod
 	)
 	if err != nil {
 		return nil, err
+	}
+
+	if r.Status == models.ExchangeRequestStatusCompleted {
+		return matchingRequests, nil
 	}
 
 	if err := s.repo.Update(r); err != nil {

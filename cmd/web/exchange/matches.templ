@@ -28,9 +28,7 @@ templ MatchDiv(match *models.ExchangeMatch, request *models.ExchangeRequest) {
 	{{ matchedReq := match.MatchedRequest(request.ID) }}
 	<div id={ MatchExchangeID(match.ID) } class="flex w-full my-4 bg-base-100 p-4 rounded-xl shadow-lg">
 		<!-- Book Image -->
-		<div class="h-30 w-27 rounded-lg">
-			<img src={ matchedReq.DesiredBook.ImageLink } alt="img"/>
-		</div>
+			<img src={ matchedReq.DesiredBook.ImageLink } alt="img" class="h-[150px] w-[106px] object-cover"/>
 		<!-- Content -->
 		<div class="flex flex-col justify-between w-full">
 			<!-- Top Section -->
@@ -45,7 +43,7 @@ templ MatchDiv(match *models.ExchangeMatch, request *models.ExchangeRequest) {
 				</div>
 				<!-- Gmail Object -->
 				<div
-					class="w-fit bg-base-100 shadow-md p-4 rounded-lg flex flex-row items-center gap-2 bg-base-100 self-start"
+					class="w-fit shadow-md p-4 rounded-lg flex flex-row items-center gap-2 bg-base-100 self-start"
 					href={ EmailMessage(matchedReq.UserEmail, matchedReq.DesiredBook.Title) }
 				>
 					<img
@@ -110,11 +108,7 @@ templ MatchTableRow(match *models.ExchangeMatch, request *models.ExchangeRequest
 	<tr id={ MatchExchangeID(match.ID) }>
 		<td class="w-auto px-3 py-2">
 			<div class="flex items-center gap-3">
-				<div class="avatar">
-					<div class="h-30 w-20 rounded-lg">
-						<img src={ matchedReq.DesiredBook.ImageLink } alt="img"/>
-					</div>
-				</div>
+				<img src={ matchedReq.DesiredBook.ImageLink } alt="img" class="h-[30px] w-[19px] object-cover"/>
 			</div>
 			<a href="" class="hover:text-black">{ matchedReq.DesiredBook.Title } </a>
 		</td>

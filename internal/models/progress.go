@@ -22,6 +22,7 @@ var (
 
 type ReadingProgress struct {
 	gorm.Model
+	ID               uint   `gorm:"primaryKey"`
 	UserBookID       uint   `gorm:"not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" form:"user-book-id"`
 	BookTitle        string `form:"book-title"`
 	StartDate        time.Time

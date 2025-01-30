@@ -19,16 +19,13 @@ const (
 )
 
 type ProgressService interface {
-	// standard methods
 	Create(bookId uint, totalPages int, bookTitle, startDateString, endDateString string) (models.ReadingProgress, error)
 	Get(id string) (*models.ReadingProgress, error)
 	GetByUserBookId(userBookId string) (*models.ReadingProgress, error)
 	GetProgressAssosiatedWithLogId(id string) (*models.ReadingProgress, error)
-	UpdateTargetPages(progressID string, logID uint) (*models.ReadingProgress, error)
 	RefreshTargetPagesForNewDay(progressID string) (*models.ReadingProgress, error)
+	UpdateTargetPagesForUserInput(progressID string, logID uint) (*models.ReadingProgress, error)
 	Delete(id string) error
-
-	// log methods
 	GetLog(id string) (*models.DailyProgressLog, error)
 	UpdateLog(id string, pagesRead int, comment string) (*models.DailyProgressLog, error)
 }
@@ -138,7 +135,7 @@ func (h *progressHandler) UpdateLog(c echo.Context) error {
 	}
 
 	progressID := fmt.Sprintf("%d", log.ReadingProgressID)
-	progress, err := h.progressService.UpdateTargetPages(progressID, log.ID)
+	progress, err := h.progressService.UpdateTargetPagesForUserInput(progressID, log.ID)
 	if err != nil {
 		return errs.HttpErrorInternalServerError(err)
 	}

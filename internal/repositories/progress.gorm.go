@@ -21,7 +21,10 @@ func (r *progressRepository) Create(progress models.ReadingProgress) error {
 
 func (r *progressRepository) GetById(id string) (*models.ReadingProgress, error) {
 	progress := &models.ReadingProgress{}
-	return progress, r.db.Preload("DailyProgress").First(progress, "id = ?", id).Error
+    if err := r.db.Preload("DailyProgress").First(progress, "id = ?", id).Error; err != nil {
+        return nil, err
+    }
+    return progress, nil
 }
 
 func (r *progressRepository) GetByUserBookId(userBookId string) (*models.ReadingProgress, error) {

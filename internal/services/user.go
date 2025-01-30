@@ -49,6 +49,10 @@ func (s *userService) AddGenre(userID, genreID string) (*models.Genre, error) {
 		return nil, err
 	}
 
+    if len(user.Genres) >= models.UserGenresLimit {
+        return nil, models.ErrUserGenresLimitExceeded
+    }
+
 	genre, err := s.repo.FirstGenre(genreID)
 	if err != nil {
 		return nil, err

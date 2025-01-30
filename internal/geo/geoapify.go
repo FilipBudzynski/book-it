@@ -70,15 +70,14 @@ type GeoapifyAutocompleteResponse struct {
 
 var GeoApifyKey string
 
-func init() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("error loading .env file")
-	}
-	GeoApifyKey = os.Getenv("GEOAPIFY_KEY")
-}
-
 func GetLocalizationAutocomplete(query string) ([]Result, error) {
+    if GeoApifyKey == "" {
+        err := godotenv.Load()
+        if err != nil {
+            log.Fatal("error loading .env file")
+        }
+        GeoApifyKey = os.Getenv("GEOAPIFY_KEY")
+    }
 	params := url.Values{}
 	params.Add("text", query)
 	params.Add("format", "json")

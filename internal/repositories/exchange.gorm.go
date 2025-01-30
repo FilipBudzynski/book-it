@@ -20,6 +20,11 @@ func (r *ExchangeRequestRepository) Create(exchange *models.ExchangeRequest) err
 	return r.db.Create(exchange).Error
 }
 
+func (r *ExchangeRequestRepository) GetByID(id string) (*models.ExchangeRequest, error) {
+	exchange := &models.ExchangeRequest{}
+	return exchange, r.db.Preload("DesiredBook").Preload("OfferedBooks.Book").First(&exchange, id).Error
+}
+
 func (r *ExchangeRequestRepository) Get(id, userId string) (*models.ExchangeRequest, error) {
 	exchange := &models.ExchangeRequest{}
 	err := r.db.Preload("DesiredBook").
@@ -54,8 +59,18 @@ func (r *ExchangeRequestRepository) GetAll(userId string) ([]*models.ExchangeReq
 		Find(&exchanges).Error
 }
 
+func (r *ExchangeRequestRepository) GetAllWithStatus(userId string, status models.ExchangeRequestStatus) ([]*models.ExchangeRequest, error) {
+	exchanges := []*models.ExchangeRequest{}
+	return exchanges, r.db.Preload("DesiredBook").
+		Preload("OfferedBooks.Book").
+		Preload("Matches.MatchedExchangeRequest.DesiredBook").
+		Where("user_google_id = ?", userId).
+		Where("status = ?", status.String()).
+		Find(&exchanges).Error
+}
+
 func (r *ExchangeRequestRepository) Delete(id string) error {
-	return r.db.Select(clause.Associations).Delete(&models.ExchangeRequest{}, id).Error
+	return r.db.Delete(&models.ExchangeRequest{}, id).Error
 }
 
 func (r *ExchangeRequestRepository) DeleteMatchesForRequest(requestId string) error {

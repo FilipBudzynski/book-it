@@ -16,8 +16,8 @@ type (
 )
 
 const (
-	ExchangeRequestStatusCompleted    ExchangeRequestStatus = "completed"
-	ExchangeRequestStatusActive       ExchangeRequestStatus = "active"
+	ExchangeRequestStatusCompleted ExchangeRequestStatus = "completed"
+	ExchangeRequestStatusActive    ExchangeRequestStatus = "active"
 )
 
 func (s ExchangeRequestStatus) String() string {
@@ -34,11 +34,22 @@ func (s ExchangeRequestStatus) Badge() string {
 	return "secondary"
 }
 
+func StringToExchangeRequestStatus(s string) ExchangeRequestStatus {
+    switch s {
+    case "completed":
+        return ExchangeRequestStatusCompleted
+    case "active":
+        return ExchangeRequestStatusActive
+    }
+    return ExchangeRequestStatusActive
+}
+
 var (
 	ErrExchangeRequestNoOfferedBooksProvided      = errors.New("no offered books provided in the request")
 	ErrExchangeRequestNoDesiredBookProvided       = errors.New("no desired book provided in the request")
 	ErrExchangeRequestDuplicateOfferedBooks       = errors.New("duplicate offered books in the request")
 	ErrExchangeRequestActiveRequestWithThisBookID = errors.New("exchange request with this book id is active")
+	ErrExchangeRequestCompleted                   = errors.New("cannot remove a completed exchange request")
 	ErrExchangeRequestLatitudeOutOfRange          = errors.New("latitude out of range")
 	ErrExchangeRequestLongitudeOutOfRange         = errors.New("longitude out of range")
 )
@@ -52,7 +63,7 @@ type ExchangeRequest struct {
 	DesiredBook   Book          `gorm:"foreignKey:DesiredBookID;constraint:OnDelete:SET NULL"`
 	OfferedBooks  []OfferedBook `gorm:"constraint:OnDelete:CASCADE"`
 	Status        ExchangeRequestStatus
-	Matches       []ExchangeMatch `gorm:"constraint:OnDelete:CASCADE,OnUpdate:CASCADE"`
+	Matches       []ExchangeMatch `gorm:"constraint:OnDelete:SET NULL,OnUpdate:CASCADE"`
 	Latitude      float64
 	Longitude     float64
 }

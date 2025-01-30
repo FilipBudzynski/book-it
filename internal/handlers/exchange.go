@@ -20,6 +20,7 @@ type ExchangeService interface {
 	Create(userId, userEmail, desiredBookID string, userBookIDs []string, latitude, longitude float64) (*models.ExchangeRequest, error)
 	Get(id, userId string) (*models.ExchangeRequest, error)
 	GetAll(userId string) ([]*models.ExchangeRequest, error)
+	GetAllWithStatus(userId string, status models.ExchangeRequestStatus) ([]*models.ExchangeRequest, error)
 	Delete(id string) error
 	FindMatchingRequests(requestId, userId string) ([]*models.ExchangeRequest, error)
 
@@ -61,6 +62,7 @@ func (h *exchangeHandler) RegisterRoutes(app *echo.Echo) {
 	group.GET("/modal/new", h.GetNewExchangeModal)
 	group.GET("/modal", h.GetPrefilledExchangeModal)
 	group.GET("/list", h.GetAll)
+	group.GET("/list/:status", h.GetAllWithStatus)
 	group.GET("/details/:id", h.Details)
 	group.GET("/:id/matches", h.Matches)
 	group.GET("/:id/matches/filter", h.FilteredMatches)
@@ -117,6 +119,22 @@ func (h *exchangeHandler) GetAll(c echo.Context) error {
 	}
 
 	exchanges, err := h.exchangeService.GetAll(userId)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
+
+	return utils.RenderView(c, webExchange.List(exchanges))
+}
+
+func (h *exchangeHandler) GetAllWithStatus(c echo.Context) error {
+	userId, err := utils.GetUserIDFromSession(c.Request())
+	if err != nil {
+		return errs.HttpErrorUnauthorized(err)
+	}
+	status := c.Param("status")
+	statusEnum := models.StringToExchangeRequestStatus(status)
+
+	exchanges, err := h.exchangeService.GetAllWithStatus(userId, statusEnum)
 	if err != nil {
 		return errs.HttpErrorInternalServerError(err)
 	}
@@ -306,10 +324,13 @@ func (h *exchangeHandler) DeclineMatch(c echo.Context) error {
 func (h *exchangeHandler) Delete(c echo.Context) error {
 	id := c.Param("id")
 	err := h.exchangeService.Delete(id)
-	if err != nil {
-		return errs.HttpErrorInternalServerError(err)
+	if err == nil {
+		return c.NoContent(http.StatusNoContent)
 	}
-	return c.NoContent(http.StatusNoContent)
+	if err == models.ErrExchangeRequestCompleted {
+		return errs.HttpErrorForbidden(err)
+	}
+	return errs.HttpErrorInternalServerError(err)
 }
 
 func (h *exchangeHandler) LocalizationAutocomplete(c echo.Context) error {

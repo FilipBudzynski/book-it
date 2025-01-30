@@ -15,8 +15,6 @@ type ProgressRepository interface {
 	GetByUserBookId(userBookId string) (*models.ReadingProgress, error)
 	Update(progress *models.ReadingProgress) error
 	Delete(id string) error
-	// logs methods
-	// TODO: move to progressLogRepository
 	GetLogById(id string) (*models.DailyProgressLog, error)
 	UpdateLog(log *models.DailyProgressLog) error
 }
@@ -139,7 +137,7 @@ func (s *progressService) RefreshTargetPagesForNewDay(progressID string) (*model
 	}
 
 	log := progress.GetTodaysLog()
-	progress, err = s.updateTargetPages(progress, log.ID)
+	progress, err = s.UpdateTargetPages(progress, log.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +148,7 @@ func (s *progressService) RefreshTargetPagesForNewDay(progressID string) (*model
 	return progress, nil
 }
 
-func (s *progressService) UpdateTargetPages(progressID string, logID uint) (*models.ReadingProgress, error) {
+func (s *progressService) UpdateTargetPagesForUserInput(progressID string, logID uint) (*models.ReadingProgress, error) {
 	progress, err := s.Get(progressID)
 	if err != nil {
 		return nil, err
@@ -160,7 +158,7 @@ func (s *progressService) UpdateTargetPages(progressID string, logID uint) (*mod
 		return progress, nil
 	}
 
-	progress, err = s.updateTargetPages(progress, logID)
+	progress, err = s.UpdateTargetPages(progress, logID)
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +169,7 @@ func (s *progressService) UpdateTargetPages(progressID string, logID uint) (*mod
 	return progress, nil
 }
 
-func (s *progressService) updateTargetPages(progress *models.ReadingProgress, logID uint) (*models.ReadingProgress, error) {
+func (s *progressService) UpdateTargetPages(progress *models.ReadingProgress, logID uint) (*models.ReadingProgress, error) {
 	pagesLeft := progress.TotalPages
 	for i := range progress.DailyProgress {
 		log := &progress.DailyProgress[i]

@@ -9,6 +9,7 @@ import (
 
 type DailyProgressLog struct {
 	gorm.Model
+	ID                uint `gorm:"primaryKey"`
 	ReadingProgressID uint `gorm:"not null"` // Reading progress foreign key
 	UserBookID        uint // Denormalized
 	Date              time.Time

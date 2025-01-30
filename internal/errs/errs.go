@@ -40,4 +40,10 @@ var (
 		return echo.NewHTTPError(http.StatusNotFound, toast).
 			SetInternal(toast)
 	}
+
+	HttpErrorForbidden = func(err error) *echo.HTTPError {
+		toast := toast.Warning(err.Error())
+		return echo.NewHTTPError(http.StatusForbidden, toast).
+			SetInternal(toast)
+	}
 )
