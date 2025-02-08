@@ -68,8 +68,6 @@ func (s *bookService) GetByQuery(query string, queryType handlers.QueryType, pag
 	if err != nil {
 		return nil, err
 	}
-
-	// store book in database if not found
 	for _, book := range books {
 		if dbBook, _ := s.repo.Get(book.ID); dbBook != nil {
 			continue

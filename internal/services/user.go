@@ -1,9 +1,6 @@
 package services
 
 import (
-	"errors"
-	"fmt"
-
 	"github.com/FilipBudzynski/book_it/internal/models"
 )
 
@@ -32,10 +29,10 @@ func NewUserService(r UserRepository) *userService {
 }
 
 func (s *userService) Create(user *models.User) error {
-	return errors.Join(
-		user.Validate(),
-		s.repo.Create(user),
-	)
+	if err := user.Validate(); err != nil {
+		return err
+	}
+	return s.repo.Create(user)
 }
 
 // TODO: do a loop to get by provider given
@@ -49,9 +46,9 @@ func (s *userService) AddGenre(userID, genreID string) (*models.Genre, error) {
 		return nil, err
 	}
 
-    if len(user.Genres) >= models.UserGenresLimit {
-        return nil, models.ErrUserGenresLimitExceeded
-    }
+	if len(user.Genres) >= models.UserGenresLimit {
+		return nil, models.ErrUserGenresLimitExceeded
+	}
 
 	genre, err := s.repo.FirstGenre(genreID)
 	if err != nil {
@@ -74,8 +71,6 @@ func (s *userService) RemoveGenre(userID, genreID string) (*models.Genre, error)
 	if err != nil {
 		return nil, err
 	}
-
-    fmt.Println(user.Username)
 
 	genre, err := s.repo.FirstGenre(genreID)
 	if err != nil {

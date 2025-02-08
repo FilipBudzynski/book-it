@@ -13,10 +13,8 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// UserBookService provides actions for managing user_book resources
 type UserBookService interface {
 	Create(userId, bookId string) error
-	Update(userBook *models.UserBook) error
 	Get(id string) (*models.UserBook, error)
 	GetAll(userId string) ([]*models.UserBook, error)
 	Delete(id string) error
@@ -36,13 +34,12 @@ func NewUserBookHandler(userBookService UserBookService) *UserBookHandler {
 
 func (h *UserBookHandler) RegisterRoutes(app *echo.Echo) {
 	group := app.Group("/user-books")
-	group.Use(utils.CheckLoggedInMiddleware) // middleware for protected routes
+	group.Use(utils.CheckLoggedInMiddleware) 
 	group.POST("/:book_id", h.Create)
 	group.DELETE("/:book_id", h.Delete)
 	group.DELETE("/search/:book_id", h.DeleteAndReplaceButton)
 	group.GET("", h.List)
 	group.GET("/create_modal/:user_book_id", h.GetCreateProgressModal)
-	// group.GET("/exchange/additional", h.GetAdditionalOfferedBookInput)
 	group.GET("/exchange/books", h.GetOfferedBooks)
 	group.GET("/search", h.Search)
 }

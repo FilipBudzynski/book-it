@@ -13,6 +13,7 @@ import (
 )
 
 type BookService interface {
+	Create(book *models.Book) error
 	Delete(bookID string) error
 	GetByQuery(query string, queryType QueryType, page int) ([]*models.Book, error)
 	GetByID(id string) (*models.Book, error)

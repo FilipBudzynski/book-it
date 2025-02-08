@@ -18,6 +18,7 @@ var (
 	ErrProgressLastDayNotFinished          = errors.New("this is the last day - finish reading today or change the end date to add more days")
 	ErrProgressPagesLeftNegative           = errors.New("pages left cannot be negative")
 	ErrProgressMaxLogsExceeded             = errors.New("max 365 logs per book")
+	ErrProgressInvalidTotalPages           = errors.New("total pages cannot be negative")
 )
 
 type ReadingProgress struct {
@@ -44,6 +45,14 @@ func (r *ReadingProgress) AfterSave(db *gorm.DB) error {
 }
 
 func (r *ReadingProgress) Validate() error {
+	if r.TotalPages <= 0 {
+		return ErrProgressInvalidTotalPages
+	}
+
+	if r.StartDate.After(r.EndDate) {
+		return ErrProgressInvalidEndDate
+	}
+
 	if r.CurrentPage > r.TotalPages {
 		return ErrProgressCurrentPageGreaterThanTotal
 	}
@@ -57,10 +66,6 @@ func (r *ReadingProgress) Validate() error {
 
 	if r.DailyTargetPages < 0 {
 		return ErrProgressDailyTargetPagesNegative
-	}
-
-	if r.StartDate.After(r.EndDate) {
-		return ErrProgressInvalidEndDate
 	}
 
 	if r.PagesLeft() < 0 {

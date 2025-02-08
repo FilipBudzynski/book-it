@@ -22,7 +22,11 @@ func (r *ExchangeRequestRepository) Create(exchange *models.ExchangeRequest) err
 
 func (r *ExchangeRequestRepository) GetByID(id string) (*models.ExchangeRequest, error) {
 	exchange := &models.ExchangeRequest{}
-	return exchange, r.db.Preload("DesiredBook").Preload("OfferedBooks.Book").First(&exchange, id).Error
+	err := r.db.Preload("Matches").Preload("DesiredBook").Preload("OfferedBooks.Book").First(&exchange, id).Error
+	if err != nil {
+		return nil, err
+	}
+	return exchange, nil
 }
 
 func (r *ExchangeRequestRepository) Get(id, userId string) (*models.ExchangeRequest, error) {
@@ -142,16 +146,14 @@ func (r *ExchangeRequestRepository) GetMatchByID(id string) (*models.ExchangeMat
 
 func (r *ExchangeRequestRepository) UpdateMatch(match *models.ExchangeMatch) error {
 	return r.db.Session(&gorm.Session{FullSaveAssociations: true}).Updates(match).Error
-	// return r.db.Model(match).Updates(map[string]interface{}{"request1_accept": match.Request1Accept, "request2_accept": match.Request2Accept}).Error
 }
 
 func (r *ExchangeRequestRepository) GetActiveExchangeRequestsByBookID(id string, userID string) ([]*models.ExchangeRequest, error) {
 	exchanges := []*models.ExchangeRequest{}
 
-	// Use a WHERE EXISTS or IN approach to get ExchangeRequests where the OfferedBooks contain the specified book_id
 	err := r.db.Preload("OfferedBooks.Book").
 		Where("user_google_id = ?", userID).
-		Where("EXISTS (SELECT 1 FROM offered_books ob WHERE ob.exchange_request_id = exchange_requests.id AND ob.book_id = ?)", id).
+		Where("EXISTS (SELECT 1 FROM offered_books ob WHERE ob.exchange_request_id = exchange_requests.id AND ob.book_id = ? AND exchange_requests.status = ?)", id, models.ExchangeRequestStatusActive).
 		Find(&exchanges).Error
 
 	return exchanges, err

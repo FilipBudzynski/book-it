@@ -755,6 +755,10 @@ video {
   height: 150px;
 }
 
+.h-\[15rem\] {
+  height: 15rem;
+}
+
 .h-\[1em\] {
   height: 1em;
 }
@@ -765,10 +769,6 @@ video {
 
 .h-\[30px\] {
   height: 30px;
-}
-
-.h-\[30rem\] {
-  height: 30rem;
 }
 
 .h-auto {

@@ -15,11 +15,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-const (
-	GoogleBooksAPI          = "https://www.googleapis.com/books/v1/volumes"
-	GoogleBooksAPIMaxResult = 40
-)
-
 var GoogleAPIKEY string
 
 func init() {
@@ -29,6 +24,11 @@ func init() {
 	}
 	GoogleAPIKEY = os.Getenv("GOOGLE_API_KET")
 }
+
+const (
+	GoogleBooksAPI          = "https://www.googleapis.com/books/v1/volumes"
+	GoogleBooksAPIMaxResult = 40
+)
 
 func NewGoogleProvider() handlers.BookProvider {
 	return &googleProvider{
@@ -71,7 +71,7 @@ type (
 		Description   string   `json:"description,omitempty"`
 		Pages         int      `json:"pageCount"`
 		Genres        []string `json:"categories"`
-		ImageLinks struct {
+		ImageLinks    struct {
 			SmallThumbnail string `json:"smallThumbnail"`
 			Thumbnail      string `json:"thumbnail"`
 		} `json:"imageLinks,omitempty"`
@@ -132,8 +132,6 @@ func (p *googleProvider) GetBooksByQuery(query string, queryType handlers.QueryT
 	startIndex := (page - 1) * limit
 	params := url.Values{}
 	urlRequest := fmt.Sprintf("%s\"%s\"", p.QueryTypeToString(queryType), query)
-
-	fmt.Println(urlRequest)
 
 	params.Add("q", urlRequest)
 	params.Add("maxResults", fmt.Sprintf("%d", limit))
@@ -229,3 +227,5 @@ func (p *googleProvider) Convert(br any) *models.Book {
 
 	return book
 }
+
+

@@ -44,7 +44,7 @@ func NewProgressHandler(s ProgressService, u UserBookService) *progressHandler {
 
 func (h *progressHandler) RegisterRoutes(app *echo.Echo) {
 	group := app.Group("/progress")
-	group.Use(utils.CheckLoggedInMiddleware) // middleware for protected routes
+	group.Use(utils.CheckLoggedInMiddleware) 
 	group.POST("", h.Create)
 	group.GET("/:id", h.GetByUserBookId)
 	group.DELETE("/:id", h.Delete)

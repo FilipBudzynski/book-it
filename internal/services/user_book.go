@@ -1,8 +1,6 @@
 package services
 
 import (
-	"fmt"
-
 	"github.com/FilipBudzynski/book_it/internal/models"
 )
 
@@ -10,7 +8,6 @@ type UserBookRepository interface {
 	Create(userBook *models.UserBook) error
 	GetAllUserBooks(userId string) ([]*models.UserBook, error)
 	Get(id string) (*models.UserBook, error)
-	Update(userBook *models.UserBook) error
 	Delete(id string) error
 	DeleteWhereBookId(bookId string) error
 	Search(userId, search string) ([]*models.UserBook, error)
@@ -36,10 +33,6 @@ func (s *userBookService) Create(userID, bookID string) error {
 	return s.repo.Create(userBook)
 }
 
-func (s *userBookService) Update(userBook *models.UserBook) error {
-	return s.repo.Update(userBook)
-}
-
 func (s *userBookService) Get(id string) (*models.UserBook, error) {
 	return s.repo.Get(id)
 }
@@ -58,8 +51,6 @@ func (s *userBookService) Delete(id string) error {
 	if err != nil {
 		return err
 	}
-
-	fmt.Println(activeRequests)
 
 	if len(activeRequests) > 0 {
 		return models.ErrUserBookInActiveExchangeRequest

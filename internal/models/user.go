@@ -20,7 +20,8 @@ type User struct {
 	Email            string            `gorm:"unique;not null;" json:"email"`
 	Books            []UserBook        `gorm:"foreignKey:UserGoogleId;constraint:OnDelete:CASCADE;"` // Ensure CASCADE delete on UserBook
 	ExchangeRequests []ExchangeRequest `gorm:"foreignKey:UserGoogleId;constraint:OnDelete:CASCADE;"`
-	Genres           []Genre           `gorm:"many2many:user_genres;"`
+	//Genres           []Genre           `gorm:"many2many:user_genres;"`
+    Genres           []Genre           `gorm:"many2many:user_genres;constraint:OnDelete:CASCADE;"` // CASCADE delete on user_genres
 	AvatarURL        string
 	Location         *Location `gorm:"foreignKey:UserGoogleId;constraint:OnDelete:CASCADE;"`
 }

@@ -35,13 +35,13 @@ func (s ExchangeRequestStatus) Badge() string {
 }
 
 func StringToExchangeRequestStatus(s string) ExchangeRequestStatus {
-    switch s {
-    case "completed":
-        return ExchangeRequestStatusCompleted
-    case "active":
-        return ExchangeRequestStatusActive
-    }
-    return ExchangeRequestStatusActive
+	switch s {
+	case "completed":
+		return ExchangeRequestStatusCompleted
+	case "active":
+		return ExchangeRequestStatusActive
+	}
+	return ExchangeRequestStatusActive
 }
 
 var (
@@ -56,6 +56,7 @@ var (
 
 type ExchangeRequest struct {
 	gorm.Model
+	ID            uint `gorm:"primaryKey"`
 	UserEmail     string
 	UserGoogleId  string        `gorm:"not null"`
 	User          User          `gorm:"foreignKey:UserGoogleId;references:GoogleId;"`
@@ -78,12 +79,11 @@ func (r *ExchangeRequest) GetMatchStatus(otherRequestId uint) MatchStatus {
 }
 
 func (e *ExchangeRequest) Validate() error {
-	if len(e.OfferedBooks) == 0 {
-		return ErrExchangeRequestNoOfferedBooksProvided
-	}
-
 	if e.DesiredBookID == "" {
 		return ErrExchangeRequestNoDesiredBookProvided
+	}
+	if len(e.OfferedBooks) == 0 {
+		return ErrExchangeRequestNoOfferedBooksProvided
 	}
 
 	if err := e.checkDuplicates(); err != nil {
@@ -113,6 +113,7 @@ func (e *ExchangeRequest) checkDuplicates() error {
 
 type OfferedBook struct {
 	gorm.Model
+	ID                uint `gorm:"primaryKey"`
 	ExchangeRequestID uint
 	BookID            string `gorm:"not null;" form:"book_id"`
 	Book              Book   `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE"`

@@ -32,10 +32,6 @@ func (r *userBookRepository) GetAllUserBooks(userId string) ([]*models.UserBook,
 		Find(&userBooks).Error
 }
 
-func (r *userBookRepository) Update(userBook *models.UserBook) error {
-	return r.db.Save(userBook).Error
-}
-
 func (r *userBookRepository) Delete(id string) error {
 	return r.db.Delete(&models.UserBook{}, id).Error
 }

@@ -75,7 +75,7 @@ func (h *exchangeHandler) RegisterRoutes(app *echo.Echo) {
 func (h *exchangeHandler) CreateExchange(c echo.Context) error {
 	exchangeBind := &exchangeFormBinding{}
 	if err := exchangeBind.bind(c); err != nil {
-		return errs.HttpErrorInternalServerError(err)
+		return errs.HttpErrorBadRequest(err)
 	}
 
 	lat, err := strconv.ParseFloat(exchangeBind.Latitude, 64)
@@ -277,7 +277,7 @@ func (h *exchangeHandler) AcceptMatch(c echo.Context) error {
 
 		var buffer bytes.Buffer
 		_ = webAlerts.AlertSuccess(
-			ExchangeAcceptedAlertMessage(request.DesiredBook.Title, matchedRequest.UserEmail),
+			ExchangeAcceptedAlertMessage(request.DesiredBook.Title, request.UserEmail),
 			fmt.Sprintf("/exchange/details/%d", matchedRequest.ID),
 		).Render(c.Request().Context(), &buffer)
 		h.notifier.Notify(otherPartyUserID, buffer.String())

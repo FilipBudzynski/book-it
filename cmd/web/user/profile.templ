@@ -23,7 +23,7 @@ templ Profile(user *models.User, genres []*models.Genre) {
 			<div class="flex flex-col items-center ">
 				<div class="grid grid-cols-2 w-full items-start justify-between py-5 gap-6 ">
 					<!-- genres -->
-					<div class="felx h-[30rem] overflow-y-auto justify-items-center">
+					<div class="felx h-[15rem] overflow-y-auto justify-items-center">
 						<div class="flex flex-wrap gap-2 justify-start">
 							for _, genre := range genres {
 								@GenreButton(genre, user.HasGenre(genre.Name))

@@ -1,7 +1,6 @@
 package services
 
 import (
-	"errors"
 	"strconv"
 	"time"
 
@@ -47,12 +46,12 @@ func (s *progressService) Create(bookId uint, totalPages int, bookTitle, startDa
 	}
 
 	targetPages := int((totalPages + days - 1) / days)
-
 	progressLogs := []models.DailyProgressLog{}
 
 	today := utils.TodaysDate()
 	logTargetPages := CalculateTargetPages(totalPages, days)
 	pagesLeft := totalPages
+
 	for i := range days {
 
 		logDate := startDateParsed.AddDate(0, 0, i)
@@ -85,13 +84,15 @@ func (s *progressService) Create(bookId uint, totalPages int, bookTitle, startDa
 		CurrentPage:      0,
 		Completed:        false,
 	}
+	if err := progress.Validate(); err != nil {
+		return models.ReadingProgress{}, err
+	}
 
-	errs := errors.Join(
-		progress.Validate(),
-		s.repo.Create(progress),
-	)
+	if err := s.repo.Create(progress); err != nil {
+		return models.ReadingProgress{}, err
+	}
 
-	return progress, errs
+	return progress, nil
 }
 
 func (s *progressService) Get(id string) (*models.ReadingProgress, error) {
@@ -131,21 +132,11 @@ func (s *progressService) RefreshTargetPagesForNewDay(progressID string) (*model
 	if err != nil {
 		return nil, err
 	}
-
 	if progress.Completed || progress.EndDate.Before(utils.TodaysDate()) {
 		return progress, nil
 	}
-
 	log := progress.GetTodaysLog()
-	progress, err = s.UpdateTargetPages(progress, log.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := s.repo.Update(progress); err != nil {
-		return nil, err
-	}
-	return progress, nil
+	return s.updateTargetPagesAndSave(progress, log.ID)
 }
 
 func (s *progressService) UpdateTargetPagesForUserInput(progressID string, logID uint) (*models.ReadingProgress, error) {
@@ -153,20 +144,21 @@ func (s *progressService) UpdateTargetPagesForUserInput(progressID string, logID
 	if err != nil {
 		return nil, err
 	}
-
 	if progress.Completed {
 		return progress, nil
 	}
+	return s.updateTargetPagesAndSave(progress, logID)
+}
 
-	progress, err = s.UpdateTargetPages(progress, logID)
+func (s *progressService) updateTargetPagesAndSave(progress *models.ReadingProgress, logID uint) (*models.ReadingProgress, error) {
+	updatedProgress, err := s.UpdateTargetPages(progress, logID)
 	if err != nil {
 		return nil, err
 	}
-
-	if err := s.repo.Update(progress); err != nil {
+	if err := s.repo.Update(updatedProgress); err != nil {
 		return nil, err
 	}
-	return progress, nil
+	return updatedProgress, nil
 }
 
 func (s *progressService) UpdateTargetPages(progress *models.ReadingProgress, logID uint) (*models.ReadingProgress, error) {
