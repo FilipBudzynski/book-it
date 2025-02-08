@@ -48,7 +48,7 @@ GEOAPIFY_KEY="example-geoapify-key"
 Clone the repository to your local environment:
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/FilipBudzynski/book-it
 cd book_it
 ```
 
