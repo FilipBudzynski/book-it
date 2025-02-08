@@ -46,19 +46,6 @@ templ ExchangeTableRow(er models.ExchangeRequest) {
 				</div>
 			</div>
 		</td>
-		<!-- <td> -->
-		<!-- 	<img src="../assets/exchange-symbol.svg" alt="Exchange Symbol" class="w-5 h-5"/> -->
-		<!-- </td> -->
-		<!-- <td> -->
-		<!-- 	<ul class="list"> -->
-		<!-- 		for _, book := range er.OfferedBooks { -->
-		<!-- 			<li class="list-row"> -->
-		<!-- 				<div><img class="size-10 rounded-box" src={ book.Book.ImageLink } alt="img"/> </div> -->
-		<!-- 				<div>{ book.Book.Title } </div> -->
-		<!-- 			</li> -->
-		<!-- 		} -->
-		<!-- 	</ul> -->
-		<!-- </td> -->
 		<td>
 			@StatusDiv(er.Status)
 		</td>
@@ -74,7 +61,7 @@ templ ExchangeTableRow(er models.ExchangeRequest) {
 			if er.Status == models.ExchangeRequestStatusCompleted {
 				<button
 					class="btn btn-outline btn-error disabled"
-                    disabled
+					disabled
 				>remove</button>
 			} else {
 				<button

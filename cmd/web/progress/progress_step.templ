@@ -22,7 +22,6 @@ func NewProgressStep() *progressStep {
 	}
 }
 
-// TODO: if user finishes before end date, what should we do with the future logs?
 templ ProgressStep(log models.DailyProgressLog) {
 	{{ stepAtributes := NewProgressStep() }}
 	if log.Date.Equal(Today()) {

@@ -79,7 +79,6 @@ func HandleToast(err error, c echo.Context) {
 
 	if !ok {
 		return
-		// te = Danger("there has been an unexpected error")
 	}
 
 	if te.Level != SUCCESS && te.Level != INFO && ok {

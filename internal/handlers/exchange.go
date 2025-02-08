@@ -24,9 +24,7 @@ type ExchangeService interface {
 	Delete(id string) error
 	FindMatchingRequests(requestId, userId string) ([]*models.ExchangeRequest, error)
 
-	// match
 	CreateMatch(request, otherRequest *models.ExchangeRequest) (*models.ExchangeMatch, error)
-	// CheckMatch(requestId, matchId uint) (bool, error)
 	GetMatches(requestId string) ([]*models.ExchangeMatch, error)
 	GetMatchesDistanceFiltered(requestId string, distanceThreshold float64) ([]*models.ExchangeMatch, error)
 	AcceptMatch(requestId, matchedRequestId string) (*models.ExchangeMatch, error)
@@ -56,7 +54,7 @@ func (h *exchangeHandler) WithNotifier(notifier *NotificationManager) *exchangeH
 
 func (h *exchangeHandler) RegisterRoutes(app *echo.Echo) {
 	group := app.Group("/exchange")
-	group.Use(utils.CheckLoggedInMiddleware) // protected routes
+	group.Use(utils.CheckLoggedInMiddleware) 
 	group.POST("", h.CreateExchange)
 	group.GET("", h.Landing)
 	group.GET("/modal/new", h.GetNewExchangeModal)
@@ -280,6 +278,7 @@ func (h *exchangeHandler) AcceptMatch(c echo.Context) error {
 			ExchangeAcceptedAlertMessage(request.DesiredBook.Title, request.UserEmail),
 			fmt.Sprintf("/exchange/details/%d", matchedRequest.ID),
 		).Render(c.Request().Context(), &buffer)
+
 		h.notifier.Notify(otherPartyUserID, buffer.String())
 	}
 

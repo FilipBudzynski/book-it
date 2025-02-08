@@ -35,7 +35,6 @@ func (s *userService) Create(user *models.User) error {
 	return s.repo.Create(user)
 }
 
-// TODO: do a loop to get by provider given
 func (s *userService) GetById(id string) (*models.User, error) {
 	return s.repo.GetById(id)
 }

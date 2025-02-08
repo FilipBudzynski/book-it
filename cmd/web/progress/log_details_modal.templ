@@ -13,7 +13,6 @@ templ ProgressLogModal(dailyLog models.DailyProgressLog) {
 	</form>
 	<h3 class="text-lg font-bold">Day: { dailyLog.Date.Format("2006-01-02") }</h3>
 	<p class="py-4">Submit your progress 🎉</p>
-	<!-- <h3>{ fmt.Sprintf("Target Pages for this day: %d", dailyLog.TargetPages) }</h3> -->
 	<div class="stats shadow w-full">
 		<div class="stat">
 			<div class="stat-title">Todays Goal</div>
@@ -55,7 +54,6 @@ templ ProgressLogModal(dailyLog models.DailyProgressLog) {
 					onclick="my_modal_1.close()"
 				>Submit</button>
 			</div>
-			<!-- </form> -->
 		</div>
 	</form>
 }

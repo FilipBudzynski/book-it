@@ -24,18 +24,15 @@ templ Base() {
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>Book It</title>
 			<link href="/assets/css/output.css" rel="stylesheet"/>
-			<!-- <script src="assets/js/htmx.min.js"></script> -->
 			// daisyUi
 			<link href="https://cdn.jsdelivr.net/npm/daisyui@5.0.0-beta.1/daisyui.css" rel="stylesheet" type="text/css"/>
 			<link href="https://cdn.jsdelivr.net/npm/daisyui@5.0.0-beta.1/themes.css" rel="stylesheet" type="text/css"/>
 			// tailwind flowbite
-			<!-- <script src="https://cdn.tailwindcss.com"></script> -->
 			<script src="https://cdn.tailwindcss.com?plugins=typography"></script>
 			// htmx
 			<script src="https://unpkg.com/htmx.org@2.0.4"></script>
 			<script src="https://unpkg.com/htmx-ext-response-targets@2.0.0/response-targets.js"></script>
 			<script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
-			//<script>htmx.config.getCacheBusterParam = true</script>
 			// hyperscript
 			<script src="https://unpkg.com/hyperscript.org@0.9.13"></script>
 			<script src="/static/toast/toast.js" defer></script>
@@ -62,7 +59,6 @@ templ Base() {
          to { transform: translateX(-90px); }
        }
     
-       /* define animations for the old and new content */
        ::view-transition-old(slide-it) {
          animation: 180ms cubic-bezier(0.4, 0, 1, 1) both fade-out,
          600ms cubic-bezier(0.4, 0, 0.2, 1) both slide-to-left;
@@ -72,7 +68,6 @@ templ Base() {
          600ms cubic-bezier(0.4, 0, 0.2, 1) both slide-from-right;
        }
     
-       /* tie the view transition to a given CSS class */
        .sample-transition {
            view-transition-name: slide-it;
        }
@@ -91,7 +86,6 @@ templ Base() {
     </style>
 		</head>
 		<body>
-			// tailwind flowbite 
 			<main class="base max-w-screen gap-2 px-6 pt-5">
 				<div id="navbar-container" hx-get="/navbar" hx-trigger="load" hx-swap="outerHTML"></div>
 				<div id="content-container" class="sample-transition" hx-history-elt>
@@ -104,5 +98,3 @@ templ Base() {
 		</body>
 	</html>
 }
-
-

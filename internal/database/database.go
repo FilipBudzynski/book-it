@@ -15,6 +15,8 @@ import (
 	"gorm.io/gorm"
 )
 
+const openConnection = 40
+
 var (
 	dburl      = os.Getenv("DB_URL")
 	dbInstance *gorm.DB
@@ -30,22 +32,14 @@ func init() {
 		log.Fatalf("failed to enable foreign key support: %v", err)
 	}
 
-	// migration of models to database
-	// db.Migrator().DropTable(&models.ExchangeRequest{}) // Drop the existing table
 	err = db.AutoMigrate(models.MigrateModels...)
 	if err != nil {
 		panic("failed to migrate database")
 	}
 }
 
-// Service represents a service that interacts with a database.
 type Service interface {
-	// Health returns a map of health status information.
-	// The keys and values in the map are service-specific.
 	Health() map[string]string
-
-	// Close terminates the database connection.
-	// It returns an error if the connection cannot be closed.
 	Close() error
 }
 
@@ -54,15 +48,12 @@ type Repository struct {
 }
 
 func New() *gorm.DB {
-	// Reuse Connection
 	if dbInstance != nil {
 		return dbInstance
 	}
 
 	db, err := gorm.Open(sqlite.Open(dburl+"?_fk=1"), &gorm.Config{})
 	if err != nil {
-		// This will not be a connection error, but a DSN parse error or
-		// another initialization error.
 		log.Fatal(err)
 	}
 
@@ -71,21 +62,14 @@ func New() *gorm.DB {
 	}
 
 	return db
-	// dbInstance = &Repository{
-	// 	Db: db,
-	// }
-	// return dbInstance
 }
 
-// Health checks the health of the database connection by pinging the database.
-// It returns a map with keys indicating various health statistics.
 func (s *Repository) Health() map[string]string {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
 	stats := make(map[string]string)
 
-	// Ping the database
 	db, err := s.Db.DB()
 	if err != nil {
 		log.Fatalf("gorm conversion to db failed, err: %v", err)
@@ -94,15 +78,13 @@ func (s *Repository) Health() map[string]string {
 	if err != nil {
 		stats["status"] = "down"
 		stats["error"] = fmt.Sprintf("db down: %v", err)
-		log.Fatalf("db down: %v", err) // Log the error and terminate the program
+		log.Fatalf("db down: %v", err)
 		return stats
 	}
 
-	// Database is up, add more statistics
 	stats["status"] = "up"
 	stats["message"] = "It's healthy"
 
-	// Get database stats (like open connections, in use, idle, etc.)
 	dbStats := db.Stats()
 	stats["open_connections"] = strconv.Itoa(dbStats.OpenConnections)
 	stats["in_use"] = strconv.Itoa(dbStats.InUse)
@@ -112,8 +94,7 @@ func (s *Repository) Health() map[string]string {
 	stats["max_idle_closed"] = strconv.FormatInt(dbStats.MaxIdleClosed, 10)
 	stats["max_lifetime_closed"] = strconv.FormatInt(dbStats.MaxLifetimeClosed, 10)
 
-	// Evaluate stats to provide a health message
-	if dbStats.OpenConnections > 40 { // Assuming 50 is the max for this example
+	if dbStats.OpenConnections > openConnection {
 		stats["message"] = "The database is experiencing heavy load."
 	}
 
@@ -132,10 +113,6 @@ func (s *Repository) Health() map[string]string {
 	return stats
 }
 
-// Close closes the database connection.
-// It logs a message indicating the disconnection from the specific database.
-// If the connection is successfully closed, it returns nil.
-// If an error occurs while closing the connection, it returns the error.
 func (s *Repository) Close() error {
 	log.Printf("Disconnected from database: %s", dburl)
 	db, err := s.Db.DB()

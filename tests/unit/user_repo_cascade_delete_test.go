@@ -1,35 +1,15 @@
-package test_repo
+package unit
 
 import (
-	"log"
 	"testing"
 
 	"github.com/FilipBudzynski/book_it/internal/models"
 	"github.com/FilipBudzynski/book_it/internal/repositories"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
 )
 
-func setupTestDB() *gorm.DB {
-	db, err := gorm.Open(sqlite.Open(":memory:?_fk=1"), &gorm.Config{})
-	if err != nil {
-		log.Fatalf("failed to connect to database: %v", err)
-	}
-
-	if err := db.Exec("PRAGMA foreign_keys = ON;").Error; err != nil {
-		log.Fatalf("failed to enable foreign key support: %v", err)
-	}
-
-	err = db.AutoMigrate(models.MigrateModels...)
-	if err != nil {
-		log.Fatalf("failed to run migrations: %v", err)
-	}
-
-	return db
-}
-
 func TestCascadeDeleteUserBooks(t *testing.T) {
-	db := setupTestDB()
+	db, cleanUp := setupTestDB(t)
+	defer cleanUp()
 
 	book1 := models.Book{ID: "book1"}
 	book2 := models.Book{ID: "book2"}
@@ -104,7 +84,8 @@ func TestCascadeDeleteUserBooks(t *testing.T) {
 }
 
 func TestCascadeDeleteExchangeRequest(t *testing.T) {
-	db := setupTestDB()
+	db, cleanUp := setupTestDB(t)
+	defer cleanUp()
 
 	book1 := models.Book{ID: "book1"}
 	book2 := models.Book{ID: "book2"}
@@ -165,7 +146,8 @@ func TestCascadeDeleteExchangeRequest(t *testing.T) {
 }
 
 func TestCascadeDeleteUserBooksWithProgress(t *testing.T) {
-	db := setupTestDB()
+	db, cleanUp := setupTestDB(t)
+	defer cleanUp()
 
 	book1 := models.Book{ID: "book1"}
 	book2 := models.Book{ID: "book2"}

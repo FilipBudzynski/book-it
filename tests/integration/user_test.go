@@ -38,7 +38,6 @@ func TestUserHandler(t *testing.T) {
 		rec := httptest.NewRecorder()
 		e.ServeHTTP(rec, req)
 
-		t.Logf("Response Code: %d, Body: %s", rec.Code, rec.Body.String())
 		assert.Equal(t, http.StatusOK, rec.Code)
 	})
 
@@ -49,7 +48,6 @@ func TestUserHandler(t *testing.T) {
 		rec := httptest.NewRecorder()
 		e.ServeHTTP(rec, req)
 
-		t.Logf("Response Code: %d, Body: %s", rec.Code, rec.Body.String())
 		assert.Equal(t, http.StatusOK, rec.Code)
 	})
 
@@ -60,7 +58,6 @@ func TestUserHandler(t *testing.T) {
 		rec := httptest.NewRecorder()
 		e.ServeHTTP(rec, req)
 
-		t.Logf("Response Code: %d, Body: %s", rec.Code, rec.Body.String())
 		assert.Equal(t, http.StatusOK, rec.Code)
 	})
 
@@ -71,7 +68,6 @@ func TestUserHandler(t *testing.T) {
 		rec := httptest.NewRecorder()
 		e.ServeHTTP(rec, req)
 
-		t.Logf("Response Code: %d, Body: %s", rec.Code, rec.Body.String())
 		assert.Equal(t, http.StatusOK, rec.Code)
 	})
 
@@ -88,7 +84,6 @@ func TestUserHandler(t *testing.T) {
 		rec := httptest.NewRecorder()
 		e.ServeHTTP(rec, req)
 
-		t.Logf("Response Code: %d", rec.Code)
 		assert.Equal(t, http.StatusOK, rec.Code)
 	})
 
@@ -99,7 +94,6 @@ func TestUserHandler(t *testing.T) {
 		rec := httptest.NewRecorder()
 		e.ServeHTTP(rec, req)
 
-		t.Logf("Response Code: %d", rec.Code)
 		assert.Equal(t, http.StatusOK, rec.Code)
 	})
 }

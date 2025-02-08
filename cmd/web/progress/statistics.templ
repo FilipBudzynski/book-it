@@ -143,10 +143,3 @@ templ LogsTableRow(dailyLog models.DailyProgressLog) {
 		<td>{ fmt.Sprintf("%d", dailyLog.TotalPages - dailyLog.PagesRead) }</td>
 	</tr>
 }
-
-templ StatisticsAndButtonUpdate(readingProgress *models.ReadingProgress) {
-	@ProgressStatistics(readingProgress)
-	<div id={ fmt.Sprintf(HtmxTrackingButtonId, readingProgress.UserBookID) } hx-swap-oob="true">
-		@TrackingButton(readingProgress.UserBookID, readingProgress.Completed)
-	</div>
-}

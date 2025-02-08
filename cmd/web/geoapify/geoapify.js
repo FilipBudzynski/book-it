@@ -1,13 +1,6 @@
 let currentMap = null;
 let marker = null;
 
-// htmx.onLoad(function () {
-//   initMap();
-// });
-// window.htmx.onLoad(function () {
-//   initMap();
-// });
-
 function initMap() {
   const mapContainer = document.querySelector("#map");
 
@@ -26,12 +19,11 @@ function initMap() {
       currentMap = null;
     }
 
-    // Get initial latitude and longitude from hidden input fields
     const latInput = document.querySelector("#geolocation-lat");
     const lonInput = document.querySelector("#geolocation-lon");
 
-    let initialLat = 38.908838755401035; // Default latitude
-    let initialLon = -77.02346458179596; // Default longitude
+    let initialLat = 38.908838755401035; 
+    let initialLon = -77.02346458179596; 
 
     if (latInput && lonInput && latInput.value && lonInput.value) {
       initialLat = parseFloat(latInput.value);
@@ -61,7 +53,6 @@ function initMap() {
       })
       .addTo(currentMap);
 
-    // Add marker at initial position if available
     if (initialLat && initialLon) {
       marker = L.marker([initialLat, initialLon], {
         icon: markerIcon,
@@ -70,7 +61,6 @@ function initMap() {
     }
   }
 
-  // The rest of your initMap() logic remains the same
   window.handleLocationSelect = function (location) {
     if (marker) {
       marker.remove();

@@ -14,7 +14,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// UserService provides actions for managing Users.
 type UserService interface {
 	Create(u *models.User) error
 	Update(u *models.User) error
@@ -23,7 +22,6 @@ type UserService interface {
 	GetByGoogleID(googleID string) (*models.User, error)
 	GetAll() ([]models.User, error)
 	Delete(id string) error
-
 	AddGenre(userID, genre string) (*models.Genre, error)
 	RemoveGenre(userID, genre string) (*models.Genre, error)
 	GetAllGenres() ([]*models.Genre, error)

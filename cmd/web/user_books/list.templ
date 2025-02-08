@@ -40,10 +40,6 @@ templ List(books []*models.UserBook) {
 				<dialog id="my_modal_1" class="modal">
 					<div class="modal-box" id="htmx_modal"></div>
 				</dialog>
-				<!-- divider -->
-				<!-- @Bookshelfs() -->
-				<!-- <div class="divider divider-horizontal"></div> -->
-				<!-- table -->
 				@UserBooksTable(books)
 			</div>
 		</div>
@@ -127,34 +123,4 @@ templ BooksTableRows(books []*models.UserBook) {
 			</td>
 		</tr>
 	}
-}
-
-templ Bookshelfs() {
-	<div class="pr-6 pb-16 ">
-		<!-- bookshelfs -->
-		<div class="w-auto">
-			<table class="table">
-				<!-- head -->
-				<thead>
-					<tr>
-						<th>Bookshelfs</th>
-					</tr>
-				</thead>
-				<tbody>
-					<!-- row 1 -->
-					<tr>
-						<td>All</td>
-					</tr>
-					<!-- row 2 -->
-					<tr>
-						<td>Read</td>
-					</tr>
-					<!-- row 3 -->
-					<tr>
-						<td>To read</td>
-					</tr>
-				</tbody>
-			</table>
-		</div>
-	</div>
 }

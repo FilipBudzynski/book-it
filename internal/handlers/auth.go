@@ -28,8 +28,6 @@ func (h *AuthHandler) RegisterRoutes(app *echo.Echo) {
 	group.GET("/logout", h.Logout)
 }
 
-// setProvider is a helper function that sets Request context to contain value "provider", from url path ":provider"
-// returns responseWriter and altered request
 func setProvider(c echo.Context) (http.ResponseWriter, *http.Request) {
 	ctx := context.WithValue(c.Request().Context(), gothic.ProviderParamKey, c.QueryParam("provider"))
 	return c.Response().Writer, c.Request().WithContext(ctx)
@@ -52,12 +50,9 @@ func (a *AuthHandler) GetAuthCallbackFunc(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	// try to get user from db
-	// TODO: get by id
 	var user *models.User
 
 	user, err = a.userService.GetByEmail(gothUser.Email)
-	// TODO: error should be wrapped
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			user = &models.User{
@@ -74,7 +69,6 @@ func (a *AuthHandler) GetAuthCallbackFunc(c echo.Context) error {
 		}
 	}
 
-	// set user cookie session
 	err = utils.SetUserSession(responseWriter, request, utils.UserSession{
 		UserID:       gothUser.UserID,
 		UserEmail:    gothUser.Email,
@@ -100,7 +94,6 @@ func (a *AuthHandler) Logout(c echo.Context) error {
 	r := c.Request()
 	w := c.Response().Writer
 
-	// remove cookie
 	err := utils.RemoveCookieSession(w, r)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
