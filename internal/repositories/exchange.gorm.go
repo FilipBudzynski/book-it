@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"fmt"
+
 	"github.com/FilipBudzynski/book_it/internal/models"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -31,25 +33,29 @@ func (r *ExchangeRequestRepository) GetByID(id string) (*models.ExchangeRequest,
 
 func (r *ExchangeRequestRepository) Get(id, userId string) (*models.ExchangeRequest, error) {
 	exchange := &models.ExchangeRequest{}
-	err := r.db.Preload("DesiredBook").
+	// user := &models.User{}
+	err := r.db.Joins("User").
+		Where("exchange_requests.id = ?", id).
+		Preload("User").
+		Preload("DesiredBook").
 		Preload("OfferedBooks.Book").
-		Where("user_google_id = ?", userId).
-		First(&exchange, id).Error
+		First(&exchange).Error
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("exchange request not found: %v", err)
 	}
 
-	// Load Matches where this request is either the origin or the target
 	var matches []models.ExchangeMatch
-	err = r.db.Where("exchange_request_id = ? OR matched_exchange_request_id = ?", exchange.ID, exchange.ID).
+	err = r.db.
 		Preload("Request.DesiredBook").
+		Preload("Request.User").
 		Preload("MatchedExchangeRequest.DesiredBook").
+		Preload("MatchedExchangeRequest.User").
+		Where("exchange_request_id = ? OR matched_exchange_request_id = ?", exchange.ID, exchange.ID).
 		Find(&matches).Error
 	if err != nil {
 		return nil, err
 	}
 
-	// Assign matches to the Matches field
 	exchange.Matches = matches
 	return exchange, nil
 }
@@ -126,10 +132,11 @@ func (r *ExchangeRequestRepository) GetAllMatches(requestId string) ([]*models.E
 
 func (r *ExchangeRequestRepository) getMatches(requestId string, matchID string) ([]*models.ExchangeMatch, error) {
 	matches := []*models.ExchangeMatch{}
-	query := r.db.Preload("Request").
+	query := r.db.
 		Preload("Request.DesiredBook").
-		Preload("MatchedExchangeRequest").
+		Preload("Request.User").
 		Preload("MatchedExchangeRequest.DesiredBook").
+		Preload("MatchedExchangeRequest.User").
 		Where("exchange_request_id = ? OR matched_exchange_request_id = ?", requestId, requestId)
 
 	if matchID != "" {

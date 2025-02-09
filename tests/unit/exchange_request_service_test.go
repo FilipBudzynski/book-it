@@ -24,7 +24,6 @@ func TestExchangeService_Request(t *testing.T) {
 
 	exchange := &models.ExchangeRequest{
 		UserGoogleId:  userID,
-		UserEmail:     userEmail,
 		DesiredBookID: desiredBookID,
 		OfferedBooks:  []models.OfferedBook{{BookID: "book123"}, {BookID: "book789"}},
 		Status:        models.ExchangeRequestStatusActive,

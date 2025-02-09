@@ -54,7 +54,7 @@ func (h *exchangeHandler) WithNotifier(notifier *NotificationManager) *exchangeH
 
 func (h *exchangeHandler) RegisterRoutes(app *echo.Echo) {
 	group := app.Group("/exchange")
-	group.Use(utils.CheckLoggedInMiddleware) 
+	group.Use(utils.CheckLoggedInMiddleware)
 	group.POST("", h.CreateExchange)
 	group.GET("", h.Landing)
 	group.GET("/modal/new", h.GetNewExchangeModal)
@@ -269,17 +269,20 @@ func (h *exchangeHandler) AcceptMatch(c echo.Context) error {
 		return errs.HttpErrorInternalServerError(err)
 	}
 
+	matchedRequest := match.MatchedRequest(request.ID)
+	otherPartyUser, err := h.userService.GetByGoogleID(matchedRequest.UserGoogleId)
+	if err != nil {
+		return errs.HttpErrorInternalServerError(err)
+	}
 	if h.notifier != nil {
-		matchedRequest := match.MatchedRequest(request.ID)
-		otherPartyUserID := matchedRequest.UserEmail
 
 		var buffer bytes.Buffer
 		_ = webAlerts.AlertSuccess(
-			ExchangeAcceptedAlertMessage(request.DesiredBook.Title, request.UserEmail),
+			ExchangeAcceptedAlertMessage(request.DesiredBook.Title, otherPartyUser.Email),
 			fmt.Sprintf("/exchange/details/%d", matchedRequest.ID),
 		).Render(c.Request().Context(), &buffer)
 
-		h.notifier.Notify(otherPartyUserID, buffer.String())
+		h.notifier.Notify(otherPartyUser.Email, buffer.String())
 	}
 
 	return utils.RenderView(c, webExchange.MatchDiv(match, request))
@@ -307,14 +310,17 @@ func (h *exchangeHandler) DeclineMatch(c echo.Context) error {
 
 	if h.notifier != nil {
 		matchedRequest := match.MatchedRequest(request.ID)
-		otherPartyUserID := matchedRequest.UserEmail
+		otherPartyUser, err := h.userService.GetByGoogleID(matchedRequest.UserGoogleId)
+		if err != nil {
+			return errs.HttpErrorInternalServerError(err)
+		}
 
 		var buffer bytes.Buffer
 		_ = webAlerts.AlertInfo(
-			ExchangeDeclineAlertMessage(request.DesiredBook.Title, matchedRequest.UserEmail),
+			ExchangeDeclineAlertMessage(request.DesiredBook.Title, otherPartyUser.Email),
 			fmt.Sprintf("/exchange/details/%d", matchedRequest.ID),
 		).Render(c.Request().Context(), &buffer)
-		h.notifier.Notify(otherPartyUserID, buffer.String())
+		h.notifier.Notify(otherPartyUser.Email, buffer.String())
 	}
 
 	return utils.RenderView(c, webExchange.MatchDiv(match, request))

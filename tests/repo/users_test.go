@@ -128,7 +128,6 @@ func TestCascadeDeleteExchangeRequest(t *testing.T) {
 
 	exchangeRequest := models.ExchangeRequest{
 		UserGoogleId:  "123",
-		UserEmail:     "test@example.com",
 		DesiredBookID: "book1",
 		OfferedBooks: []models.OfferedBook{
 			{

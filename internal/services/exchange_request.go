@@ -50,7 +50,7 @@ func (s *exchangeService) Create(
 
 	exchange := &models.ExchangeRequest{
 		UserGoogleId:  userId,
-		UserEmail:     userEmail,
+		//UserEmail:     userEmail,
 		DesiredBookID: desiredBookID,
 		OfferedBooks:  offeredBooks,
 		Status:        models.ExchangeRequestStatusActive,

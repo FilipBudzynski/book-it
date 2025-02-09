@@ -128,7 +128,6 @@ func TestExchangeHandler(t *testing.T) {
 		exchange := &models.ExchangeRequest{
 			ID:            2,
 			UserGoogleId:  "test-user-id",
-			UserEmail:     "test@example.com",
 			DesiredBookID: "1",
 			OfferedBooks: []models.OfferedBook{
 				{ID: 1, BookID: "2"},
